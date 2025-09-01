@@ -1,0 +1,87 @@
+package me.rightsflow.contracts.service
+
+import jakarta.persistence.EntityManager
+import jakarta.persistence.ParameterMode
+import jakarta.persistence.PersistenceContext
+import me.rightsflow.common.config.SecuritySubjectProvider
+import me.rightsflow.common.exception.EntityNotFoundWithClsException
+import me.rightsflow.contracts.dto.request.LicenseRtFeaturesCreateRequest
+import me.rightsflow.contracts.dto.response.LicenseRtFeaturesDto
+import me.rightsflow.contracts.entity.LicenseRtFeatureSet
+import me.rightsflow.contracts.entity.LicenseRtFeatures
+import me.rightsflow.contracts.repository.LicenseRtFeatureSetRepository
+import me.rightsflow.contracts.repository.LicenseRtFeaturesRepository
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+
+@Service
+class LicenseRtFeaturesService(
+    private val repo: LicenseRtFeaturesRepository,
+    private val licenseRtFeatureSetRepo: LicenseRtFeatureSetRepository,
+    private val subProvider: SecuritySubjectProvider,
+    @PersistenceContext private val em: EntityManager
+) {
+
+    fun getById(id: Long): LicenseRtFeaturesDto =
+        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java) }.toDto()
+
+    fun findByFeatureSet(id: Long): List<LicenseRtFeaturesDto> {
+        licenseRtFeatureSetRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatureSet::class.java) }
+        return repo.findByIdFeatureSet(id).map { it.toDto() }
+    }
+
+    @Transactional
+    fun create(req: LicenseRtFeaturesCreateRequest): LicenseRtFeaturesDto {
+        val query = em.createNativeQuery(
+            "SELECT pkg_contract.ins_license_rt_features(" +
+                    ":pIdLicRt, " +
+                    ":pIdFeatureSet, " +
+                    ":pIdFeature, " +
+                    ":pIncluded, " +
+                    ":pCreatedBy" +
+                    ")"
+        )
+
+        query.setParameter("pIdLicRt", req.idLicRt)
+        query.setParameter("pIdFeatureSet", req.idFeatureSet)
+        query.setParameter("pIdFeature", req.idFeature)
+        query.setParameter("pIncluded", req.isIncluded)
+        query.setParameter("pCreatedBy", subProvider.currentSub())
+
+        val id = query.singleResult as Long
+
+        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java) }
+        em.refresh(e)
+        return e.toDto()
+    }
+
+    @Transactional
+    fun delete(id: Long) {
+        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java) }
+        val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rt_features")
+
+        sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+
+        sp.setParameter("p_id", id)
+        sp.setParameter("p_username", subProvider.currentSub())
+
+        sp.execute()
+    }
+
+    private fun LicenseRtFeatures.toDto() = LicenseRtFeaturesDto(
+        id = this.id!!,
+        idLicRt = this.idLicRt,
+        rightTypeName = this.licenseRt?.rightType?.name ?: "",
+        idFeatureSet = this.idFeatureSet,
+        idFeatureCategory = this.idFeatureCategory,
+        featureCategoryName = this.featureCategory?.name ?: "",
+        idFeature = this.idFeature,
+        featureName = this.featureTree?.featurePlain?.name ?: "",
+        isIncluded = this.isIncluded,
+        createdBy = this.createdBy,
+        createdAt = this.createdAt,
+        updatedBy = this.updatedBy,
+        updatedAt = this.updatedAt
+    )
+}

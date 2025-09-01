@@ -1,0 +1,17 @@
+package me.rightsflow.contracts.dto.response
+
+import io.swagger.v3.oas.annotations.media.Schema
+import java.time.OffsetDateTime
+
+@Schema(description = "ОИС в составе лицензии")
+data class LicenseOipDto(
+    @field:Schema(description = "ID", example = "1") val id: Long,
+    @field:Schema(description = "ID лицензии", example = "1") val idLicense: Long,
+    @field:Schema(description = "Номер лицензии", example = "Л-00001/2025") val licenseNum: String?,
+    @field:Schema(description = "ID ОИС", example = "1") val idOip: Int,
+    @field:Schema(description = "Название ОИС") val oipName: String?,
+    @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
+    @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
+    @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
+    @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?
+)

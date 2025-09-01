@@ -1,0 +1,469 @@
+package me.rightsflow.intersync.config
+
+import me.rightsflow.intersync.dto.*
+import me.rightsflow.intersync.service.ReplicationService
+import org.apache.avro.generic.GenericRecord
+import org.apache.avro.util.Utf8
+import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.kafka.support.Acknowledgment
+import org.springframework.kafka.support.KafkaHeaders
+import org.springframework.kafka.support.KafkaNull
+import org.springframework.messaging.Message
+import java.time.Instant
+import java.util.function.Consumer
+
+@Configuration
+class StreamProcessors(
+    private val replicationService: ReplicationService
+) {
+
+    private val log = LoggerFactory.getLogger(StreamProcessors::class.java)
+
+
+    @Bean
+    fun userProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("userProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("userProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("userProcessor -> Received sync message with id: $syncId")
+                val userDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToUserAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> UsersAvroMessage(null,"","","","",false,
+                        false,false,0L,0L,0L,0L,"")
+                    else -> throw IllegalArgumentException("userProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processUser(syncId, userDto)
+                acknowledgment?.acknowledge()
+                log.info("userProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun counterpartyProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("counterpartyProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("counterpartyProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("counterpartyProcessor -> Received sync message with id: $syncId")
+                val counterpartyDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfCounterpartyAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null,"","", Instant.MIN,
+                        null,null)
+                    else -> throw IllegalArgumentException("counterpartyProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processCounterparty(syncId, counterpartyDto)
+                acknowledgment?.acknowledge()
+                log.info("counterpartyProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun organizationProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("organizationProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("organizationProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("organizationProcessor -> Received sync message with id: $syncId")
+                val organizationDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfOrganizationAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfOrganizationAvroMessage(null,null,"","",
+                        Instant.MIN,null,null)
+                    else -> throw IllegalArgumentException("organizationProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processOrganization(syncId, organizationDto)
+                acknowledgment?.acknowledge()
+                log.info("organizationProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun oipProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("oipProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("oipProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("oipProcessor -> Received sync message with id: $syncId")
+                val oipDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfOipAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfOipAvroMessage(null,null,null,null,
+                        "", null, null, null, "", Instant.MIN,
+                        null, null)
+                    else -> throw IllegalArgumentException("oipProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processOip(syncId, oipDto)
+                acknowledgment?.acknowledge()
+                log.info("oipProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun oipSuperTypeProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("oipSuperTypeProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("oipSuperTypeProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("oipSuperTypeProcessor -> Received sync message with id: $syncId")
+                val oipSuperTypeDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovOipSuperTypeAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovOipSuperTypeAvroMessage(null,"")
+                    else -> throw IllegalArgumentException("oipSuperTypeProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processOipSuperType(syncId, oipSuperTypeDto)
+                acknowledgment?.acknowledge()
+                log.info("oipSuperTypeProcessor -> Successfully processed message with id: ${syncId}")
+
+            }
+        }
+    }
+
+    @Bean
+    fun oipTypeProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("oipTypeProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("oipTypeProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("oipTypeProcessor -> Received sync message with id: $syncId")
+                val oipTypeDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovOipTypeAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovOipTypeAvroMessage(null,null,"")
+                    else -> throw IllegalArgumentException("oipTypeProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processOipType(syncId, oipTypeDto)
+                acknowledgment?.acknowledge()
+                log.info("oipTypeProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun rightTypeProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("rightTypeProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("rightTypeProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("rightTypeProcessor -> Received sync message with id: $syncId")
+                val rightTypeDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfRightTypeAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfRightTypeAvroMessage(null,null,"","",Instant.MIN,
+                        null,null)
+                    else -> throw IllegalArgumentException("rightTypeProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processRightType(syncId, rightTypeDto)
+                acknowledgment?.acknowledge()
+                log.info("rightTypeProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun featureCategoryProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("featureCategoryProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("featureCategoryProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("featureCategoryProcessor -> Received sync message with id: $syncId")
+                val featureCategoryDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfFeatureCategoryAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfFeatureCategoryAvroMessage(null,"","",Instant.MIN,
+                        null,null)
+                    else -> throw IllegalArgumentException("featureCategoryProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processFeatureCategory(syncId, featureCategoryDto)
+                acknowledgment?.acknowledge()
+                log.info("featureCategoryProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun featurePlainProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("featurePlainProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("featurePlainProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("featurePlainProcessor -> Received sync message with id: $syncId")
+                val featurePlainDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfFeaturePlainAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfFeaturePlainAvroMessage(null,"",null,"",Instant.MIN,
+                        null,null)
+                    else -> throw IllegalArgumentException("featurePlainProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processFeaturePlain(syncId, featurePlainDto)
+                acknowledgment?.acknowledge()
+                log.info("featurePlainProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun featureTreeProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("featureTreeProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("featureTreeProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("featureTreeProcessor -> Received sync message with id: $syncId")
+                val featureTreeDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfFeatureTreeAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfFeatureTreeAvroMessage(null,null,null,null,null,
+                        "",Instant.MIN,null,null)
+                    else -> throw IllegalArgumentException("featureTreeProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processFeatureTree(syncId, featureTreeDto)
+                acknowledgment?.acknowledge()
+                log.info("featureTreeProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+
+}
+
+object MessageConverter {
+
+    fun convertToUserAvroMessage(record: GenericRecord): UsersAvroMessage {
+        return UsersAvroMessage(
+            id = record.get("id") as Int,
+            username = record.getString("username"),
+            display_name = record.getString("display_name"),
+            email = record.getString("email"),
+            password_hash = record.getString("password_hash"),
+            enabled = record.get("enabled") as Boolean?,
+            account_non_expired = record.get("account_non_expired") as Boolean?,
+            account_non_locked = record.get("account_non_locked") as Boolean?,
+            expiration_date = record.get("expiration_date") as Long?,
+            last_logon = record.get("last_logon") as Long?,
+            created_at = record.get("created_at") as Long?,
+            updated_at = record.get("updated_at") as Long?,
+            user_type = record.getString("user_type")
+        )
+    }
+
+    fun convertToKlfCounterpartyAvroMessage(record: GenericRecord): KlfCounterpartyAvroMessage {
+        return KlfCounterpartyAvroMessage(
+            id = record.get("id") as Int?,
+            guid = record.getStringOrNull("guid"),
+            name = record.getString("name"),
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToKlfOrganizationAvroMessage(record: GenericRecord): KlfOrganizationAvroMessage {
+        return KlfOrganizationAvroMessage(
+            id = record.get("id") as Int?,
+            guid = record.getStringOrNull("guid"),
+            name = record.getString("name"),
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToLovOipSuperTypeAvroMessage(record: GenericRecord): LovOipSuperTypeAvroMessage {
+        return LovOipSuperTypeAvroMessage(
+            id = record.get("id") as Int?,
+            name = record.getString("name")
+        )
+    }
+
+    fun convertToLovOipTypeAvroMessage(record: GenericRecord): LovOipTypeAvroMessage {
+        return LovOipTypeAvroMessage(
+            id = record.get("id") as Int?,
+            id_oip_super_type = record.get("id_oip_super_type") as Int?,
+            name = record.getString("name")
+        )
+    }
+
+    fun convertToKlfOipAvroMessage(record: GenericRecord): KlfOipAvroMessage {
+        return KlfOipAvroMessage(
+            id = record.get("id") as Int?,
+            guid = record.getStringOrNull("guid"),
+            id_oip_super_type = record.get("id_oip_super_type") as Int?,
+            id_oip_type = record.get("id_oip_type") as Int?,
+            name = record.getString("name"),
+            part_num = record.get("part_num") as Int?,
+            part_count = record.get("part_count") as Int?,
+            duration = record.get("duration") as Long?,
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToKlfRightTypeAvroMessage(record: GenericRecord): KlfRightTypeAvroMessage {
+        return KlfRightTypeAvroMessage(
+            id = record.get("id") as Int?,
+            id_parent = record.get("id_parent") as Int?,
+            name = record.getString("name"),
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToKlfFeatureCategoryAvroMessage(record: GenericRecord): KlfFeatureCategoryAvroMessage {
+        return KlfFeatureCategoryAvroMessage(
+            id = record.get("id") as Int?,
+            name = record.getString("name"),
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)},
+        )
+    }
+
+    fun convertToKlfFeaturePlainAvroMessage(record: GenericRecord): KlfFeaturePlainAvroMessage {
+        return KlfFeaturePlainAvroMessage(
+            id = record.get("id") as Int?,
+            name = record.getString("name"),
+            id_feature_category = record.get("id_feature_category") as Int?,
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToKlfFeatureTreeAvroMessage(record: GenericRecord): KlfFeatureTreeAvroMessage {
+        return KlfFeatureTreeAvroMessage(
+            id = record.get("id") as Int?,
+            id_parent = record.get("id_parent") as Int?,
+            id_feature_category = record.get("id_feature_category") as Int?,
+            id_feature_plain = record.get("id_feature_plain") as Int?,
+            validity_period = record.getStringOrNull("validity_period"),
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    private fun GenericRecord.getStringOrNull(fieldName: String): String? {
+        return when (val value = this.get(fieldName)) {
+            is Utf8 -> value.toString()
+            is String -> value
+            null -> null
+            else -> value.toString()
+        }
+    }
+
+    private fun GenericRecord.getString(fieldName: String): String {
+        return getStringOrNull(fieldName) ?: ""
+    }
+
+    private fun GenericRecord.getRequiredString(fieldName: String): String {
+        return getStringOrNull(fieldName) ?: throw IllegalArgumentException("Field $fieldName is required but was null")
+    }
+}

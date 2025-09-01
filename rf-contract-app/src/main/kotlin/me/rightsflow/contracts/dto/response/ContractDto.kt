@@ -1,0 +1,27 @@
+package me.rightsflow.contracts.dto.response
+
+import io.swagger.v3.oas.annotations.media.Schema
+import java.time.LocalDate
+import java.time.OffsetDateTime
+
+@Schema(description = "Контракт")
+data class ContractDto(
+    @field:Schema(description = "ID", example = "1") val id: Long,
+    @field:Schema(description = "GUID", example = "013-123456789") val guid: String?,
+    @field:Schema(description = "Номер контракта", example = "С-0123/2025") val num: String,
+    @field:Schema(description = "ID организации", example = "1") val idOrg: Int,
+    @field:Schema(description = "Наименование организации", example = "АО 'Рога и Копыта'") val orgName: String?,
+    @field:Schema(description = "Период действия (начало)", example = "2023-01-01") val validityPeriodStart: LocalDate?,
+    @field:Schema(description = "Период действия (конец)", example = "2024-01-01") val validityPeriodEnd: LocalDate?,
+    @field:Schema(description = "Дата подписания", example = "2023-01-01") val signDate: LocalDate?,
+    @field:Schema(description = "ID типа контракта", example = "1") val idContractType: Int,
+    @field:Schema(description = "Наименование типа контракта", example = "Договор") val contractTypeName: String?,
+    @field:Schema(description = "ID статуса контракта", example = "1") val idContractStatus: Int,
+    @field:Schema(description = "Наименование статуса контракта", example = "Подписан") val contractStatusName: String?,
+    @field:Schema(description = "Вид контракта (покупка/продажа)", example = "SALE") val inOut: String,
+    @field:Schema(description = "Описание", example = "Договор на поставку товаров") val description: String?,
+    @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
+    @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
+    @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
+    @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?
+)

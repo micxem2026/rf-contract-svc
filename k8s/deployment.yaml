@@ -1,0 +1,156 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: rf-contract-secret
+  namespace: develop
+type: Opaque
+data:
+  # echo -n "users_db" | base64 -> dXNlcnNfZGI=
+  postgres-password: cmYtT3duZXIyNQ==
+  postgres-user: cmlnaHRzZmxvdw==
+  swagger-secret: bW1LLXc3d3hDZm1FdzdTdlBDbW1YbmN1SUZ4UWM2eEwtNjUxNWM0VUIwaw==
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rf-contract-svc
+data:
+  hostname: contract-svc
+  hostname-external: rights.flow.me
+  profiles: local,kafka
+  contract-db: pg-contract-db-svc
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rf-contact-svc
+  labels:
+    app: rf-contract-svc
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rf-contract-svc
+  template:
+    metadata:
+      name: rf-contract-svc
+      labels:
+        app: rf-contract-svc
+    spec:
+      #      hostAliases:
+      #        - ip: "192.168.1.22"
+      #          hostnames:
+      #            - "gitlab.micxem"
+      containers:
+        - name: rf-contract-svc
+          image: gitlab.micxem:5050/rights-flow/rf-contract-svc:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8082
+              protocol: TCP
+          args: [ "--spring.profiles.active=$(RF_CONTRACT_SVC_PROFILES)"]
+          env:
+            - name: RF_CONTRACT_SVC_PROFILES
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-contract-svc
+                  key: profiles
+            - name: RF_EUREKA_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-eureka-svc
+                  key: serviceURL
+            - name: RF_CONTRACT_SVC_HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-contract-svc
+                  key: hostname
+            - name: RF_CONTRACT_SVC_HOSTNAME_EXTERNAL
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-contract-svc
+                  key: hostname-external
+            - name: RF_AUTH_SVC_HOSTNAME
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-auth-svc
+                  key: hostname
+            - name: RF_CONFIG_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-config-svc
+                  key: serviceURL
+            - name: RF_PG_CONTRACT_DB_SVC
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-contract-svc
+                  key: contract-db
+            - name: PG_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: rf-contract-secret
+                  key: postgres-user
+            - name: PG_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: rf-contract-secret
+                  key: postgres-password
+            - name: SWAGGER_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: rf-contract-secret
+                  key: swagger-secret
+            - name: RF_KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-props
+                  key: brokers
+            - name: RF_SCHEMA_REGISTRY_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: kafka-props
+                  key: schema-registry-url
+
+          readinessProbe:
+            httpGet:
+              path: /api/contract/v1/actuator/health/readiness
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 15
+          livenessProbe:
+            httpGet:
+              path: /api/contract/v1/actuator/health/liveness
+              port: 8081
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
+            successThreshold: 1
+            failureThreshold: 15
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1"
+              memory: "1024Mi"
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: gitlab-registry-secret
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contract-svc
+  labels:
+    app: rf-contract-svc
+spec:
+  selector:
+    app: rf-contract-svc
+  type: ClusterIP
+  ports:
+    - name: http
+      port: 8082
+      targetPort: 8082
