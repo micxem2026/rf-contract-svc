@@ -17,6 +17,8 @@ import java.util.concurrent.TimeUnit
 
 @Component
 class GenericDlqScheduler(
+    @Value("\${rightsflow.app.dlg-topic-poll-seconds}")
+    private val dlqTopicPollSeconds: Long,
     @Value("\${spring.cloud.stream.kafka.binder.brokers}")
     private val bootstrapServers: String,
     @Value("\${spring.cloud.stream.kafka.binder.configuration.schema.registry.url}")
@@ -56,7 +58,7 @@ class GenericDlqScheduler(
 
         KafkaConsumer<String, GenericRecord?>(consumerProps).use { consumer ->
             consumer.subscribe(listOf(dlqTopic))
-            val records = consumer.poll(Duration.ofSeconds(10))
+            val records = consumer.poll(Duration.ofSeconds(dlqTopicPollSeconds))
 
             if (records.isEmpty) {
                 log.info("DLQ topic $dlqTopic is empty")
