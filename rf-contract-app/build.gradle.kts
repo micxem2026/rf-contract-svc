@@ -102,6 +102,6 @@ tasks.named<BootRun>("bootRun") {
 }
 
 tasks.named<BootJar>("bootJar") {
-    archiveBaseName.set("rf-catalog-svc") // Задаем основное имя файла
+    archiveBaseName.set("rf-contract-svc") // Задаем основное имя файла
     archiveVersion.set("")               // Убираем версию из имени файла
 }
