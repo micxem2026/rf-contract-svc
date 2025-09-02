@@ -56,7 +56,7 @@ class GenericDlqScheduler(
 
         KafkaConsumer<String, GenericRecord?>(consumerProps).use { consumer ->
             consumer.subscribe(listOf(dlqTopic))
-            val records = consumer.poll(Duration.ofSeconds(1))
+            val records = consumer.poll(Duration.ofSeconds(10))
 
             if (records.isEmpty) {
                 log.info("DLQ topic $dlqTopic is empty")
