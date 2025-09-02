@@ -23,7 +23,7 @@ data:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rf-contact-svc
+  name: rf-contract-svc
   labels:
     app: rf-contract-svc
 spec:
