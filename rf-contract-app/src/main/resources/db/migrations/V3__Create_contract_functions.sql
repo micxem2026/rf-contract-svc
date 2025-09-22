@@ -148,12 +148,13 @@ $$ language plpgsql;
 create or replace function pkg_contract.ins_contract(p_guid character varying,
                                                      p_num character varying,
                                                      p_id_org integer,
+                                                     p_id_org_party integer,
                                                      p_beg_date date,
                                                      p_end_date date,
                                                      p_sign_date date,
                                                      p_id_contract_type integer,
                                                      p_id_contract_status integer,
-                                                     p_in_out char(1),
+                                                     p_in_out char(2),
                                                      p_description character varying,
                                                      p_username character varying
 ) returns bigint
@@ -167,15 +168,22 @@ DECLARE
     v_num contract.num%type;
     v_id_contract_type integer;
     v_id_contract_status integer;
+    v_id_org_party integer;
 BEGIN
 
     v_id_contract_type := pkg_contract.get_def_contract_type(p_id_contract_type);
     v_id_contract_status := pkg_contract.get_def_contract_status(v_id_contract_type, p_id_contract_status);
     v_validity_period := daterange(p_beg_date, p_end_date, '[]');
-    v_num := coalesce(p_num, pkg_contract.get_next_contract_num(v_id_contract_type));
+    v_num := coalesce(nullif(p_num, ''), pkg_contract.get_next_contract_num(v_id_contract_type));
 
-    insert into contract (guid, num, id_org, validity_period, sign_date, id_contract_type, id_contract_status, in_out, description, created_by)
-    values (p_guid, v_num, p_id_org, v_validity_period, p_sign_date, v_id_contract_type,
+    if p_in_out in ('eP', 'eS') then
+        v_id_org_party := null;
+    else
+        v_id_org_party := p_id_org_party;
+    end if;
+
+    insert into contract (guid, num, id_org, id_org_party, validity_period, sign_date, id_contract_type, id_contract_status, in_out, description, created_by)
+    values (p_guid, v_num, p_id_org, v_id_org_party, v_validity_period, p_sign_date, v_id_contract_type,
             v_id_contract_status, p_in_out, p_description, p_username)
     returning id into r_result;
 
@@ -187,12 +195,13 @@ create or replace function pkg_contract.upd_contract(p_id bigint,
                                                      p_guid character varying,
                                                      p_num character varying,
                                                      p_id_org integer,
+                                                     p_id_org_party integer,
                                                      p_beg_date date,
                                                      p_end_date date,
                                                      p_sign_date date,
                                                      p_id_contract_type integer,
                                                      p_id_contract_status integer,
-                                                     p_in_out char(1),
+                                                     p_in_out char(2),
                                                      p_description character varying,
                                                      p_username character varying
 ) returns bigint
@@ -205,6 +214,7 @@ DECLARE
     v_id_contract_type integer;
     v_id_contract_status integer;
     v_old contract%rowtype;
+    v_id_org_party integer;
 BEGIN
 
     select * into v_old from contract where id = p_id;
@@ -217,11 +227,18 @@ BEGIN
     v_id_contract_type := pkg_contract.get_old_contract_type(p_id_contract_type, v_old.id_contract_type);
     v_id_contract_status := pkg_contract.get_old_contract_status(v_id_contract_type, p_id_contract_status, v_old.id_contract_status);
 
+    if coalesce(p_in_out, v_old.in_out) in ('eP', 'eS') then
+        v_id_org_party := null;
+    else
+        v_id_org_party := p_id_org_party;
+    end if;
+
     update contract
     set
         guid = p_guid,
         num = coalesce(p_num, num),
         id_org = coalesce(p_id_org, id_org),
+        id_org_party = v_id_org_party,
         validity_period = v_validity_period,
         sign_date = p_sign_date,
         id_contract_type = v_id_contract_type,
@@ -786,49 +803,82 @@ create or replace trigger tr_remake_license_rt_feature_set_ext
     for each row
 execute function pkg_contract.remake_license_rt_feature_set_ext();
 
-create or replace function pkg_contract.ins_license_rt_features(p_id_lic_rt bigint,
-                                                                p_id_feature_set bigint,
-                                                                p_id_feature integer,
-                                                                p_is_included boolean,
-                                                                p_username character varying
+create or replace function pkg_contract.ins_license_rt_features(
+    p_id_lic_rt bigint,
+    p_id_feature_set bigint,
+    p_id_feature integer,
+    p_is_included boolean,
+    p_username varchar
 ) returns bigint
     security definer
     set search_path = rightsflow
 as
 $$
-DECLARE
+declare
+    v_rt_name varchar;
+    v_fc_name varchar;
+    v_is_native boolean;
     r_result bigint;
-    v_klf_feature  sync__klf_feature_tree%rowtype;
-BEGIN
-
-    if p_id_lic_rt is null then
-        raise exception 'Ошибка создания характеристики! Не указан идентификатор права лицензии (p_id_lic_rt)!'
-            using errcode = 20112;
-    end if;
-
-    if p_id_feature_set is null then
-        raise exception 'Ошибка создания характеристики! Не указан идентификатор набора характеристик (p_id_feature_set)!'
-            using errcode = 20113;
-    end if;
-
+    v_feature_category bigint;
+begin
     if p_id_feature is null then
         raise exception 'Ошибка создания характеристики! Не указан идентификатор характеристики (p_id_feature)!'
             using errcode = 20114;
     end if;
 
-    select * into v_klf_feature from sync__klf_feature_tree where id = p_id_feature;
+    -- извлекаем категорию признака
+    select id_feature_category
+    into v_feature_category
+    from sync__klf_feature_tree
+    where id = p_id_feature;
+
     if not found then
         raise exception 'Ошибка создания характеристики! Указан не существующий идентификатор характеристики [p_id_feature=%]!', p_id_feature
             using errcode = 20115;
     end if;
 
-    insert into license_rt_features (id_lic_rt, id_feature_set, id_feature_category, id_feature, is_included, created_by)
-    values (p_id_lic_rt, p_id_feature_set, v_klf_feature.id_feature_category, p_id_feature,
-            coalesce(p_is_included, true), p_username)
+    -- проверка категорий: сначала "down", потом "up"
+    if exists (
+        select 1
+        from license_rt fr
+        join vw_rt_cat_down cd on cd.id_right_type = fr.id_right_type
+        where fr.id = p_id_lic_rt
+          and cd.id_feature_category = v_feature_category
+    ) then
+        v_is_native := true;
+    elsif exists (
+        select 1
+        from license_rt fr
+        join vw_rt_cat_up cu on cu.id_right_type = fr.id_right_type
+        where fr.id = p_id_lic_rt
+          and cu.id_feature_category = v_feature_category
+    ) then
+        v_is_native := false;
+    else
+        select rt.name, fc.name
+        into v_rt_name, v_fc_name
+        from license_rt fr
+                 join sync__klf_right_type rt on rt.id = fr.id_right_type
+                 join sync__klf_feature_category fc on fc.id = v_feature_category
+        where fr.id = p_id_lic_rt;
+
+        raise exception 'Ошибка создания характеристики! Характеристика категории "%" не может использоваться для права "%"!',
+            v_fc_name, v_rt_name
+            using errcode = 20119;
+    end if;
+
+    -- вставка
+    insert into license_rt_features (
+        id_lic_rt, id_feature_set, id_feature_category, id_feature, is_included, is_native, created_by
+    )
+    values (
+               p_id_lic_rt, p_id_feature_set, v_feature_category, p_id_feature,
+               coalesce(p_is_included, true), v_is_native, p_username
+           )
     returning id into r_result;
 
     return r_result;
-END;
+end;
 $$ language plpgsql;
 
 create or replace procedure pkg_contract.del_license_rt_features(p_id bigint,
@@ -1023,39 +1073,82 @@ BEGIN
 END;
 $$ language plpgsql;
 
-create or replace function pkg_contract.ins_format_rt_features(p_id_fmt_rt bigint,
-                                                               p_id_feature_set bigint,
-                                                               p_id_feature integer,
-                                                               p_is_included boolean,
-                                                               p_username character varying
+create or replace function pkg_contract.ins_format_rt_features(
+    p_id_fmt_rt bigint,
+    p_id_feature_set bigint,
+    p_id_feature integer,
+    p_is_included boolean,
+    p_username varchar
 ) returns bigint
     security definer
     set search_path = rightsflow
 as
 $$
-DECLARE
+declare
+    v_rt_name varchar;
+    v_fc_name varchar;
+    v_is_native boolean;
     r_result bigint;
-    v_klf_feature  sync__klf_feature_tree%rowtype;
-BEGIN
-
+    v_feature_category bigint;
+begin
     if p_id_feature is null then
         raise exception 'Ошибка создания характеристики! Не указан идентификатор характеристики (p_id_feature)!'
             using errcode = 20114;
     end if;
 
-    select * into v_klf_feature from sync__klf_feature_tree where id = p_id_feature;
+    -- извлекаем категорию признака
+    select id_feature_category
+    into v_feature_category
+    from sync__klf_feature_tree
+    where id = p_id_feature;
+
     if not found then
         raise exception 'Ошибка создания характеристики! Указан не существующий идентификатор характеристики [p_id_feature=%]!', p_id_feature
             using errcode = 20115;
     end if;
 
-    insert into format_rt_features (id_fmt_rt, id_feature_set, id_feature_category, id_feature, is_included, created_by)
-    values (p_id_fmt_rt, p_id_feature_set, v_klf_feature.id_feature_category, p_id_feature,
-            coalesce(p_is_included, true), p_username)
+    -- проверка категорий: сначала "down", потом "up"
+    if exists (
+        select 1
+        from format_rt fr
+        join vw_rt_cat_down cd on cd.id_right_type = fr.id_right_type
+        where fr.id = p_id_fmt_rt
+          and cd.id_feature_category = v_feature_category
+    ) then
+        v_is_native := true;
+    elsif exists (
+        select 1
+        from format_rt fr
+        join vw_rt_cat_up cu on cu.id_right_type = fr.id_right_type
+        where fr.id = p_id_fmt_rt
+          and cu.id_feature_category = v_feature_category
+    ) then
+        v_is_native := false;
+    else
+        select rt.name, fc.name
+        into v_rt_name, v_fc_name
+        from format_rt fr
+        join sync__klf_right_type rt on rt.id = fr.id_right_type
+        join sync__klf_feature_category fc on fc.id = v_feature_category
+        where fr.id = p_id_fmt_rt;
+
+        raise exception 'Ошибка создания характеристики! Характеристика категории "%" не может использоваться для права "%"!',
+            v_fc_name, v_rt_name
+            using errcode = 20119;
+    end if;
+
+    -- вставка
+    insert into format_rt_features (
+        id_fmt_rt, id_feature_set, id_feature_category, id_feature, is_included, is_native, created_by
+    )
+    values (
+               p_id_fmt_rt, p_id_feature_set, v_feature_category, p_id_feature,
+               coalesce(p_is_included, true), v_is_native, p_username
+           )
     returning id into r_result;
 
     return r_result;
-END;
+end;
 $$ language plpgsql;
 
 create or replace procedure pkg_contract.del_format_rt_features(p_id bigint,
@@ -1307,3 +1400,392 @@ create or replace trigger tr_check_format_rt_features
     before insert on rightsflow.format_rt_features
     for each row
 execute function pkg_contract.check_format_rt_features();
+
+create or replace function pkg_contract.get_features_set_hash(
+    p_id_lic_rt      bigint,
+    p_id_feature_set bigint,
+    p_id_right_type  integer,
+    p_username       character varying,
+    p_use_cache      integer default 1
+) returns text[]
+    security definer
+    set search_path = rightsflow
+as
+$$
+declare
+    v_result   text[] := array[]::text[];   -- финальный результат
+    v_result1  text[] := array[]::text[];   -- from vw_rt_cat_down
+    v_result2  text[] := array[]::text[];   -- from vw_rt_cat_up
+    v_sql      text;
+    v_categories int[];        -- список категорий для первой группы
+    v_categories2 int[];       -- список категорий для второй группы
+    v_cat_parts  text[];       -- вспомогательно для cat_list expression
+    v_cat_list_expr text;
+    v_cat      integer;
+    v_cnt      integer;
+    v_available_ids text[];    -- сбор доступных id (в форме 'category:id')
+    v_quoted_vals text;
+    v_sub        text;
+    v_final_sql  text;
+    v_val_text   text;
+begin
+    raise notice 'id_feature_set: %, id_right_type: %', p_id_feature_set, p_id_right_type;
+    -- 1) попытка взять из кеша (если включено)
+    if p_use_cache = 1 then
+        select array_agg(hash_value order by hash_value) into v_result
+        from license_rt_features_hash
+        where id_lic_rt = p_id_lic_rt
+          and id_feature_set = p_id_feature_set
+          and id_right_type = p_id_right_type;
+
+        if v_result is not null and array_length(v_result,1) is not null then
+            return v_result;
+        end if;
+    end if;
+
+    --------------------------------------------------------------------------------
+    -- 2) первая группа: vw_rt_cat_down
+    --------------------------------------------------------------------------------
+    select array_agg(distinct id_feature_category order by id_feature_category)
+    into v_categories
+    from vw_rt_cat_down
+    where id_right_type = p_id_right_type;
+
+    if v_categories is not null and array_length(v_categories,1) is not null then
+        -- сформировать выражение для сборки хэша: cat1.id || ',' || cat2.id || ...
+        select array_agg('cat' || cid || '.id' order by cid) into v_cat_parts
+        from unnest(v_categories) as c(cid);
+
+        if v_cat_parts is not null then
+            -- используем dollar-quoted delimiter, чтобы не путаться с кавычками
+            v_cat_list_expr := array_to_string(v_cat_parts, $x$ || ',' || $x$);
+        else
+            v_cat_list_expr := null;
+        end if;
+
+        v_sql := null;
+
+        -- пройти по каждой категории и подготовить подзапрос (v_sub) для cross join
+        foreach v_cat in array v_categories loop
+                -- если для категории есть строки с is_include = false (исключения характеристик)
+                select count(*) into v_cnt from license_rt_features
+                where id_feature_set = p_id_feature_set and id_feature_category = v_cat and is_included = false;
+
+                if v_cnt = 0 then
+                    -- нет исключений: проверить, есть ли конкретные связи в license_rt_features
+                    select count(*) into v_cnt from license_rt_features
+                    where id_feature_set = p_id_feature_set and id_feature_category = v_cat;
+
+                    if v_cnt > 0 then
+                        select array_agg((id_feature_category::text || ':' || id_feature::text) order by id_feature) into v_available_ids
+                        from license_rt_features
+                        where id_feature_set = p_id_feature_set and id_feature_category = v_cat;
+                    else
+                        -- нет записей в license_rt_features: берем дефолт (root feature parent is null limit 1)
+                        select id_feature_category::text || ':' || id::text into v_val_text
+                        from sync__klf_feature_tree
+                        where id_feature_category = v_cat and id_parent is null
+                        limit 1;
+
+                        if v_val_text is not null then
+                            v_available_ids := array[v_val_text];
+                        else
+                            v_available_ids := array[]::text[];
+                        end if;
+                    end if;
+
+                else
+                    -- есть исключения (is_included = false) — используем рекурсивные cte (with recursive)
+                    v_final_sql := $sql$
+with recursive excluded_nodes as (
+  select id_feature from license_rt_features
+   where id_feature_set = $1 and id_feature_category = $2 and is_included = false
+),
+ancestors as (
+  select k.id, k.id_parent from sync__klf_feature_tree k where k.id in (select id_feature from excluded_nodes)
+  union all
+  select k2.id, k2.id_parent from sync__klf_feature_tree k2 join ancestors a on k2.id = a.id_parent
+),
+first_set as (
+  select id_feature_category::text || ':' || id::text as id
+    from sync__klf_feature_tree o1
+   where o1.id_parent in (select id_parent from ancestors where id_parent is not null)
+     and id_feature_category = $3
+),
+second_set as (
+  select id_feature_category::text || ':' || id::text as id
+    from sync__klf_feature_tree where id in (select id from ancestors)
+)
+select array_agg(id order by id) from (select id from first_set except select id from second_set) t;
+$sql$;
+
+                    execute v_final_sql into v_available_ids using p_id_feature_set, v_cat, v_cat;
+                    -- v_available_ids может быть null, проверим дальше
+                end if;
+
+                -- fallback: если v_available_ids пуст или null -> пробуем дефолт (parent is null limit 1)
+                if v_available_ids is null or array_length(v_available_ids,1) is null then
+                    select id_feature_category::text || ':' || id::text into v_val_text
+                    from sync__klf_feature_tree
+                    where id_feature_category = v_cat and id_parent is null
+                    limit 1;
+
+                    if v_val_text is not null then
+                        v_available_ids := array[v_val_text];
+                    else
+                        v_available_ids := array[]::text[];
+                    end if;
+                end if;
+
+                -- подготовить подзапрос вида: (select unnest(array['c:1','c:2']::text[]) as id) cat<cat>
+                if array_length(v_available_ids,1) > 0 then
+                    select array_to_string(array_agg(quote_literal(x)), ',') into v_quoted_vals
+                    from unnest(v_available_ids) as x;
+                    v_sub := format('(select unnest(array[%s]::text[]) as id) cat%s', v_quoted_vals, v_cat);
+                else
+                    -- если нечего — подставим пустую таблицу (чтобы не ломать cross join)
+                    v_sub := format('(select null::text as id) cat%s', v_cat);
+                end if;
+
+                -- собрать v_sql: первый элемент — select distinct <cat_list_expr> as hash from <first_sub>
+                if v_sql is null then
+                    v_sql := format('select distinct %s as hash from %s', v_cat_list_expr, v_sub);
+                else
+                    v_sql := v_sql || ' cross join ' || v_sub;
+                end if;
+
+                -- сброс временных переменных
+                v_available_ids := null;
+                v_val_text := null;
+            end loop; -- v_categories loop
+
+        -- выполнить l_sql и собрать в массив
+        if v_sql is not null then
+            v_final_sql := 'select array_agg(hash order by hash) from (' || v_sql || ') t';
+            execute v_final_sql into v_result1;
+            if v_result1 is null then
+                v_result1 := array[]::text[];
+            end if;
+        end if;
+    end if; -- end first group
+
+    -- отладочный вывод (аналог dbms_output)
+    if v_sql is not null then
+        raise debug 'last dynamic sql (result1): %', left(coalesce(v_sql,''), 2000);
+    end if;
+
+    --------------------------------------------------------------------------------
+    -- 3) вторая группа: vw_rt_cat_up
+    --------------------------------------------------------------------------------
+    select array_agg(distinct id_feature_category order by id_feature_category)
+    into v_categories2
+    from vw_rt_cat_up
+    where id_right_type = p_id_right_type;
+
+    if v_categories2 is not null and array_length(v_categories2,1) is not null then
+        select array_agg('cat' || cid || '.id' order by cid) into v_cat_parts
+        from unnest(v_categories2) as c(cid);
+
+        if v_cat_parts is not null then
+            v_cat_list_expr := array_to_string(v_cat_parts, $x$ || ',' || $x$);
+        else
+            v_cat_list_expr := null;
+        end if;
+
+        v_sql := null;
+
+        foreach v_cat in array v_categories2 loop
+                select count(*) into v_cnt from license_rt_features
+                where id_feature_set = p_id_feature_set and id_feature_category = v_cat and is_included = false;
+
+                if v_cnt = 0 then
+                    select count(*) into v_cnt from license_rt_features
+                    where id_feature_set = p_id_feature_set and id_feature_category = v_cat;
+
+                    if v_cnt > 0 then
+                        select array_agg((id_feature_category::text || ':' || id_feature::text) order by id_feature) into v_available_ids
+                        from license_rt_features
+                        where id_feature_set = p_id_feature_set and id_feature_category = v_cat;
+                    else
+                        select id_feature_category::text || ':' || id::text into v_val_text
+                        from sync__klf_feature_tree
+                        where id_feature_category = v_cat and id_parent is null
+                        limit 1;
+
+                        if v_val_text is not null then
+                            v_available_ids := array[v_val_text];
+                        else
+                            v_available_ids := array[]::text[];
+                        end if;
+                    end if;
+
+                else
+                    -- рекурсивный вариант для исключений
+                    v_final_sql := $sql$
+with recursive excluded_nodes as (
+  select id_feature from license_rt_features
+   where id_feature_set = $1 and id_feature_category = $2 and is_included = false
+),
+ancestors as (
+  select k.id, k.id_parent from sync__klf_feature_tree k where k.id in (select id_feature from excluded_nodes)
+  union all
+  select k2.id, k2.id_parent from sync__klf_feature_tree k2 join ancestors a on k2.id = a.id_parent
+),
+first_set as (
+  select id_feature_category::text || ':' || id::text as id
+    from sync__klf_feature_tree o1
+   where o1.id_parent in (select id_parent from ancestors where id_parent is not null)
+     and id_feature_category = $3
+),
+second_set as (
+  select id_feature_category::text || ':' || id::text as id
+    from sync__klf_feature_tree where id in (select id from ancestors)
+)
+select array_agg(id order by id) from (select id from first_set except select id from second_set) t;
+$sql$;
+
+                    execute v_final_sql into v_available_ids using p_id_feature_set, v_cat, v_cat;
+                end if;
+
+                if v_available_ids is null or array_length(v_available_ids,1) is null then
+                    select id_feature_category::text || ':' || id::text into v_val_text
+                    from sync__klf_feature_tree
+                    where id_feature_category = v_cat and id_parent is null
+                    limit 1;
+
+                    if v_val_text is not null then
+                        v_available_ids := array[v_val_text];
+                    else
+                        v_available_ids := array[]::text[];
+                    end if;
+                end if;
+
+                if array_length(v_available_ids,1) > 0 then
+                    select array_to_string(array_agg(quote_literal(x)), ',') into v_quoted_vals
+                    from unnest(v_available_ids) as x;
+                    v_sub := format('(select unnest(array[%s]::text[]) as id) cat%s', v_quoted_vals, v_cat);
+                else
+                    v_sub := format('(select null::text as id) cat%s', v_cat);
+                end if;
+
+                if v_sql is null then
+                    v_sql := format('select distinct %s as hash from %s', v_cat_list_expr, v_sub);
+                else
+                    v_sql := v_sql || ' cross join ' || v_sub;
+                end if;
+
+                v_available_ids := null;
+                v_val_text := null;
+            end loop;
+
+        if v_sql is not null then
+            v_final_sql := 'select array_agg(hash order by hash) from (' || v_sql || ') t';
+            execute v_final_sql into v_result2;
+            if v_result2 is null then
+                v_result2 := array[]::text[];
+            end if;
+        end if;
+    end if; -- end second group
+
+    --------------------------------------------------------------------------------
+    -- 4) комбинация результатов
+    --------------------------------------------------------------------------------
+    if array_length(v_result1,1) is not null and array_length(v_result2,1) is null then
+        v_result := v_result1;
+
+    elsif array_length(v_result2,1) is not null and array_length(v_result1,1) is null then
+        -- второй набор получает префикс ';' при единственном использовании
+        v_result := array(select ';' || x from unnest(v_result2) as x);
+
+    elsif array_length(v_result1,1) is not null and array_length(v_result2,1) is not null then
+        -- cartesian product r1 || ';' || r2
+        v_result := array(
+                select r1 || ';' || r2 from unnest(v_result1) as r1 cross join unnest(v_result2) as r2
+                    );
+    else
+        v_result := array[]::text[];
+    end if;
+
+    --------------------------------------------------------------------------------
+    -- 5) кеширование результата (вставка в license_rt_features_hash)
+    --------------------------------------------------------------------------------
+    if p_use_cache = 1 and array_length(v_result,1) is not null then
+        for v_val_text in select unnest(v_result) loop
+                insert into license_rt_features_hash (id_lic_rt, id_feature_set, id_right_type, hash_value, created_by)
+                values ( p_id_lic_rt, p_id_feature_set, p_id_right_type, v_val_text, p_username);
+            end loop;
+    end if;
+
+    -- отладочный вывод (аналог dbms_output)
+    if v_sql is not null then
+        raise debug 'last dynamic sql (result2): %', left(coalesce(v_sql,''), 2000);
+    end if;
+
+    return v_result;
+end;
+$$ language plpgsql;
+
+create or replace function pkg_contract.get_elemental_rights(
+    p_id_oip        int,
+    p_id_org        int,
+    p_in_out        char(1),
+    p_beg_date      date,
+    p_end_date      date,
+    p_username      character varying
+)
+    returns table (
+                      beg_date        date,
+                      end_date        date,
+                      id_lic_rt       bigint,
+                      id_feature_set  bigint,
+                      id_right_type   int,
+                      id_org          int,
+                      sign_date       date,
+                      is_exclusive    boolean,
+                      is_use_right    boolean,
+                      features_hash   text
+                  )
+    security definer
+    set search_path = rightsflow
+as
+$$
+declare
+    v_p1 char(2)[] := array[]::char(2)[];
+    v_p2 char(2)[] := array[]::char(2)[];
+begin
+
+    if p_in_out = 'P' then
+       v_p1 := array['eP','iP'];
+       v_p2 := array['iS'];
+    elsif p_in_out = 'S' then
+       v_p1 := array['eS','iS'];
+       v_p2 := array['iP'];
+    end if;
+
+    return query
+        with lic as (
+            select lrt.*
+            from vw_lic_rt lrt
+            where lrt.id_oip = p_id_oip
+              and ((lrt.id_org = p_id_org and lrt.in_out = any(v_p1)) or
+                   (lrt.id_org_party = p_id_org and lrt.in_out = any(v_p2)))
+              and lrt.validity_period && daterange(p_beg_date, p_end_date, '[]')
+              and lrt.status_mode = 1 -- контракты для которых разрешён расчёт
+        )
+        select
+            lower(lic.validity_period) as beg_date,
+            upper(lic.validity_period)-1 as end_date,
+            lic.id_lic_rt,
+            lic.id_feature_set,
+            lic.id_right_type,
+            lic.id_org,
+            lic.sign_date,
+            lic.is_exclusive,
+            lic.is_use_right,
+            ntab.features_hash
+        from lic
+        cross join lateral unnest(
+           pkg_contract.get_features_set_hash(lic.id_lic_rt, lic.id_feature_set, lic.id_right_type, p_username)
+        ) as ntab(features_hash);
+end;
+$$ language plpgsql;

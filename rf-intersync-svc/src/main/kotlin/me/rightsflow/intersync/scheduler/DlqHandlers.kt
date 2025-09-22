@@ -123,7 +123,7 @@ class rightTypeDlqHandler(
     override fun process(key: String, value: GenericRecord?) {
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val rightTypeDto = when (value) {
-            null -> KlfRightTypeAvroMessage(null,null,"","",null,null,null)
+            null -> KlfRightTypeAvroMessage(null,null,"","","",null,null,null)
             else -> MessageConverter.convertToKlfRightTypeAvroMessage(value)
         }
         replicationService.processRightType(syncId, rightTypeDto)
@@ -180,5 +180,22 @@ class featureTreeDlqHandler(
             else -> MessageConverter.convertToKlfFeatureTreeAvroMessage(value)
         }
         replicationService.processFeatureTree(syncId, featureTreeDto)
+    }
+}
+
+@Component
+class featureCatToRtDlqHandler(
+    private val replicationService: ReplicationService,
+    @Value("\${spring.cloud.stream.kafka.bindings.featureCatToRtProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val featureCatToRtDto = when (value) {
+            null -> KlfFeatureCatToRtAvroMessage(null,0,0,null,"",null,null,null)
+            else -> MessageConverter.convertToKlfFeatureCatToRtAvroMessage(value)
+        }
+        replicationService.processFeatureCatToRt(syncId, featureCatToRtDto)
     }
 }

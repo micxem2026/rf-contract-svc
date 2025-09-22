@@ -13,13 +13,15 @@ data class ContractCreateRequest(
     val guid: String?,
 
     @field:Schema(description = "Номер контракта", example = "123")
-    @field:NotBlank
     @field:Size(max = 255)
     val num: String,
 
-    @field:Schema(description = "ID организации покупателя/продавца", example = "1")
+    @field:Schema(description = "ID организации владельца контракта", example = "1")
     @field:NotNull
-    val idOrg: Int,
+    var idOrg: Int,
+
+    @field:Schema(description = "ID организации партнёра для внутригруппового контракта", example = "1")
+    val idOrgParty: Int?,
 
     @field:Schema(description = "Период действия контракта (начало)", example = "2022-01-01")
     val validityPeriodStart: LocalDate?,
@@ -32,17 +34,18 @@ data class ContractCreateRequest(
 
     @field:Schema(description = "ID типа контракта (сделка/договор)", example = "1")
     @field:NotNull
-    val idContractType: Int,
+    var idContractType: Int,
 
     @field:Schema(description = "ID статуса контракта (черновик/подписан)", example = "1")
     @field:NotNull
-    val idContractStatus: Int,
+    var idContractStatus: Int,
 
-    @field:Schema(description = "Вид контракта (покупка/продажа)", example = "SALE")
+    @field:Schema(description = "Вид контракта (внешняя покупка/продажа, внутренняя покупка/продажа)", example = "eS", allowableValues = ["eP", "eS", "iP", "iS"])
     @field:NotNull
-    val inOut: String,
+    var inOut: String,
 
     @field:Schema(description = "Описание", example = "Описание")
     @field:Size(max = 511)
     val description: String?
+
 )

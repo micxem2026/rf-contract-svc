@@ -32,6 +32,9 @@ class Contract(
     @Column(name = "ID_ORG", nullable = false)
     var idOrg: Int,
 
+    @Column(name = "ID_ORG_PARTY")
+    var idOrgParty: Int? = null,
+
     @Type(PostgreSQLRangeType::class)
     @Column(name = "VALIDITY_PERIOD", nullable = false, columnDefinition = "daterange")
     var validityPeriod: Range<LocalDate> = Range.emptyRange(LocalDate::class.java),
@@ -46,7 +49,7 @@ class Contract(
     var idContractStatus: Int,
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "IN_OUT", nullable = false, length = 1)
+    @Column(name = "IN_OUT", nullable = false, length = 2)
     var inOut: ContractKind,
 
     @Column(name = "DESCRIPTION", length = 511)
@@ -56,7 +59,7 @@ class Contract(
 
     @Schema(enumAsRef = true)
     enum class ContractKind {
-        S, P;
+        eS, eP, iS, iP;
 
         @JsonValue
         override fun toString(): String {
@@ -67,6 +70,10 @@ class Contract(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_ORG", referencedColumnName = "ID", insertable = false, updatable = false)
     var organization: Organization? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_ORG_PARTY", referencedColumnName = "ID", insertable = false, updatable = false)
+    var organizationParty: Organization? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_CONTRACT_TYPE", referencedColumnName = "ID", insertable = false, updatable = false)

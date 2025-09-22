@@ -21,6 +21,7 @@ class ContractStatusService(
         idContractType = this.idContractType,
         name = this.name,
         def = this.def,
+        mode = this.mode,
         contractTypeName = this.contractType?.name ?: ""
     )
 }

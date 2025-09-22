@@ -1,6 +1,8 @@
 package me.rightsflow.contracts.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
+import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
@@ -58,9 +60,11 @@ class ContractController(
         @RequestParam(required = false) idContractStatus: Int?,
         @RequestParam(required = false) idOrg: Int?,
         @RequestParam(required = false) numFilter: String?,
+        @RequestParam(required = false)
+        @Parameter(name = "inOut", schema = Schema(type = "string", allowableValues = ["eP", "eS", "iP", "iS"])) inOut: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<ContractDto> {
-        val page = service.findByFilter(idContractType, idContractStatus, idOrg, numFilter, pageable)
+        val page = service.findByFilter(idContractType, idContractStatus, idOrg, numFilter, inOut,pageable)
         return PagedModel(page)
     }
 

@@ -111,4 +111,14 @@ class ReplicationService(
             throw exception
         }
     }
+
+    @Transactional
+    fun processFeatureCatToRt(syncId:Int, message: KlfFeatureCatToRtAvroMessage) {
+        try {
+            syncService.syncKlfFeatureCatToRt(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing feature category to right type with id: $syncId", exception)
+            throw exception
+        }
+    }
 }

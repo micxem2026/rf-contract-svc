@@ -26,7 +26,10 @@ class LicenseRtFeatures(
     var idFeature: Int,
 
     @Column(name = "IS_INCLUDED", nullable = false)
-    var isIncluded: Boolean = true
+    var isIncluded: Boolean = true,
+
+    @Column(name = "IS_NATIVE", nullable = false)
+    var isNative: Boolean = false
 
 ) : BaseAudit() {
 

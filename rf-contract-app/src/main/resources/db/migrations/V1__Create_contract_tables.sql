@@ -1,21 +1,6 @@
 -- Расширение для эффективного ILIKE '%...%' по name
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
--- Домен contract_kind
-DO $$
-    BEGIN
-        IF NOT EXISTS (
-            SELECT 1
-            FROM pg_type t
-            JOIN pg_namespace n ON n.oid = t.typnamespace
-            WHERE t.typname = 'contract_kind'
-              AND n.nspname = 'rightsflow'  -- если домен в схеме public
-        ) THEN
-            CREATE DOMAIN contract_kind AS CHARACTER(1)
-                CHECK (VALUE IN ('S', 'P'));
-        END IF;
-    END$$;
-
 -- LOV_CONTRACT_TYPE
 CREATE TABLE IF NOT EXISTS LOV_CONTRACT_TYPE (
     ID   INTEGER PRIMARY KEY,
@@ -29,9 +14,11 @@ CREATE TABLE IF NOT EXISTS LOV_CONTRACT_STATUS (
     ID INTEGER PRIMARY KEY,
     ID_CONTRACT_TYPE INTEGER NOT NULL REFERENCES LOV_CONTRACT_TYPE(ID),
     NAME VARCHAR(255) NOT NULL,
-    DEF BOOLEAN DEFAULT FALSE
+    DEF BOOLEAN DEFAULT FALSE,
+    MODE INTEGER DEFAULT 0
 );
 COMMENT ON TABLE LOV_CONTRACT_STATUS IS 'Статусы контрактов';
+COMMENT ON COLUMN LOV_CONTRACT_STATUS.MODE IS '0 - не участвует в расчете прав, 1 - участвует в расчете прав';
 
 CREATE INDEX IF NOT EXISTS idx_lov_contract_status ON LOV_CONTRACT_STATUS(ID_CONTRACT_TYPE);
 
@@ -42,18 +29,18 @@ INSERT INTO LOV_CONTRACT_TYPE (ID, NAME, DEF)
 VALUES (2,'Договор','0'::BOOLEAN)
 ON CONFLICT (ID) DO NOTHING;
 
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF)
-VALUES (1,'Черновик',1,'1'::BOOLEAN)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
+VALUES (1,'Черновик',1,'1'::BOOLEAN, 0)
 ON CONFLICT (ID) DO NOTHING;
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF)
-VALUES (2,'Подписана',1,'0'::BOOLEAN)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
+VALUES (2,'Подписана',1,'0'::BOOLEAN, 1)
 ON CONFLICT (ID) DO NOTHING;
 
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF)
-VALUES (10,'Черновик',2,'1'::BOOLEAN)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
+VALUES (10,'Черновик',2,'1'::BOOLEAN, 0)
 ON CONFLICT (ID) DO NOTHING;
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF)
-VALUES (11,'Подписан',2,'0'::BOOLEAN)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
+VALUES (11,'Подписан',2,'0'::BOOLEAN, 1)
 ON CONFLICT (ID) DO NOTHING;
 
 -- KLF_COUNTERPARTY
@@ -91,16 +78,18 @@ CREATE TABLE IF NOT EXISTS CONTRACT (
     GUID VARCHAR(255) UNIQUE,
     NUM VARCHAR(255) NOT NULL,
     ID_ORG INTEGER NOT NULL REFERENCES SYNC__KLF_ORGANIZATION(ID),
+    ID_ORG_PARTY INTEGER NOT NULL REFERENCES SYNC__KLF_ORGANIZATION(ID),
     VALIDITY_PERIOD DATERANGE NOT NULL DEFAULT '(,)'::daterange,
     SIGN_DATE DATE,
     ID_CONTRACT_TYPE INTEGER NOT NULL REFERENCES LOV_CONTRACT_TYPE(ID),
     ID_CONTRACT_STATUS INTEGER NOT NULL REFERENCES LOV_CONTRACT_STATUS(ID),
-    IN_OUT CONTRACT_KIND NOT NULL,
+    IN_OUT CHARACTER(2) NOT NULL,
     DESCRIPTION VARCHAR(511),
     CREATED_BY VARCHAR(20) NOT NULL,
     CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_BY VARCHAR(20),
-    UPDATED_AT TIMESTAMPTZ
+    UPDATED_AT TIMESTAMPTZ,
+    CONSTRAINT chk_in_out CHECK (in_out = ANY (ARRAY['eP'::bpchar, 'eS'::bpchar, 'iP'::bpchar, 'iS'::bpchar]))
 );
 COMMENT ON TABLE CONTRACT IS 'Контракты';
 
@@ -247,6 +236,7 @@ CREATE TABLE IF NOT EXISTS SYNC__KLF_RIGHT_TYPE (
     ID          INTEGER PRIMARY KEY,
     ID_PARENT   INTEGER NULL REFERENCES SYNC__KLF_RIGHT_TYPE(ID) ON DELETE RESTRICT,
     NAME        VARCHAR(255) NOT NULL,
+    DESCRIPTION VARCHAR(1023),
     CREATED_BY  VARCHAR(20)  NOT NULL,
     CREATED_AT  TIMESTAMPTZ  NOT NULL DEFAULT now(),
     UPDATED_BY  VARCHAR(20),
@@ -414,12 +404,14 @@ CREATE TABLE IF NOT EXISTS LICENSE_RT_FEATURES (
     ID_FEATURE_CATEGORY INTEGER NOT NULL REFERENCES SYNC__KLF_FEATURE_CATEGORY(ID),
     ID_FEATURE INTEGER NOT NULL REFERENCES SYNC__KLF_FEATURE_TREE(ID),
     IS_INCLUDED BOOLEAN NOT NULL DEFAULT TRUE,
+    IS_NATIVE BOOLEAN NOT NULL DEFAULT TRUE,
     CREATED_BY VARCHAR(20) NOT NULL,
     CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_BY VARCHAR(20),
     UPDATED_AT TIMESTAMPTZ
 );
 COMMENT ON TABLE LICENSE_RT_FEATURES IS 'Характеристики набора характеристик';
+COMMENT ON COLUMN LICENSE_RT_FEATURES.IS_NATIVE IS 'Ненативная характеристика относится только к потомкам текущего права набора характеристик';
 
 CREATE INDEX IF NOT EXISTS idx_lic_rt_ftr_lic_rt ON LICENSE_RT_FEATURES(ID_LIC_RT);
 CREATE INDEX IF NOT EXISTS idx_lic_rt_ftr_lic_rt_ftr_set ON LICENSE_RT_FEATURES(ID_FEATURE_SET);
@@ -434,12 +426,14 @@ CREATE TABLE IF NOT EXISTS FORMAT_RT_FEATURES (
     ID_FEATURE_CATEGORY INTEGER NOT NULL REFERENCES SYNC__KLF_FEATURE_CATEGORY(ID),
     ID_FEATURE INTEGER NOT NULL REFERENCES SYNC__KLF_FEATURE_TREE(ID),
     IS_INCLUDED BOOLEAN NOT NULL DEFAULT TRUE,
+    IS_NATIVE BOOLEAN NOT NULL DEFAULT TRUE,
     CREATED_BY VARCHAR(20) NOT NULL,
     CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_BY VARCHAR(20),
     UPDATED_AT TIMESTAMPTZ
 );
 COMMENT ON TABLE FORMAT_RT_FEATURES IS 'Характеристики набора характеристик формата';
+COMMENT ON COLUMN FORMAT_RT_FEATURES.IS_NATIVE IS 'Ненативная характеристика относится только к потомкам текущего права набора характеристик';
 
 CREATE INDEX IF NOT EXISTS idx_fmt_rt_ftr_fmt_rt ON FORMAT_RT_FEATURES(ID_FMT_RT);
 CREATE INDEX IF NOT EXISTS idx_fmt_rt_ftr_lic_rt_ftr_set ON FORMAT_RT_FEATURES(ID_FEATURE_SET);
@@ -580,5 +574,172 @@ VALUES
     ('featureTreeProcessor-in-0','PAUSE')
 ON CONFLICT (BINDING_NAME) DO NOTHING;
 
+INSERT INTO KAFKA_BINDINGS_CONTROL (BINDING_NAME, BINDING_STATE)
+VALUES
+    ('featureCatToRtProcessor-in-0','PAUSE')
+ON CONFLICT (BINDING_NAME) DO NOTHING;
 
+-- KLF_FEATURE_CAT_TO_RT
+CREATE TABLE IF NOT EXISTS SYNC__KLF_FEATURE_CAT_TO_RT (
+    ID                   INTEGER PRIMARY KEY,
+    ID_RIGHT_TYPE        INTEGER NOT NULL REFERENCES SYNC__KLF_RIGHT_TYPE(ID) ON DELETE RESTRICT,
+    ID_FEATURE_CATEGORY  INTEGER NOT NULL REFERENCES SYNC__KLF_FEATURE_CATEGORY(ID) ON DELETE RESTRICT,
+    ID_DEF_FEATURE       INTEGER NULL REFERENCES SYNC__KLF_FEATURE_TREE(ID) ON DELETE RESTRICT,
+    CREATED_BY           VARCHAR(20) NOT NULL,
+    CREATED_AT           TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UPDATED_BY           VARCHAR(20),
+    UPDATED_AT           TIMESTAMPTZ
+);
 
+-- Один тип права не должен иметь дублирующуюся категорию
+CREATE UNIQUE INDEX IF NOT EXISTS UNQ_KLF_FEATURE_CAT_TO_RT ON SYNC__KLF_FEATURE_CAT_TO_RT(ID_RIGHT_TYPE, ID_FEATURE_CATEGORY);
+CREATE INDEX IF NOT EXISTS IDX_KLF_FEATURE_CAT_TO_RT_RT ON SYNC__KLF_FEATURE_CAT_TO_RT(ID_RIGHT_TYPE);
+
+-- Вьюшки
+-- VW_RT_CAT_DOWN
+create or replace view vw_rt_cat_down as
+with recursive r as (
+    -- базовый шаг: каждая строка становится "корнем" пути (как без START WITH в Oracle)
+    select
+        t.id,
+        t.name,
+        t.id_parent,
+        t.id as id_right_type_root
+    from sync__klf_right_type t
+
+    union all
+
+    -- рекурсивный шаг: поднимаемся к родителю
+    select
+        p.id,
+        p.name,
+        p.id_parent,
+        r.id_right_type_root
+    from r
+             join sync__klf_right_type p
+                  on p.id = r.id_parent
+)
+select
+    r.id  AS id_right_type_root,
+    r.name AS right_type_root_name,
+    r.id_right_type_root AS id_right_type,
+    rt.name AS right_type_name,
+    c.id  AS id_feature_category,
+    c.name AS feature_category_name,
+    fc.id_def_feature,
+    fp.name AS def_feature_name
+from r
+join sync__klf_right_type         rt on r.id_right_type_root = rt.id
+join sync__klf_feature_cat_to_rt  fc on r.id = fc.id_right_type
+join sync__klf_feature_category   c  on fc.id_feature_category = c.id
+left join sync__klf_feature_tree  ro on fc.id_def_feature = ro.id
+left join sync__klf_feature_plain fp on ro.id_feature_plain = fp.id;
+
+-- VW_RT_CAT_UP
+create or replace view vw_rt_cat_up as
+with recursive r as (
+    -- базовый шаг: каждая строка становится "корнем" пути (как без START WITH в Oracle)
+    select
+        t.id,
+        t.name,
+        t.id_parent,
+        t.id as id_right_type_root
+    from sync__klf_right_type t
+
+    union all
+
+    -- рекурсивный шаг: опускаемся от родителя к потомкам
+    select
+        p.id,
+        p.name,
+        p.id_parent,
+        r.id_right_type_root
+    from r
+             join sync__klf_right_type p
+                  on p.id_parent = r.id
+)
+select
+    r.id  AS id_right_type_root,
+    r.name AS right_type_root_name,
+    r.id_right_type_root AS id_right_type,
+    rt.name AS right_type_name,
+    c.id  AS id_feature_category,
+    c.name AS feature_category_name,
+    fc.id_def_feature,
+    fp.name AS def_feature_name
+from r
+join sync__klf_right_type         rt on r.id_right_type_root = rt.id
+join sync__klf_feature_cat_to_rt  fc on r.id = fc.id_right_type
+join sync__klf_feature_category   c  on fc.id_feature_category = c.id
+left join sync__klf_feature_tree  ro on fc.id_def_feature = ro.id
+left join sync__klf_feature_plain fp on ro.id_feature_plain = fp.id
+where r.id <> r.id_right_type_root;
+
+-- VW_RT_CATS
+create or replace view vw_rt_cats as
+with recursive r as (
+    -- базовый шаг: корнем является узел с id_parent = null
+    select
+        id,
+        name,
+        id_parent,
+        1 as lvl
+    from sync__klf_right_type
+    where id_parent is null
+
+    union all
+
+    -- рекурсивный шаг: опускаемся вниз
+    select
+        c.id,
+        c.name,
+        c.id_parent,
+        r.lvl+1 as lvl
+    from sync__klf_right_type c
+             join r on r.id = c.id_parent
+)
+select r.*, op1.cat_list as cats1, op2.cat_list as cats2
+from r
+left join (
+    select
+        id_right_type,
+        string_agg(id_feature_category::text, ',' order by id_feature_category) as cat_list
+    from vw_rt_cat_down
+    group by id_right_type
+) op1 on op1.id_right_type = r.id
+left join (
+    select
+        id_right_type,
+        string_agg(id_feature_category::text, ',' order by id_feature_category) as cat_list
+    from vw_rt_cat_up
+    group by id_right_type
+) op2 on op2.id_right_type = r.id
+order by r.lvl, r.id_parent nulls first, r.id;
+
+-- VW_LIC_RT
+create or replace view vw_lic_rt as
+select fs.validity_period, l.id_contract, c.id_org, c.id_org_party, c.in_out, coalesce(c.sign_date, upper(c.validity_period)) as sign_date,
+       lrt.id_license, lo.id_oip, lrt.id as id_lic_rt, lrt.id_right_type, fs.id as id_feature_set, fs.is_exclusive, fs.is_use_right,
+       c.id_contract_type, c.id_contract_status, cs.mode status_mode
+from license l
+         join license_oip lo on l.id = lo.id_license
+         join contract c on l.id_contract = c.id
+         join lov_contract_status cs on c.id_contract_status = cs.id
+         join license_rt lrt on lrt.id_license = l.id
+         join license_rt_feature_set_ext fs on fs.id_lic_rt = lrt.id;
+
+-- VW_FEATURES
+create or replace view vw_features as
+with recursive cat_tree as (
+    select id, id_parent, id_feature_plain, 1 lvl from sync__klf_feature_tree
+    where id_parent is null
+
+    union all
+
+    select k.id, k.id_parent, k.id_feature_plain, c.lvl+1 as lvl from sync__klf_feature_tree k, cat_tree c
+    where k.id_parent = c.id
+)
+select t.* from (
+  select ct.id, ct.id_parent, ct.id_feature_plain, cp.id_feature_category, cp.name, ct.lvl from cat_tree ct, sync__klf_feature_plain cp
+  where ct.id_feature_plain = cp.id
+) t;

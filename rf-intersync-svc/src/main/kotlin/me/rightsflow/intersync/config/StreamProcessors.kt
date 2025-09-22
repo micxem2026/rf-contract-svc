@@ -71,7 +71,7 @@ class StreamProcessors(
                 log.info("counterpartyProcessor -> Received sync message with id: $syncId")
                 val counterpartyDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfCounterpartyAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null,"","", Instant.MIN,
+                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null,"","", Instant.EPOCH,
                         null,null)
                     else -> throw IllegalArgumentException("counterpartyProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -102,7 +102,7 @@ class StreamProcessors(
                 val organizationDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfOrganizationAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfOrganizationAvroMessage(null,null,"","",
-                        Instant.MIN,null,null)
+                        Instant.EPOCH,null,null)
                     else -> throw IllegalArgumentException("organizationProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
                 replicationService.processOrganization(syncId, organizationDto)
@@ -132,7 +132,7 @@ class StreamProcessors(
                 val oipDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfOipAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfOipAvroMessage(null,null,null,null,
-                        "", null, null, null, "", Instant.MIN,
+                        "", null, null, null, "", Instant.EPOCH,
                         null, null)
                     else -> throw IllegalArgumentException("oipProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -221,7 +221,7 @@ class StreamProcessors(
                 log.info("rightTypeProcessor -> Received sync message with id: $syncId")
                 val rightTypeDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfRightTypeAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfRightTypeAvroMessage(null,null,"","",Instant.MIN,
+                    is KafkaNull -> KlfRightTypeAvroMessage(null,null,"","","",Instant.EPOCH,
                         null,null)
                     else -> throw IllegalArgumentException("rightTypeProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -251,7 +251,7 @@ class StreamProcessors(
                 log.info("featureCategoryProcessor -> Received sync message with id: $syncId")
                 val featureCategoryDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfFeatureCategoryAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfFeatureCategoryAvroMessage(null,"","",Instant.MIN,
+                    is KafkaNull -> KlfFeatureCategoryAvroMessage(null,"","",Instant.EPOCH,
                         null,null)
                     else -> throw IllegalArgumentException("featureCategoryProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -281,7 +281,7 @@ class StreamProcessors(
                 log.info("featurePlainProcessor -> Received sync message with id: $syncId")
                 val featurePlainDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfFeaturePlainAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfFeaturePlainAvroMessage(null,"",null,"",Instant.MIN,
+                    is KafkaNull -> KlfFeaturePlainAvroMessage(null,"",null,"",Instant.EPOCH,
                         null,null)
                     else -> throw IllegalArgumentException("featurePlainProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -312,12 +312,42 @@ class StreamProcessors(
                 val featureTreeDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfFeatureTreeAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfFeatureTreeAvroMessage(null,null,null,null,null,
-                        "",Instant.MIN,null,null)
+                        "",Instant.EPOCH,null,null)
                     else -> throw IllegalArgumentException("featureTreeProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
                 replicationService.processFeatureTree(syncId, featureTreeDto)
                 acknowledgment?.acknowledge()
                 log.info("featureTreeProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
+    @Bean
+    fun featureCatToRtProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("featureCatToRtProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("featureCatToRtProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("featureCatToRtProcessor -> Received sync message with id: $syncId")
+                val featureCatToRtDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfFeatureCatToRtAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfFeatureCatToRtAvroMessage(null,0,0,null,"",Instant.EPOCH,
+                        null,null)
+                    else -> throw IllegalArgumentException("featureCatToRtProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processFeatureCatToRt(syncId, featureCatToRtDto)
+                acknowledgment?.acknowledge()
+                log.info("featureCatToRtProcessor -> Successfully processed message with id: ${syncId}")
             }
         }
     }
@@ -406,6 +436,7 @@ object MessageConverter {
             id = record.get("id") as Int?,
             id_parent = record.get("id_parent") as Int?,
             name = record.getString("name"),
+            description = record.getStringOrNull("description"),
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),
@@ -443,6 +474,19 @@ object MessageConverter {
             id_feature_category = record.get("id_feature_category") as Int?,
             id_feature_plain = record.get("id_feature_plain") as Int?,
             validity_period = record.getStringOrNull("validity_period"),
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToKlfFeatureCatToRtAvroMessage(record: GenericRecord): KlfFeatureCatToRtAvroMessage {
+        return KlfFeatureCatToRtAvroMessage(
+            id = record.get("id") as Int?,
+            id_right_type = record.get("id_right_type") as Int,
+            id_feature_category = record.get("id_feature_category") as Int,
+            id_def_feature = record.get("id_def_feature") as Int?,
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),

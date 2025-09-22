@@ -191,6 +191,7 @@ class SyncService {
                     ":pId, " +
                     ":pIdParent, " +
                     ":pName, " +
+                    ":pDescription, " +
                     ":pCreatedBy, " +
                     ":pCreatedAt, " +
                     ":pUpdatedBy, " +
@@ -202,6 +203,7 @@ class SyncService {
         query.setParameter("pId", dto.id)
         query.setParameter("pIdParent", dto.id_parent)
         query.setParameter("pName", dto.name)
+        query.setParameter("pDescription", dto.description)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
         query.setParameter("pUpdatedBy", dto.updated_by)
@@ -285,6 +287,35 @@ class SyncService {
         query.setParameter("pIdFeatureCategory", dto.id_feature_category)
         query.setParameter("pIdFeaturePlain", dto.id_feature_plain)
         query.setParameter("pValidityPeriod", dto.validity_period)
+        query.setParameter("pCreatedBy", dto.created_by)
+        query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
+        query.setParameter("pUpdatedBy", dto.updated_by)
+        query.setParameter("pUpdatedAt", dto.updated_at?.let { microsToOffsetDateTime(it) })
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncKlfFeatureCatToRt(pSyncId: Int, dto: KlfFeatureCatToRtAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_klf_feature_cat_to_rt(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pIdRightType, " +
+                    ":pIdFeatureCategory, " +
+                    ":pIdDefFeature, " +
+                    ":pCreatedBy, " +
+                    ":pCreatedAt, " +
+                    ":pUpdatedBy, " +
+                    ":pUpdatedAt" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pIdRightType", dto.id_right_type)
+        query.setParameter("pIdFeatureCategory", dto.id_feature_category)
+        query.setParameter("pIdDefFeature", dto.id_def_feature)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
         query.setParameter("pUpdatedBy", dto.updated_by)

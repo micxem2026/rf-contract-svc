@@ -13,8 +13,11 @@ data class ContractUpdateRequest(
     @field:Schema(description = "Номер контракта")
     @field:Size(max = 255) val num: String?,
 
-    @field:Schema(description = "ID организации")
+    @field:Schema(description = "ID организации владельца контракта", example = "1")
     val idOrg: Int?,
+
+    @field:Schema(description = "ID организации партнёра для внутригруппового контракта", example = "1")
+    val idOrgParty: Int?,
 
     @field:Schema(description = "Период действия контракта (начало)")
     val validityPeriodStart: LocalDate?,
@@ -31,7 +34,7 @@ data class ContractUpdateRequest(
     @field:Schema(description = "ID статуса контракта (черновик/подписан)")
     val idContractStatus: Int?,
 
-    @field:Schema(description = "Вид контракта (покупка/продажа)")
+    @field:Schema(description = "Вид контракта (внешняя покупка/продажа, внутренняя покупка/продажа)", example = "eS", allowableValues = ["eP", "eS", "iP", "iS"])
     val inOut: String?,
 
     @field:Schema(description = "Описание")

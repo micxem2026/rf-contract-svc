@@ -31,9 +31,12 @@ class ContractService(
         idContractStatus: Int?,
         idOrg: Int?,
         numFilter: String?,
+        inOut: String?,
         pageable: Pageable
-    ): Page<ContractDto> =
-        repo.findByFilter(idContractType, idContractStatus, idOrg, numFilter, pageable).map { it.toDto() }
+    ): Page<ContractDto> = run {
+        val contractKind = inOut?.let { Contract.ContractKind.valueOf(it) }
+        repo.findByFilter(idContractType, idContractStatus, idOrg, numFilter, contractKind, pageable).map { it.toDto() }
+    }
 
     @Transactional
     fun create(req: ContractCreateRequest): ContractDto {
@@ -43,6 +46,7 @@ class ContractService(
                     ":pGuid, " +
                     ":pNum, " +
                     ":pIdOrg, " +
+                    ":pIdOrgParty, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pSignDate, " +
@@ -57,6 +61,7 @@ class ContractService(
         query.setParameter("pGuid", req.guid)
         query.setParameter("pNum", req.num)
         query.setParameter("pIdOrg", req.idOrg)
+        query.setParameter("pIdOrgParty", req.idOrgParty)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pSignDate", req.signDate)
@@ -82,6 +87,7 @@ class ContractService(
                     ":pGuid, " +
                     ":pNum, " +
                     ":pIdOrg, " +
+                    ":pIdOrgParty, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pSignDate, " +
@@ -97,6 +103,7 @@ class ContractService(
         query.setParameter("pGuid", req.guid)
         query.setParameter("pNum", req.num)
         query.setParameter("pIdOrg", req.idOrg)
+        query.setParameter("pIdOrgParty", req.idOrgParty)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pSignDate", req.signDate)
@@ -132,7 +139,9 @@ class ContractService(
         guid = this.guid,
         num = this.num,
         idOrg = this.idOrg,
-        orgName = this.organization?.name ?: "",
+        nameOrg = this.organization?.name ?: "",
+        idOrgParty = this.idOrgParty,
+        nameOrgParty = this.organizationParty?.name ?: "",
         validityPeriodStart = this.validityPeriod.realLower(),
         validityPeriodEnd = this.validityPeriod.realUpper(),
         signDate = this.signDate,

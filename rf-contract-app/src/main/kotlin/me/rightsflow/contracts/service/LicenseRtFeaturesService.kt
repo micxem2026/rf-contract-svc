@@ -79,6 +79,7 @@ class LicenseRtFeaturesService(
         idFeature = this.idFeature,
         featureName = this.featureTree?.featurePlain?.name ?: "",
         isIncluded = this.isIncluded,
+        isNative = this.isNative,
         createdBy = this.createdBy,
         createdAt = this.createdAt,
         updatedBy = this.updatedBy,

@@ -76,6 +76,7 @@ data class KlfRightTypeAvroMessage(
     val id: Int?,
     val id_parent: Int?,
     val name: String,
+    val description: String?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,
@@ -110,6 +111,18 @@ data class KlfFeatureTreeAvroMessage(
     val id_feature_category: Int?,
     val id_feature_plain: Int?,
     val validity_period: String?,
+    val created_by: String,
+    val created_at: Instant?,
+    val updated_by: String?,
+    val updated_at: Instant?
+)
+
+// SYNC__KLF_FEATURE_CAT_TO_RT
+data class KlfFeatureCatToRtAvroMessage(
+    val id: Int?,
+    val id_right_type: Int,
+    val id_feature_category: Int,
+    val id_def_feature: Int?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,
