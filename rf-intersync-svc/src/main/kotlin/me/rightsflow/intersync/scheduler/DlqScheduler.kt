@@ -17,11 +17,11 @@ import java.util.concurrent.TimeUnit
 
 @Component
 class GenericDlqScheduler(
-    @Value("\${rightsflow.app.dlg-topic-poll-seconds}")
+    @param:Value("\${rightsflow.app.dlg-topic-poll-seconds}")
     private val dlqTopicPollSeconds: Long,
-    @Value("\${spring.cloud.stream.kafka.binder.brokers}")
+    @param:Value("\${spring.cloud.stream.kafka.binder.brokers}")
     private val bootstrapServers: String,
-    @Value("\${spring.cloud.stream.kafka.binder.configuration.schema.registry.url}")
+    @param:Value("\${spring.cloud.stream.kafka.binder.configuration.schema.registry.url}")
     private val schemaRegistryUrl: String,
     private val kafkaTemplate: KafkaTemplate<String, GenericRecord?>,
     private val handlers: List<DlqHandler> // все зарегистрированные хендлеры

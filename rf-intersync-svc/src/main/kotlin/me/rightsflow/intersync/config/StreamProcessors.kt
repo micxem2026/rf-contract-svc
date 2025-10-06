@@ -352,6 +352,36 @@ class StreamProcessors(
         }
     }
 
+    @Bean
+    fun oipHierarchyProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("oipHierarchyProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("oipHierarchyProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("oipHierarchyProcessor -> Received sync message with id: $syncId")
+                val oipHierarchyDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToKlfOipHierarchyAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> KlfOipHierarchyAvroMessage(null,0,0,"",Instant.EPOCH,
+                        null,null)
+                    else -> throw IllegalArgumentException("oipHierarchyProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processOipHierarchy(syncId, oipHierarchyDto)
+                acknowledgment?.acknowledge()
+                log.info("oipHierarchyProcessor -> Successfully processed message with id: ${syncId}")
+            }
+        }
+    }
+
 
 }
 
@@ -487,6 +517,18 @@ object MessageConverter {
             id_right_type = record.get("id_right_type") as Int,
             id_feature_category = record.get("id_feature_category") as Int,
             id_def_feature = record.get("id_def_feature") as Int?,
+            created_by = record.getString("created_by"),
+            created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
+            updated_by = record.getStringOrNull("updated_by"),
+            updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToKlfOipHierarchyAvroMessage(record: GenericRecord): KlfOipHierarchyAvroMessage {
+        return KlfOipHierarchyAvroMessage(
+            id = record.get("id") as Int?,
+            id_parent = record.get("id_parent") as Int,
+            id_oip = record.get("id_oip") as Int,
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),

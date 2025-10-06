@@ -78,15 +78,17 @@ class FormatRtService(
     }
 
     @Transactional
-    fun delete(id: Long) {
+    fun delete(id: Long, useCascade: Boolean) {
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, FormatRt::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_format_rt")
 
         sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_use_cascade", useCascade)
 
         sp.execute()
     }

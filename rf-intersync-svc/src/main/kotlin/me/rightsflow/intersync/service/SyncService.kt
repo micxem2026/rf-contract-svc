@@ -324,6 +324,33 @@ class SyncService {
         return query.singleResult as Int
     }
 
+    @Transactional
+    fun syncKlfOipHierarchy(pSyncId: Int, dto: KlfOipHierarchyAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_klf_oip_hierarchy(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pIdParent, " +
+                    ":pIdOip, " +
+                    ":pCreatedBy, " +
+                    ":pCreatedAt, " +
+                    ":pUpdatedBy, " +
+                    ":pUpdatedAt" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pIdParent", dto.id_parent)
+        query.setParameter("pIdOip", dto.id_oip)
+        query.setParameter("pCreatedBy", dto.created_by)
+        query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
+        query.setParameter("pUpdatedBy", dto.updated_by)
+        query.setParameter("pUpdatedAt", dto.updated_at?.let { microsToOffsetDateTime(it) })
+
+        return query.singleResult as Int
+    }
+
     private fun microsToOffsetDateTime(micros: Long): OffsetDateTime {
         return OffsetDateTime.ofInstant(
             Instant.ofEpochSecond(micros / 1_000_000, (micros % 1_000_000) * 1000),

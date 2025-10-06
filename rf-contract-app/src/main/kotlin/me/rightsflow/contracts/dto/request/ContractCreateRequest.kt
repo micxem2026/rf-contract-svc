@@ -14,7 +14,7 @@ data class ContractCreateRequest(
 
     @field:Schema(description = "Номер контракта", example = "123")
     @field:Size(max = 255)
-    val num: String,
+    val num: String?,
 
     @field:Schema(description = "ID организации владельца контракта", example = "1")
     @field:NotNull
@@ -35,10 +35,6 @@ data class ContractCreateRequest(
     @field:Schema(description = "ID типа контракта (сделка/договор)", example = "1")
     @field:NotNull
     var idContractType: Int,
-
-    @field:Schema(description = "ID статуса контракта (черновик/подписан)", example = "1")
-    @field:NotNull
-    var idContractStatus: Int,
 
     @field:Schema(description = "Вид контракта (внешняя покупка/продажа, внутренняя покупка/продажа)", example = "eS", allowableValues = ["eP", "eS", "iP", "iS"])
     @field:NotNull

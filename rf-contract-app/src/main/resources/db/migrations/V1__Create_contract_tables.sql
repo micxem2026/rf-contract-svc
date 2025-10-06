@@ -1,5 +1,7 @@
 -- Расширение для эффективного ILIKE '%...%' по name
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
+-- Расширение для вычитания массивов
+CREATE EXTENSION IF NOT EXISTS intarray;
 
 -- LOV_CONTRACT_TYPE
 CREATE TABLE IF NOT EXISTS LOV_CONTRACT_TYPE (
@@ -14,11 +16,12 @@ CREATE TABLE IF NOT EXISTS LOV_CONTRACT_STATUS (
     ID INTEGER PRIMARY KEY,
     ID_CONTRACT_TYPE INTEGER NOT NULL REFERENCES LOV_CONTRACT_TYPE(ID),
     NAME VARCHAR(255) NOT NULL,
+    CODE VARCHAR(20) NOT NULL,
     DEF BOOLEAN DEFAULT FALSE,
     MODE INTEGER DEFAULT 0
 );
 COMMENT ON TABLE LOV_CONTRACT_STATUS IS 'Статусы контрактов';
-COMMENT ON COLUMN LOV_CONTRACT_STATUS.MODE IS '0 - не участвует в расчете прав, 1 - участвует в расчете прав';
+COMMENT ON COLUMN LOV_CONTRACT_STATUS.MODE IS '0 - не участвует в расчете прав, редактируется, 1 - не участвует в расчете прав, не редактируется, 2 - участвует в расчете прав, не редактируется';
 
 CREATE INDEX IF NOT EXISTS idx_lov_contract_status ON LOV_CONTRACT_STATUS(ID_CONTRACT_TYPE);
 
@@ -29,19 +32,52 @@ INSERT INTO LOV_CONTRACT_TYPE (ID, NAME, DEF)
 VALUES (2,'Договор','0'::BOOLEAN)
 ON CONFLICT (ID) DO NOTHING;
 
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
-VALUES (1,'Черновик',1,'1'::BOOLEAN, 0)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE, CODE)
+VALUES (1,'Черновик',1,'1'::BOOLEAN, 0, 'DRAFT')
 ON CONFLICT (ID) DO NOTHING;
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
-VALUES (2,'Подписана',1,'0'::BOOLEAN, 1)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE, CODE)
+VALUES (2,'Архив',1,'0'::BOOLEAN, 1, 'ARCHIVE')
+ON CONFLICT (ID) DO NOTHING;
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE, CODE)
+VALUES (3,'Утверждена',1,'0'::BOOLEAN, 2, 'APPROVED')
 ON CONFLICT (ID) DO NOTHING;
 
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
-VALUES (10,'Черновик',2,'1'::BOOLEAN, 0)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE, CODE)
+VALUES (11,'Черновик',2,'1'::BOOLEAN, 0, 'DRAFT')
 ON CONFLICT (ID) DO NOTHING;
-INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE)
-VALUES (11,'Подписан',2,'0'::BOOLEAN, 1)
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE, CODE)
+VALUES (12,'Архив',2,'0'::BOOLEAN, 1, 'ARCHIVE')
 ON CONFLICT (ID) DO NOTHING;
+INSERT INTO LOV_CONTRACT_STATUS (ID, NAME, ID_CONTRACT_TYPE, DEF, MODE, CODE)
+VALUES (13,'Утверждён',2,'0'::BOOLEAN, 2, 'APPROVED')
+ON CONFLICT (ID) DO NOTHING;
+
+-- CONTRACT_CHANGE_BUFFER
+CREATE TABLE IF NOT EXISTS CONTRACT_CHANGE_BUFFER (
+   ID          BIGSERIAL NOT NULL PRIMARY KEY,
+   NAME_ENTITY VARCHAR(50) NOT NULL,
+   ID_ENTITY   BIGINT NOT NULL,
+   ACTION      VARCHAR(10) NOT NULL CONSTRAINT chk_ccb_action CHECK (ACTION IN ('INSERT', 'UPDATE', 'DELETE')),
+   DATA        JSONB NOT NULL,
+   STATUS      VARCHAR(20) NOT NULL CONSTRAINT chk_ccb_status CHECK (STATUS IN ('NEW', 'ARCHIVED', 'PROCESSED')),
+   CREATED_BY  VARCHAR(20)  NOT NULL,
+   CREATED_AT  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+   UPDATED_BY  VARCHAR(20),
+   UPDATED_AT  TIMESTAMPTZ
+);
+COMMENT ON TABLE CONTRACT_CHANGE_BUFFER IS 'История изменения контрактов';
+CREATE UNIQUE INDEX IF NOT EXISTS UNQ_CONTRACT_CHANGE_BUFFER ON CONTRACT_CHANGE_BUFFER(NAME_ENTITY, ID_ENTITY, ACTION);
+CREATE INDEX IF NOT EXISTS idx_cntr_chng_buff_gin ON CONTRACT_CHANGE_BUFFER USING GIN (data jsonb_path_ops);
+
+-- CONTRACT_OUTBOX
+CREATE TABLE IF NOT EXISTS CONTRACT_OUTBOX (
+    ID          BIGSERIAL NOT NULL PRIMARY KEY,
+    ID_ORG      INTEGER NOT NULL,
+    ID_OIP      INTEGER NOT NULL,
+    CREATED_BY  VARCHAR(20)  NOT NULL,
+    CREATED_AT  TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+COMMENT ON TABLE CONTRACT_OUTBOX IS 'Сообщения об изменении контрактов';
 
 -- KLF_COUNTERPARTY
 CREATE TABLE IF NOT EXISTS SYNC__KLF_COUNTERPARTY (
@@ -85,6 +121,8 @@ CREATE TABLE IF NOT EXISTS CONTRACT (
     ID_CONTRACT_STATUS INTEGER NOT NULL REFERENCES LOV_CONTRACT_STATUS(ID),
     IN_OUT CHARACTER(2) NOT NULL,
     DESCRIPTION VARCHAR(511),
+    WARNING VARCHAR(511),
+    ID_SIBLING BIGINT REFERENCES CONTRACT(ID),
     CREATED_BY VARCHAR(20) NOT NULL,
     CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_BY VARCHAR(20),
@@ -220,6 +258,7 @@ CREATE TABLE IF NOT EXISTS LICENSE_OIP (
     ID BIGSERIAL NOT NULL PRIMARY KEY,
     ID_LICENSE BIGINT NOT NULL REFERENCES LICENSE(ID) ON DELETE CASCADE,
     ID_OIP INTEGER NOT NULL REFERENCES SYNC__KLF_OIP(ID) ON DELETE CASCADE,
+    ID_ROOT_OIP INTEGER NOT NULL REFERENCES SYNC__KLF_OIP(ID) ON DELETE CASCADE,
     CREATED_BY VARCHAR(20) NOT NULL,
     CREATED_AT TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     UPDATED_BY VARCHAR(20),
@@ -579,6 +618,16 @@ VALUES
     ('featureCatToRtProcessor-in-0','PAUSE')
 ON CONFLICT (BINDING_NAME) DO NOTHING;
 
+INSERT INTO KAFKA_BINDINGS_CONTROL (BINDING_NAME, BINDING_STATE)
+VALUES
+    ('oipHierarchyProcessor-in-0','PAUSE')
+ON CONFLICT (BINDING_NAME) DO NOTHING;
+
+INSERT INTO KAFKA_BINDINGS_CONTROL (BINDING_NAME, BINDING_STATE)
+VALUES
+    ('contractOutboxProcessor-in-0','PAUSE')
+ON CONFLICT (BINDING_NAME) DO NOTHING;
+
 -- KLF_FEATURE_CAT_TO_RT
 CREATE TABLE IF NOT EXISTS SYNC__KLF_FEATURE_CAT_TO_RT (
     ID                   INTEGER PRIMARY KEY,
@@ -594,6 +643,22 @@ CREATE TABLE IF NOT EXISTS SYNC__KLF_FEATURE_CAT_TO_RT (
 -- Один тип права не должен иметь дублирующуюся категорию
 CREATE UNIQUE INDEX IF NOT EXISTS UNQ_KLF_FEATURE_CAT_TO_RT ON SYNC__KLF_FEATURE_CAT_TO_RT(ID_RIGHT_TYPE, ID_FEATURE_CATEGORY);
 CREATE INDEX IF NOT EXISTS IDX_KLF_FEATURE_CAT_TO_RT_RT ON SYNC__KLF_FEATURE_CAT_TO_RT(ID_RIGHT_TYPE);
+
+-- KLF_OIP_HIERARCHY
+CREATE TABLE IF NOT EXISTS SYNC__KLF_OIP_HIERARCHY (
+     ID         INTEGER PRIMARY KEY,
+     ID_PARENT  INTEGER NOT NULL REFERENCES SYNC__KLF_OIP(ID),
+     ID_OIP     INTEGER NOT NULL REFERENCES SYNC__KLF_OIP(ID),
+     CREATED_BY VARCHAR(20)  NOT NULL,
+     CREATED_AT TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+     UPDATED_BY VARCHAR(20),
+     UPDATED_AT TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_klf_oip_h_parent ON SYNC__KLF_OIP_HIERARCHY(ID_PARENT);
+CREATE INDEX IF NOT EXISTS idx_klf_oip_h_oip    ON SYNC__KLF_OIP_HIERARCHY(ID_OIP);
+CREATE UNIQUE INDEX IF NOT EXISTS UNQ_KLF_OIP_HIERARCHY ON SYNC__KLF_OIP_HIERARCHY(ID_PARENT, ID_OIP);
+
 
 -- Вьюшки
 -- VW_RT_CAT_DOWN
@@ -719,7 +784,7 @@ order by r.lvl, r.id_parent nulls first, r.id;
 -- VW_LIC_RT
 create or replace view vw_lic_rt as
 select fs.validity_period, l.id_contract, c.id_org, c.id_org_party, c.in_out, coalesce(c.sign_date, upper(c.validity_period)) as sign_date,
-       lrt.id_license, lo.id_oip, lrt.id as id_lic_rt, lrt.id_right_type, fs.id as id_feature_set, fs.is_exclusive, fs.is_use_right,
+       lrt.id_license, lo.id_oip, lrt.id as id_lic_rt, lrt.id_right_type, fs.id_feature_set, fs.is_exclusive, fs.is_use_right,
        c.id_contract_type, c.id_contract_status, cs.mode status_mode
 from license l
          join license_oip lo on l.id = lo.id_license
@@ -729,17 +794,22 @@ from license l
          join license_rt_feature_set_ext fs on fs.id_lic_rt = lrt.id;
 
 -- VW_FEATURES
+drop view rightsflow.vw_features;
 create or replace view vw_features as
 with recursive cat_tree as (
-    select id, id_parent, id_feature_plain, 1 lvl from sync__klf_feature_tree
+    select id, id_parent, id_feature_plain, 1 lvl
+    from sync__klf_feature_tree
     where id_parent is null
 
     union all
 
-    select k.id, k.id_parent, k.id_feature_plain, c.lvl+1 as lvl from sync__klf_feature_tree k, cat_tree c
+    select k.id, k.id_parent, k.id_feature_plain, c.lvl+1 as lvl
+    from sync__klf_feature_tree k, cat_tree c
     where k.id_parent = c.id
 )
 select t.* from (
-  select ct.id, ct.id_parent, ct.id_feature_plain, cp.id_feature_category, cp.name, ct.lvl from cat_tree ct, sync__klf_feature_plain cp
+  select ct.id, ct.id_parent, ct.id_feature_plain, cp.id_feature_category, fc.name || ' : ' || cp.name as name, ct.lvl
+  from cat_tree ct, sync__klf_feature_plain cp, sync__klf_feature_category fc
   where ct.id_feature_plain = cp.id
+    and cp.id_feature_category = fc.id
 ) t;

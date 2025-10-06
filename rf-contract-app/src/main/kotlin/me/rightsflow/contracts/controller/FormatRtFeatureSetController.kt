@@ -109,8 +109,9 @@ class FormatRtFeatureSetController(
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun delete(@PathVariable id: Long) {
-        service.delete(id)
+    fun delete(@PathVariable id: Long,
+               @RequestParam(required = false, defaultValue = "false") useCascade: Boolean) {
+        service.delete(id, useCascade)
     }
 
     @DeleteMapping("/features-by-fs/{id}")

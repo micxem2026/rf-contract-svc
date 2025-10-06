@@ -13,6 +13,8 @@ import me.rightsflow.contracts.repository.LicenseOipRepository
 import me.rightsflow.contracts.repository.LicenseRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.math.BigDecimal
+import java.math.BigInteger
 
 @Service
 class LicenseOipService(
@@ -30,25 +32,27 @@ class LicenseOipService(
     }
 
     @Transactional
-    fun create(req: LicenseOipRequest): LicenseOipDto {
+    fun create(req: LicenseOipRequest): List<LicenseOipDto> {
 
         val query = em.createNativeQuery(
             "SELECT pkg_contract.ins_license_oip(" +
                     ":pIdLicense, " +
-                    ":pIdOip, " +
+                    ":pIdOipStr, " +
                     ":pCreatedBy" +
                     ")"
         )
 
         query.setParameter("pIdLicense", req.idLicense)
-        query.setParameter("pIdOip", req.idOip)
+        query.setParameter("pIdOipStr", req.listIdOip.joinToString(","))
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
-        val id = query.singleResult as Long
+        @Suppress("UNCHECKED_CAST")
+        val result = query.singleResult as Array<Long>
+        val ids = result.toList()
+        val entities = repo.findAllById(ids)
+        entities.forEach { em.refresh(it) }
 
-        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseOip::class.java) }
-        em.refresh(e)
-        return e.toDto()
+        return entities.map { it.toDto() }
     }
 
     @Transactional
@@ -65,12 +69,29 @@ class LicenseOipService(
         sp.execute()
     }
 
+    @Transactional
+    fun deleteByRoot(idLicense: Long, idRoot: Long) {
+        val sp = em.createStoredProcedureQuery("pkg_contract.del_license_oip_by_root")
+
+        sp.registerStoredProcedureParameter("p_id_license", Long::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_id_root_oip", Long::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+
+        sp.setParameter("p_id_license", idLicense)
+        sp.setParameter("p_id_root_oip", idRoot)
+        sp.setParameter("p_username", subProvider.currentSub())
+
+        sp.execute()
+    }
+
     private fun LicenseOip.toDto() = LicenseOipDto(
         id = this.id!!,
         idLicense = this.idLicense,
         licenseNum = this.license?.num ?: "",
         idOip = this.idOip,
         oipName = this.oip?.name ?: "",
+        idRootOip = this.idRootOip,
+        rootOipName = this.rootOip?.name ?: "",
         createdBy = this.createdBy,
         createdAt = this.createdAt,
         updatedBy = this.updatedBy,

@@ -383,7 +383,7 @@ CREATE OR REPLACE FUNCTION pkg_sync.sync_klf_feature_tree(
     p_updated_by character varying DEFAULT NULL::character varying,
     p_updated_at timestamptz DEFAULT NULL::timestamptz)
     RETURNS integer
-    LANGUAGE 'plpgsql'
+    LANGUAGE plpgsql
     COST 100
     VOLATILE PARALLEL UNSAFE
     SECURITY DEFINER
@@ -415,7 +415,7 @@ BEGIN
 END;
 $BODY$;
 
--- SYNC__KLF_RIGHT_TYPE
+-- SYNC__KLF_FEATURE_CAT_TO_RT
 CREATE OR REPLACE FUNCTION pkg_sync.sync_klf_feature_cat_to_rt(
     p_sync_id integer,
     p_id integer,
@@ -427,7 +427,7 @@ CREATE OR REPLACE FUNCTION pkg_sync.sync_klf_feature_cat_to_rt(
     p_updated_by character varying DEFAULT NULL::character varying,
     p_updated_at timestamptz DEFAULT NULL::timestamptz)
     RETURNS integer
-    LANGUAGE 'plpgsql'
+    LANGUAGE plpgsql
     COST 100
     VOLATILE PARALLEL UNSAFE
     SECURITY DEFINER
@@ -452,6 +452,40 @@ BEGIN
                updated_by = EXCLUDED.updated_by,
                updated_at = EXCLUDED.updated_at
         WHERE EXCLUDED.updated_at > COALESCE(sync__klf_feature_cat_to_rt.updated_at, '1970-01-01'::TIMESTAMPTZ);
+    END IF;
+    RETURN p_sync_id;
+END;
+$BODY$;
+
+-- SYNC__KLF_OIP_HIERARCHY
+CREATE OR REPLACE FUNCTION pkg_sync.sync_klf_oip_hierarchy(
+    p_sync_id integer,
+    p_id integer,
+    p_id_parent integer,
+    p_id_oip integer,
+    p_created_by character varying DEFAULT 'admin',
+    p_created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
+    p_updated_by character varying DEFAULT NULL::character varying,
+    p_updated_at timestamptz DEFAULT NULL::timestamptz)
+    RETURNS integer
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET search_path = rightsflow
+AS $BODY$
+BEGIN
+    IF p_id IS NULL THEN
+        DELETE FROM sync__klf_oip_hierarchy WHERE id = p_sync_id;
+    ELSE
+        INSERT INTO sync__klf_oip_hierarchy (id, id_parent, id_oip, created_by, created_at, updated_by, updated_at)
+        VALUES (p_sync_id, p_id_parent, p_id_oip,
+                p_created_by, p_created_at, p_updated_by, p_updated_at)
+        ON CONFLICT (id) DO UPDATE SET
+           id_parent = EXCLUDED.id_parent,
+           id_oip = EXCLUDED.id_oip,
+           created_by = EXCLUDED.created_by,
+           updated_by = EXCLUDED.updated_by,
+           updated_at = EXCLUDED.updated_at
+        WHERE EXCLUDED.updated_at > COALESCE(sync__klf_oip_hierarchy.updated_at, '1970-01-01'::TIMESTAMPTZ);
     END IF;
     RETURN p_sync_id;
 END;

@@ -11,7 +11,7 @@ import java.time.LocalDate
 data class LicenseCreateRequest(
 
     @field:Schema(description = "ID контракта", example = "1")
-    @field:NotNull val idContract: Long,
+    @field:NotNull var idContract: Long,
 
     @field:Schema(description = "ID формата для лицензии", example = "1")
     val idLicFormat: Long?,
@@ -21,14 +21,14 @@ data class LicenseCreateRequest(
     val guid: String?,
 
     @field:Schema(description = "Номер лицензии", example = "LIC-001")
-    @field:NotBlank @field:Size(max = 255)
-    val num: String,
+    @field:Size(max = 255)
+    val num: String?,
 
     @field:Schema(description = "Стоимость", example = "100.00")
-    @field:NotNull val price: BigDecimal,
+    @field:NotNull var price: BigDecimal,
 
     @field:Schema(description = "ID валюты", example = "1")
-    @field:NotNull val idCurrency: Int,
+    @field:NotNull var idCurrency: Int,
 
     @field:Schema(description = "Период действия лицензии (начало)", example = "2022-01-01")
     val validityPeriodStart: LocalDate?,

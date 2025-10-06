@@ -8,9 +8,9 @@ data class LicenseOipRequest (
 
     @field:Schema(description = "ID контракта", example = "1")
     @field:NotNull
-    val idLicense: Long,
+    var idLicense: Long,
 
-    @field:Schema(description = "ID ОИС", example = "1")
+    @field:Schema(description = "Список ID ОИС для добавления в лицензию", example = "[1]")
     @field:NotNull
-    val idOip: Int
+    var listIdOip: List<Int>
 )

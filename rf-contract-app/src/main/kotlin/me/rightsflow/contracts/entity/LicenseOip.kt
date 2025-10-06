@@ -20,7 +20,10 @@ class LicenseOip(
     var idLicense: Long,
 
     @Column(name = "ID_OIP", nullable = false)
-    var idOip: Int
+    var idOip: Int,
+
+    @Column(name = "ID_ROOT_OIP", nullable = false)
+    var idRootOip: Int
 
 ) : BaseAudit() {
 
@@ -31,6 +34,10 @@ class LicenseOip(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_OIP", referencedColumnName = "ID", insertable = false, updatable = false)
     var oip: Oip? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_ROOT_OIP", referencedColumnName = "ID", insertable = false, updatable = false)
+    var rootOip: Oip? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

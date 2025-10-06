@@ -24,7 +24,10 @@ class ContractStatus(
     val def: Boolean = false,
 
     @Column(name = "MODE", nullable = false)
-    val mode: Int
+    val mode: Int,
+
+    @Column(name = "CODE", nullable = false, length = 20)
+    val code: String
 ) {
 
     @ManyToOne(fetch = FetchType.LAZY)

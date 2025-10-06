@@ -92,15 +92,17 @@ class LicenseRtFeatureSetService(
     }
 
     @Transactional
-    fun delete(id: Long) {
+    fun delete(id: Long, useCascade: Boolean) {
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatureSet::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rt_feature_set")
 
         sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_use_cascade", useCascade)
 
         sp.execute()
     }

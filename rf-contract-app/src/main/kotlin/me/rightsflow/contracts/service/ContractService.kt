@@ -8,7 +8,9 @@ import me.rightsflow.common.exception.EntityNotFoundWithClsException
 import me.rightsflow.common.util.realLower
 import me.rightsflow.common.util.realUpper
 import me.rightsflow.contracts.dto.request.ContractCreateRequest
+import me.rightsflow.contracts.dto.request.ContractStatusUpdateRequest
 import me.rightsflow.contracts.dto.request.ContractUpdateRequest
+import me.rightsflow.contracts.dto.response.ContractChangeStatusDto
 import me.rightsflow.contracts.dto.response.ContractDto
 import me.rightsflow.contracts.entity.Contract
 import me.rightsflow.contracts.repository.ContractRepository
@@ -51,7 +53,6 @@ class ContractService(
                     ":pEndDate, " +
                     ":pSignDate, " +
                     ":pIdContractType, " +
-                    ":pIdContractStatus, " +
                     ":pInOut, " +
                     ":pDescription, " +
                     ":pCreatedBy" +
@@ -66,7 +67,6 @@ class ContractService(
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pSignDate", req.signDate)
         query.setParameter("pIdContractType", req.idContractType)
-        query.setParameter("pIdContractStatus", req.idContractStatus)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
@@ -92,7 +92,6 @@ class ContractService(
                     ":pEndDate, " +
                     ":pSignDate, " +
                     ":pIdContractType, " +
-                    ":pIdContractStatus, " +
                     ":pInOut, " +
                     ":pDescription, " +
                     ":pCreatedBy" +
@@ -108,7 +107,6 @@ class ContractService(
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pSignDate", req.signDate)
         query.setParameter("pIdContractType", req.idContractType)
-        query.setParameter("pIdContractStatus", req.idContractStatus)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
@@ -121,17 +119,46 @@ class ContractService(
     }
 
     @Transactional
-    fun delete(id: Long) {
+    fun delete(id: Long, useCascade: Boolean) {
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_contract")
 
         sp.registerStoredProcedureParameter("p_id", java.lang.Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_use_cascade", useCascade)
 
         sp.execute()
+    }
+
+    @Transactional
+    fun updateStatus(id: Long, req: ContractStatusUpdateRequest): ContractChangeStatusDto {
+        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
+        val query = em.createNativeQuery(
+            "SELECT pkg_contract.upd_contract_status(" +
+                    ":pIdContract, " +
+                    ":pStatusCode, " +
+                    ":pUsername" +
+                    ")"
+        )
+
+        query.setParameter("pIdContract", id)
+        query.setParameter("pStatusCode", req.statusCode)
+        query.setParameter("pUsername", subProvider.currentSub())
+
+        query.singleResult as Long
+
+        em.refresh(e)
+
+        val success = e.contractStatus?.code == req.statusCode.uppercase()
+        val info = if (success) "Статус договора успешно изменен" else e.warning ?: ""
+        val contract = e.toDto()
+
+        return ContractChangeStatusDto(success, info, id, contract)
+
     }
 
     private fun Contract.toDto() = ContractDto(
@@ -151,6 +178,10 @@ class ContractService(
         contractStatusName = this.contractStatus?.name ?: "",
         inOut = this.inOut.name,
         description = this.description,
+        warning = this.warning,
+        idSibling = this.idSibling,
+        guidSibling = this.siblingContract?.guid ?: "",
+        numSibling = this.siblingContract?.num ?: "",
         createdBy = this.createdBy,
         createdAt = this.createdAt,
         updatedBy = this.updatedBy,

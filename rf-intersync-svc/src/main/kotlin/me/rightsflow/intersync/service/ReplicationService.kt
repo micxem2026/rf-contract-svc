@@ -121,4 +121,14 @@ class ReplicationService(
             throw exception
         }
     }
+
+    @Transactional
+    fun processOipHierarchy(syncId:Int, message: KlfOipHierarchyAvroMessage) {
+        try {
+            syncService.syncKlfOipHierarchy(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing OIP hierarchy with id: $syncId", exception)
+            throw exception
+        }
+    }
 }

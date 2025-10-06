@@ -9,7 +9,9 @@ import jakarta.validation.Valid
 import me.rightsflow.common.config.*
 import me.rightsflow.contracts.dto.request.ContractCounterpartyRequest
 import me.rightsflow.contracts.dto.request.ContractCreateRequest
+import me.rightsflow.contracts.dto.request.ContractStatusUpdateRequest
 import me.rightsflow.contracts.dto.request.ContractUpdateRequest
+import me.rightsflow.contracts.dto.response.ContractChangeStatusDto
 import me.rightsflow.contracts.dto.response.ContractCounterpartyDto
 import me.rightsflow.contracts.dto.response.ContractDto
 import me.rightsflow.contracts.service.ContractCounterpartyService
@@ -92,7 +94,7 @@ class ContractController(
         counterpartyService.create(req)
 
     @PutMapping("/{id}")
-    @Operation(summary = "Изменить контракт по заданному ID записи")
+    @Operation(summary = "Изменить контракт по заданному ID контракта")
     @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
     @ApiResponse(responseCode = "200", description = "Контракт обновлён")
     @ValidationErrorResponse
@@ -103,6 +105,17 @@ class ContractController(
     fun update(@PathVariable id: Long, @Valid @RequestBody req: ContractUpdateRequest): ContractDto =
         service.update(id, req)
 
+    @PutMapping("/set-status/{id}")
+    @Operation(summary = "Изменить статус контракта по заданному ID контракта")
+    @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
+    @ApiResponse(responseCode = "200", description = "Обновление статуса выполнено")
+    @ValidationErrorResponse
+    @NotFoundResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun updateStatus(@PathVariable id: Long, @Valid @RequestBody req: ContractStatusUpdateRequest): ContractChangeStatusDto =
+        service.updateStatus(id, req)
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить контракт по заданному ID записи")
     @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
@@ -112,8 +125,9 @@ class ContractController(
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun delete(@PathVariable id: Long) {
-        service.delete(id)
+    fun delete(@PathVariable id: Long,
+               @RequestParam(required = false, defaultValue = "false") useCascade: Boolean) {
+        service.delete(id, useCascade)
     }
 
     @DeleteMapping("/cparty-by-contract/{id}")

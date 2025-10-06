@@ -128,3 +128,14 @@ data class KlfFeatureCatToRtAvroMessage(
     val updated_by: String?,
     val updated_at: Instant?
 )
+
+// SYNC__KLF_OIP_HIERARCHY
+data class KlfOipHierarchyAvroMessage(
+    val id: Int?,
+    val id_parent: Int,
+    val id_oip: Int,
+    val created_by: String,
+    val created_at: Instant?,
+    val updated_by: String?,
+    val updated_at: Instant?
+)

@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value
 @Component
 class UserDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.userProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.userProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -28,9 +28,9 @@ class UserDlqHandler(
 }
 
 @Component
-class oipSuperTypeDlqHandler(
+class OipSuperTypeDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.oipSuperTypeProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.oipSuperTypeProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -45,9 +45,9 @@ class oipSuperTypeDlqHandler(
 }
 
 @Component
-class oipTypeDlqHandler(
+class OipTypeDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.oipTypeProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.oipTypeProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -62,9 +62,9 @@ class oipTypeDlqHandler(
 }
 
 @Component
-class oipDlqHandler(
+class OipDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.oipProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.oipProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -80,9 +80,9 @@ class oipDlqHandler(
 }
 
 @Component
-class organizationDlqHandler(
+class OrganizationDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.organizationProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.organizationProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -97,9 +97,9 @@ class organizationDlqHandler(
 }
 
 @Component
-class counterpartyDlqHandler(
+class CounterpartyDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.counterpartyProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.counterpartyProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -114,9 +114,9 @@ class counterpartyDlqHandler(
 }
 
 @Component
-class rightTypeDlqHandler(
+class RightTypeDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.rightTypeProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.rightTypeProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -131,9 +131,9 @@ class rightTypeDlqHandler(
 }
 
 @Component
-class featureCategoryDlqHandler(
+class FeatureCategoryDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.featureCategoryProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.featureCategoryProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -148,9 +148,9 @@ class featureCategoryDlqHandler(
 }
 
 @Component
-class featurePlainDlqHandler(
+class FeaturePlainDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.featurePlainProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.featurePlainProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -166,9 +166,9 @@ class featurePlainDlqHandler(
 }
 
 @Component
-class featureTreeDlqHandler(
+class FeatureTreeDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.featureTreeProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.featureTreeProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -184,9 +184,9 @@ class featureTreeDlqHandler(
 }
 
 @Component
-class featureCatToRtDlqHandler(
+class FeatureCatToRtDlqHandler(
     private val replicationService: ReplicationService,
-    @Value("\${spring.cloud.stream.kafka.bindings.featureCatToRtProcessor-in-0.consumer.dlq-name}")
+    @param:Value("\${spring.cloud.stream.kafka.bindings.featureCatToRtProcessor-in-0.consumer.dlq-name}")
     override val topic: String
 ) : DlqHandler {
 
@@ -197,5 +197,22 @@ class featureCatToRtDlqHandler(
             else -> MessageConverter.convertToKlfFeatureCatToRtAvroMessage(value)
         }
         replicationService.processFeatureCatToRt(syncId, featureCatToRtDto)
+    }
+}
+
+@Component
+class OipHierarchyDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.oipHierarchyProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val oipHierarchyDto = when (value) {
+            null -> KlfOipHierarchyAvroMessage(null,0,0,"",null,null,null)
+            else -> MessageConverter.convertToKlfOipHierarchyAvroMessage(value)
+        }
+        replicationService.processOipHierarchy(syncId, oipHierarchyDto)
     }
 }

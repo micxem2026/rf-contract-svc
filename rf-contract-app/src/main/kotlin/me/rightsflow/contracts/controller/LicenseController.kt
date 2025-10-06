@@ -74,15 +74,15 @@ class LicenseController(
     fun create(@Valid @RequestBody req: LicenseCreateRequest): LicenseDto = service.create(req)
 
     @PostMapping(value = ["/oip-by-license"])
-    @Operation(summary = "Добавить ОИС в лицензию")
+    @Operation(summary = "Добавить ОИС(ы) в лицензию")
     @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiResponse(responseCode = "201", description = "ОИС добавлен")
+    @ApiResponse(responseCode = "201", description = "ОИС(ы) добавлен(ы)")
     @ValidationErrorResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun addLicenseOip(@Valid @RequestBody req: LicenseOipRequest): LicenseOipDto = licenseOipService.create(req)
+    fun addLicenseOip(@Valid @RequestBody req: LicenseOipRequest): List<LicenseOipDto> = licenseOipService.create(req)
 
     @PutMapping("/{id}")
     @Operation(summary = "Изменить лицензию по заданному ID записи")
@@ -105,8 +105,9 @@ class LicenseController(
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun delete(@PathVariable id: Long) {
-        service.delete(id)
+    fun delete(@PathVariable id: Long,
+               @RequestParam(required = false, defaultValue = "false") useCascade: Boolean) {
+        service.delete(id, useCascade)
     }
 
     @DeleteMapping("/oip-by-license/{id}")
@@ -120,5 +121,18 @@ class LicenseController(
     @InternalServerErrorResponse
     fun deleteOip(@PathVariable id: Long) {
         licenseOipService.delete(id)
+    }
+
+    @DeleteMapping("/oip-by-license/{idLicense}/root/{idRoot}")
+    @Operation(summary = "Удалить ОИС(ы) из лицензии по заданному ID корневого ОИС")
+    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiResponse(responseCode = "204", description = "ОИС(ы) удален(ы) из лицензии")
+    @NotFoundResponse
+    @ConflictResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun deleteOipByRoot(@PathVariable idLicense: Long, @PathVariable idRoot: Long) {
+        licenseOipService.deleteByRoot(idLicense, idRoot)
     }
 }

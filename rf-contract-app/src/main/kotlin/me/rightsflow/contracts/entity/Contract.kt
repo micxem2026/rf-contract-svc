@@ -53,7 +53,13 @@ class Contract(
     var inOut: ContractKind,
 
     @Column(name = "DESCRIPTION", length = 511)
-    var description: String? = null
+    var description: String? = null,
+
+    @Column(name = "WARNING", length = 511)
+    var warning: String? = null,
+
+    @Column(name = "ID_SIBLING")
+    var idSibling: Long? = null
 
 ) : BaseAudit() {
 
@@ -66,6 +72,10 @@ class Contract(
             return this.name
         }
     }
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_SIBLING", referencedColumnName = "ID", insertable = false, updatable = false)
+    var siblingContract: Contract? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_ORG", referencedColumnName = "ID", insertable = false, updatable = false)

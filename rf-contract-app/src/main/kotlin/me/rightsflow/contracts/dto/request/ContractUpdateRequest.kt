@@ -31,9 +31,6 @@ data class ContractUpdateRequest(
     @field:Schema(description = "ID типа контракта (сделка/договор)")
     val idContractType: Int?,
 
-    @field:Schema(description = "ID статуса контракта (черновик/подписан)")
-    val idContractStatus: Int?,
-
     @field:Schema(description = "Вид контракта (внешняя покупка/продажа, внутренняя покупка/продажа)", example = "eS", allowableValues = ["eP", "eS", "iP", "iS"])
     val inOut: String?,
 
