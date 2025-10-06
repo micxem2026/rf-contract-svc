@@ -794,7 +794,7 @@ from license l
          join license_rt_feature_set_ext fs on fs.id_lic_rt = lrt.id;
 
 -- VW_FEATURES
-drop view rightsflow.vw_features;
+drop view if exists rightsflow.vw_features;
 create or replace view vw_features as
 with recursive cat_tree as (
     select id, id_parent, id_feature_plain, 1 lvl
