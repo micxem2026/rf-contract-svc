@@ -72,7 +72,7 @@ class OipDlqHandler(
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val oipDto = when (value) {
             null -> KlfOipAvroMessage(null,"",null,null,"",null,
-                null,null,"",null,null,null)
+                null,null,null,"",null,null,null)
             else -> MessageConverter.convertToKlfOipAvroMessage(value)
         }
         replicationService.processOip(syncId, oipDto)
@@ -106,7 +106,7 @@ class CounterpartyDlqHandler(
     override fun process(key: String, value: GenericRecord?) {
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val counterpartyDto = when (value) {
-            null -> KlfCounterpartyAvroMessage(null,"","","",null,null,null)
+            null -> KlfCounterpartyAvroMessage(null,"","",null,"",null,null,null)
             else -> MessageConverter.convertToKlfCounterpartyAvroMessage(value)
         }
         replicationService.processCounterparty(syncId, counterpartyDto)

@@ -38,7 +38,10 @@ class Oip(
 
     @Type(PostgreSQLIntervalType::class)
     @Column(name = "DURATION", columnDefinition = "INTERVAL")
-    var duration: Duration? = null
+    var duration: Duration? = null,
+
+    @Column(name = "DESCRIPTION")
+    var description: String? = null
 
 ) : BaseAudit() {
 

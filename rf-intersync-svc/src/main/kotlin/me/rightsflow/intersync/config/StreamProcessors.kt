@@ -71,7 +71,7 @@ class StreamProcessors(
                 log.info("counterpartyProcessor -> Received sync message with id: $syncId")
                 val counterpartyDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfCounterpartyAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null,"","", Instant.EPOCH,
+                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null,"",null,"", Instant.EPOCH,
                         null,null)
                     else -> throw IllegalArgumentException("counterpartyProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -132,7 +132,7 @@ class StreamProcessors(
                 val oipDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfOipAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfOipAvroMessage(null,null,null,null,
-                        "", null, null, null, "", Instant.EPOCH,
+                        "", null, null, null, null, "", Instant.EPOCH,
                         null, null)
                     else -> throw IllegalArgumentException("oipProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -410,6 +410,7 @@ object MessageConverter {
             id = record.get("id") as Int?,
             guid = record.getStringOrNull("guid"),
             name = record.getString("name"),
+            id_org_ref = record.get("id_org_ref") as Int?,
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),
@@ -454,6 +455,7 @@ object MessageConverter {
             part_num = record.get("part_num") as Int?,
             part_count = record.get("part_count") as Int?,
             duration = record.get("duration") as Long?,
+            description = record.getString("description"),
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),
@@ -537,6 +539,7 @@ object MessageConverter {
     }
 
     private fun GenericRecord.getStringOrNull(fieldName: String): String? {
+        this.schema.getField(fieldName) ?: return null // Поле отсутствует в схеме
         return when (val value = this.get(fieldName)) {
             is Utf8 -> value.toString()
             is String -> value

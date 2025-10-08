@@ -25,6 +25,7 @@ data class KlfCounterpartyAvroMessage(
     val id: Int?,
     val guid: String?,
     val name: String,
+    val id_org_ref: Int?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,
@@ -65,6 +66,7 @@ data class KlfOipAvroMessage(
     val part_num: Int?,
     val part_count: Int?,
     val duration: Long?, //io.debezium.time.MicroDuration
+    val description: String?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,

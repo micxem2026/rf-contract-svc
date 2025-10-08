@@ -19,8 +19,15 @@ class Counterparty(
     val guid: String? = null,
 
     @Column(name = "NAME", nullable = false, length = 255)
-    val name: String
+    val name: String,
+
+    @Column(name = "ID_ORG_REF")
+    val idOrgRef: Int? = null,
 ) : BaseAudit() {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_ORG_REF", referencedColumnName = "ID", insertable = false, updatable = false)
+    var orgRef: Organization? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
