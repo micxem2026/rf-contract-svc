@@ -34,7 +34,7 @@ class LicenseRtFeaturesService(
     fun create(req: LicenseRtFeaturesCreateRequest): LicenseRtFeaturesDto {
         val query = em.createNativeQuery(
             "SELECT pkg_contract.ins_license_rt_features(" +
-                    ":pIdLicRt, " +
+                    ":pIdLicRights, " +
                     ":pIdFeatureSet, " +
                     ":pIdFeature, " +
                     ":pIncluded, " +
@@ -42,7 +42,7 @@ class LicenseRtFeaturesService(
                     ")"
         )
 
-        query.setParameter("pIdLicRt", req.idLicRt)
+        query.setParameter("pIdLicRights", req.idLicRights)
         query.setParameter("pIdFeatureSet", req.idFeatureSet)
         query.setParameter("pIdFeature", req.idFeature)
         query.setParameter("pIncluded", req.isIncluded)
@@ -71,8 +71,7 @@ class LicenseRtFeaturesService(
 
     private fun LicenseRtFeatures.toDto() = LicenseRtFeaturesDto(
         id = this.id!!,
-        idLicRt = this.idLicRt,
-        rightTypeName = this.licenseRt?.rightType?.name ?: "",
+        idLicRights = this.idLicRights,
         idFeatureSet = this.idFeatureSet,
         idFeatureCategory = this.idFeatureCategory,
         featureCategoryName = this.featureCategory?.name ?: "",

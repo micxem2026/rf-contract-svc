@@ -5,10 +5,10 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import me.rightsflow.common.config.*
-import me.rightsflow.contracts.dto.request.LicenseRtCreateRequest
-import me.rightsflow.contracts.dto.request.LicenseRtUpdateRequest
-import me.rightsflow.contracts.dto.response.LicenseRtDto
-import me.rightsflow.contracts.service.LicenseRtService
+import me.rightsflow.contracts.dto.request.FormatRightsCreateRequest
+import me.rightsflow.contracts.dto.request.FormatRightsUpdateRequest
+import me.rightsflow.contracts.dto.response.FormatRightsDto
+import me.rightsflow.contracts.service.FormatRtService
 import org.springdoc.core.annotations.ParameterObject
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
@@ -19,64 +19,64 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/contracts/lic-rt")
-@Tag(name = "Тип права лицензии", description = "Операции с привязками типов прав к лицензии")
-class LicenseRtController(
-    private val service: LicenseRtService
+@RequestMapping("/formats/fmt-rt")
+@Tag(name = "Права формата", description = "Операции с привязками типов прав к форматам")
+class FormatRightsController(
+    private val service: FormatRtService
 ) {
 
     @GetMapping("/{id}")
-    @Operation(summary = "Получить тип права лицензии по ID записи")
+    @Operation(summary = "Получить право для формата по ID записи")
     @PreAuthorize("hasAuthority('SCOPE_user')")
-    @ApiResponse(responseCode = "200", description = "Тип права лицензии найден")
+    @ApiResponse(responseCode = "200", description = "Право для формата получено")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun getById(@PathVariable id: Long): LicenseRtDto = service.getById(id)
+    fun getById(@PathVariable id: Long): FormatRightsDto = service.getById(id)
 
-    @GetMapping("/by-license/{id}")
-    @Operation(summary = "Получить список типов прав лицензии по ID лицензии")
+    @GetMapping("/by-format/{id}")
+    @Operation(summary = "Получить список прав формата по ID формата")
     @PreAuthorize("hasAuthority('SCOPE_user')")
-    @ApiResponse(responseCode = "200", description = "Список типов прав лицензии получен")
+    @ApiResponse(responseCode = "200", description = "Список прав формата получен")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun findByLicenseId(
+    fun findByLicFormat(
         @PathVariable id: Long,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
-    ): PagedModel<LicenseRtDto> {
-        val page = service.findByLicense(id, pageable)
+    ): PagedModel<FormatRightsDto> {
+        val page = service.findByLicFormat(id, pageable)
         return PagedModel(page)
     }
 
     @PostMapping
-    @Operation(summary = "Создать привязку типа права к лицензии")
+    @Operation(summary = "Создать привязку права к формату")
     @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
     @ResponseStatus(HttpStatus.CREATED)
-    @ApiResponse(responseCode = "201", description = "Привязка типа права к лицензии создана")
+    @ApiResponse(responseCode = "201", description = "Привязка права к формату создана")
     @ConflictResponse
     @NotFoundResponse
     @ValidationErrorResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun create(@Valid @RequestBody req: LicenseRtCreateRequest): LicenseRtDto = service.create(req)
+    fun create(@Valid @RequestBody req: FormatRightsCreateRequest): FormatRightsDto = service.create(req)
 
     @PutMapping("/{id}")
-    @Operation(summary = "Изменить привязку типа права к лицензии по ID записи")
+    @Operation(summary = "Изменить привязку права к формату по ID записи")
     @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
-    @ApiResponse(responseCode = "200", description = "Привязка типа права к лицензии обновлена")
+    @ApiResponse(responseCode = "200", description = "Привязка права к формату обновлена")
     @ConflictResponse
     @NotFoundResponse
     @ValidationErrorResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun update(@PathVariable id: Long, @Valid @RequestBody req: LicenseRtUpdateRequest): LicenseRtDto =
+    fun update(@PathVariable id: Long, @Valid @RequestBody req: FormatRightsUpdateRequest): FormatRightsDto =
         service.update(id, req)
 
     @DeleteMapping("/{id}")
-    @Operation(summary = "Удалить привязку типа права к лицензии по ID записи")
+    @Operation(summary = "Удалить привязку права к формату по ID записи")
     @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
-    @ApiResponse(responseCode = "204", description = "Привязка типа права к лицензии удалена")
+    @ApiResponse(responseCode = "204", description = "Привязка права к формату удалена")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @NotFoundResponse
     @ConflictResponse

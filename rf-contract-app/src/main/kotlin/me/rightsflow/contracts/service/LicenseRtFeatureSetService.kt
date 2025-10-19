@@ -10,7 +10,7 @@ import me.rightsflow.common.util.realUpper
 import me.rightsflow.contracts.dto.request.LicenseRtFeatureSetCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseRtFeatureSetUpdateRequest
 import me.rightsflow.contracts.dto.response.LicenseRtFeatureSetDto
-import me.rightsflow.contracts.entity.LicenseRt
+import me.rightsflow.contracts.entity.LicenseRights
 import me.rightsflow.contracts.entity.LicenseRtFeatureSet
 import me.rightsflow.contracts.repository.*
 import org.springframework.data.domain.Page
@@ -21,7 +21,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class LicenseRtFeatureSetService(
     private val repo: LicenseRtFeatureSetRepository,
-    private val licenseRtRepo: LicenseRtRepository,
+    private val licenseRtRepo: LicenseRightsRepository,
     private val subProvider: SecuritySubjectProvider,
     @PersistenceContext private val em: EntityManager
 ) {
@@ -31,15 +31,15 @@ class LicenseRtFeatureSetService(
     }
 
     fun findByLicenseRt(id: Long, pageable: Pageable): Page<LicenseRtFeatureSetDto> {
-        licenseRtRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRt::class.java) }
-        return repo.findByIdLicRt(id, pageable).map { it.toDto() }
+        licenseRtRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
+        return repo.findByIdLicRights(id, pageable).map { it.toDto() }
     }
 
     @Transactional
     fun create(req: LicenseRtFeatureSetCreateRequest): LicenseRtFeatureSetDto {
         val query = em.createNativeQuery(
             "SELECT pkg_contract.ins_license_rt_feature_set(" +
-                    ":pIdLicRt, " +
+                    ":pIdLicRights, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
                     ":pBegDate, " +
@@ -48,7 +48,7 @@ class LicenseRtFeatureSetService(
                     ")"
         )
 
-        query.setParameter("pIdLicRt", req.idLicRt)
+        query.setParameter("pIdLicRights", req.idLicRights)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
         query.setParameter("pBegDate", req.validityPeriodStart)
@@ -68,7 +68,7 @@ class LicenseRtFeatureSetService(
         val query = em.createNativeQuery(
             "SELECT pkg_contract.upd_license_rt_feature_set(" +
                     ":pId, " +
-                    ":pIdLicRt, " +
+                    ":pIdLicRights, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
                     ":pBegDate, " +
@@ -78,7 +78,7 @@ class LicenseRtFeatureSetService(
         )
 
         query.setParameter("pId", id)
-        query.setParameter("pIdLicRt", req.idLicRt)
+        query.setParameter("pIdLicRights", req.idLicRights)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
         query.setParameter("pBegDate", req.validityPeriodStart)
@@ -109,8 +109,8 @@ class LicenseRtFeatureSetService(
 
     private fun LicenseRtFeatureSet.toDto() = LicenseRtFeatureSetDto(
         id = this.id!!,
-        idLicRt = this.idLicRt,
-        rightTypeName = this.licenseRt?.rightType?.name ?: "",
+        idLicRights = this.idLicRights,
+        licenseRightsRt = this.licenseRights?.getLicenseRightsRt() ?: emptyList(),
         isExclusive = this.isExclusive,
         isUseRight = this.isUseRight,
         validityPeriodStart = this.validityPeriod.realLower(),

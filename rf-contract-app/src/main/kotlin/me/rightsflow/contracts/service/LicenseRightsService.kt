@@ -5,40 +5,41 @@ import jakarta.persistence.ParameterMode
 import jakarta.persistence.PersistenceContext
 import me.rightsflow.common.config.SecuritySubjectProvider
 import me.rightsflow.common.exception.EntityNotFoundWithClsException
-import me.rightsflow.contracts.dto.request.LicenseRtCreateRequest
-import me.rightsflow.contracts.dto.request.LicenseRtUpdateRequest
-import me.rightsflow.contracts.dto.response.LicenseRtDto
+import me.rightsflow.contracts.dto.request.LicenseRightsCreateRequest
+import me.rightsflow.contracts.dto.request.LicenseRightsUpdateRequest
+import me.rightsflow.contracts.dto.response.LicenseRightsRtDto
+import me.rightsflow.contracts.dto.response.LicenseRightsDto
 import me.rightsflow.contracts.entity.License
-import me.rightsflow.contracts.entity.LicenseRt
+import me.rightsflow.contracts.entity.LicenseRights
 import me.rightsflow.contracts.repository.LicenseRepository
-import me.rightsflow.contracts.repository.LicenseRtRepository
+import me.rightsflow.contracts.repository.LicenseRightsRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class LicenseRtService(
-    private val repo: LicenseRtRepository,
+class LicenseRightsService(
+    private val repo: LicenseRightsRepository,
     private val licenseRepo: LicenseRepository,
     private val subProvider: SecuritySubjectProvider,
     @PersistenceContext private val em: EntityManager
 ) {
 
-    fun getById(id: Long): LicenseRtDto =
-        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRt::class.java) }.toDto()
+    fun getById(id: Long): LicenseRightsDto =
+        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }.toDto()
 
-    fun findByLicense(id: Long, pageable: Pageable): Page<LicenseRtDto> {
+    fun findByLicense(id: Long, pageable: Pageable): Page<LicenseRightsDto> {
         licenseRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
         return repo.findByLicenseId(id, pageable).map { it.toDto() }
     }
 
     @Transactional
-    fun create(req: LicenseRtCreateRequest): LicenseRtDto {
+    fun create(req: LicenseRightsCreateRequest): LicenseRightsDto {
         val query = em.createNativeQuery(
-            "SELECT pkg_contract.ins_license_rt(" +
+            "SELECT pkg_contract.ins_license_rights(" +
                     ":pIdLicense, " +
-                    ":pIdRightType, " +
+                    ":pIdRightTypes, " +
                     ":phbStartDate, " +
                     ":phbDays, " +
                     ":pCreatedBy" +
@@ -46,26 +47,26 @@ class LicenseRtService(
         )
 
         query.setParameter("pIdLicense", req.idLicense)
-        query.setParameter("pIdRightType", req.idRightType)
+        query.setParameter("pIdRightTypes", req.listIdRightTypes.joinToString(","))
         query.setParameter("phbStartDate", req.hbStartDate)
         query.setParameter("phbDays", req.hbDays)
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         val id = query.singleResult as Long
 
-        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRt::class.java) }
+        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
         em.refresh(e)
         return e.toDto()
     }
 
     @Transactional
-    fun update(id: Long, req: LicenseRtUpdateRequest): LicenseRtDto {
-        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRt::class.java) }
+    fun update(id: Long, req: LicenseRightsUpdateRequest): LicenseRightsDto {
+        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
         val query = em.createNativeQuery(
-            "SELECT pkg_contract.upd_license_rt(" +
+            "SELECT pkg_contract.upd_license_rights(" +
                     ":pId, " +
                     ":pIdLicense, " +
-                    ":pIdRightType, " +
+                    ":pIdRightTypes, " +
                     ":phbStartDate, " +
                     ":phbDays, " +
                     ":pCreatedBy" +
@@ -74,7 +75,7 @@ class LicenseRtService(
 
         query.setParameter("pId", id)
         query.setParameter("pIdLicense", req.idLicense)
-        query.setParameter("pIdRightType", req.idRightType)
+        query.setParameter("pIdRightTypes", req.listIdRightTypes?.joinToString(","))
         query.setParameter("phbStartDate", req.hbStartDate)
         query.setParameter("phbDays", req.hbDays)
         query.setParameter("pCreatedBy", subProvider.currentSub())
@@ -87,8 +88,8 @@ class LicenseRtService(
 
     @Transactional
     fun delete(id: Long, useCascade: Boolean) {
-        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRt::class.java) }
-        val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rt")
+        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
+        val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rights")
 
         sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
@@ -101,12 +102,11 @@ class LicenseRtService(
         sp.execute()
     }
 
-    private fun LicenseRt.toDto() = LicenseRtDto(
+    private fun LicenseRights.toDto() = LicenseRightsDto(
         id = this.id!!,
         idLicense = this.idLicense,
         licenseNum = this.license?.num ?: "",
-        idRightType = this.idRightType,
-        rightTypeName = this.rightType?.name ?: "",
+        licenseRightsRt = this.getLicenseRightsRt(),
         hbStartDate = this.hbStartDate,
         hbDays = this.hbDays,
         createdBy = this.createdBy,
@@ -114,4 +114,15 @@ class LicenseRtService(
         updatedBy = this.updatedBy,
         updatedAt = this.updatedAt
     )
+}
+
+internal fun LicenseRights.getLicenseRightsRt(): List<LicenseRightsRtDto> {
+    return this.rights.map { LicenseRightsRtDto(
+        id = it.id!!,
+        idLicRights = it.idLicRights,
+        idRightType = it.idRightType,
+        nameRightType = it.rightType?.name ?: "",
+        createdBy = it.createdBy,
+        createdAt = it.createdAt)
+    }
 }

@@ -6,16 +6,16 @@ import jakarta.validation.constraints.NotNull
 @Schema(description = "Запрос на создание характеристики набора характеристик для формата")
 data class FormatRtFeaturesCreateRequest(
 
-    @field:Schema(description = "ID привязки типа прав", example = "1")
-    @field:NotNull val idFmtRt: Long,
+    @field:Schema(description = "ID привязки права к формату", example = "1")
+    @field:NotNull var idFmtRights: Long,
 
     @field:Schema(description = "ID набора характеристик", example = "1")
-    @field:NotNull val idFeatureSet: Long,
+    @field:NotNull var idFeatureSet: Long,
 
     @field:Schema(description = "ID характеристики", example = "1")
-    @field:NotNull val idFeature: Int,
+    @field:NotNull var idFeature: Int,
 
-    @field:Schema(description = "Признак включения", example = "true")
+    @field:Schema(description = "Признак включения/исключения характеристики", example = "true")
     @field:NotNull val isIncluded: Boolean
 
 )

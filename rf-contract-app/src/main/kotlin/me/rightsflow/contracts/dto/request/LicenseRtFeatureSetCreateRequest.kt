@@ -7,8 +7,8 @@ import java.time.LocalDate
 @Schema(description = "Запрос на создание набора характеристик права для лицензии")
 data class LicenseRtFeatureSetCreateRequest(
 
-    @field:Schema(description = "ID привязки типа права к лицензии", example = "1")
-    @field:NotNull val idLicRt: Long,
+    @field:Schema(description = "ID привязки права к лицензии", example = "1")
+    @field:NotNull var idLicRights: Long,
 
     @field:Schema(description = "Признак исключительности права", example = "true")
     @field:NotNull val isExclusive: Boolean,

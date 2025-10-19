@@ -51,7 +51,7 @@ class ContractService(
                     ":pIdOrgParty, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
-                    ":pSignDate, " +
+                    ":pContractDate, " +
                     ":pIdContractType, " +
                     ":pInOut, " +
                     ":pDescription, " +
@@ -65,7 +65,7 @@ class ContractService(
         query.setParameter("pIdOrgParty", req.idOrgParty)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
-        query.setParameter("pSignDate", req.signDate)
+        query.setParameter("pContractDate", req.contractDate)
         query.setParameter("pIdContractType", req.idContractType)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
@@ -90,7 +90,7 @@ class ContractService(
                     ":pIdOrgParty, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
-                    ":pSignDate, " +
+                    ":pContractDate, " +
                     ":pIdContractType, " +
                     ":pInOut, " +
                     ":pDescription, " +
@@ -105,7 +105,7 @@ class ContractService(
         query.setParameter("pIdOrgParty", req.idOrgParty)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
-        query.setParameter("pSignDate", req.signDate)
+        query.setParameter("pContractDate", req.contractDate)
         query.setParameter("pIdContractType", req.idContractType)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
@@ -171,7 +171,7 @@ class ContractService(
         nameOrgParty = this.organizationParty?.name ?: "",
         validityPeriodStart = this.validityPeriod.realLower(),
         validityPeriodEnd = this.validityPeriod.realUpper(),
-        signDate = this.signDate,
+        contractDate = this.contractDate,
         idContractType = this.idContractType,
         contractTypeName = this.contractType?.name ?: "",
         idContractStatus = this.idContractStatus,

@@ -39,8 +39,8 @@ class Contract(
     @Column(name = "VALIDITY_PERIOD", nullable = false, columnDefinition = "daterange")
     var validityPeriod: Range<LocalDate> = Range.emptyRange(LocalDate::class.java),
 
-    @Column(name = "SIGN_DATE")
-    var signDate: LocalDate? = null,
+    @Column(name = "CONTRACT_DATE")
+    var contractDate: LocalDate? = null,
 
     @Column(name = "ID_CONTRACT_TYPE", nullable = false)
     var idContractType: Int,

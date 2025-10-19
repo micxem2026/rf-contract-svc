@@ -1,16 +1,15 @@
 package me.rightsflow.contracts.entity
 
-import io.hypersistence.utils.hibernate.type.range.PostgreSQLRangeType
-import io.hypersistence.utils.hibernate.type.range.Range
 import jakarta.persistence.*
 import me.rightsflow.common.entity.BaseAudit
 import org.hibernate.Hibernate
-import org.hibernate.annotations.Type
-import java.time.LocalDate
 
 @Entity
-@Table(name = "LICENSE_RT_FEATURE_SET")
-class LicenseRtFeatureSet(
+@Table(
+    name = "LICENSE_RIGHTS_RT",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["ID_LIC_RIGHTS", "ID_RIGHT_TYPE"])]
+)
+class LicenseRightsRt(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,21 +19,18 @@ class LicenseRtFeatureSet(
     @Column(name = "ID_LIC_RIGHTS", nullable = false)
     var idLicRights: Long,
 
-    @Column(name = "IS_EXCLUSIVE", nullable = false)
-    var isExclusive: Boolean = false,
-
-    @Column(name = "IS_USE_RIGHT", nullable = false)
-    var isUseRight: Boolean = false,
-
-    @Type(PostgreSQLRangeType::class)
-    @Column(name = "VALIDITY_PERIOD", nullable = false, columnDefinition = "daterange")
-    var validityPeriod: Range<LocalDate> = Range.emptyRange(LocalDate::class.java)
+    @Column(name = "ID_RIGHT_TYPE", nullable = false)
+    var idRightType: Int,
 
 ) : BaseAudit() {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_LIC_RIGHTS", referencedColumnName = "ID", insertable = false, updatable = false)
-    var licenseRights: LicenseRights? = null
+    var licRights: LicenseRights? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_RIGHT_TYPE", referencedColumnName = "ID", insertable = false, updatable = false)
+    var rightType: RightType? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -42,7 +38,7 @@ class LicenseRtFeatureSet(
 
         if (Hibernate.getClass(this) != Hibernate.getClass(other)) return false
 
-        other as LicenseRtFeatureSet
+        other as LicenseRightsRt
 
         return id != null && id == other.id
     }

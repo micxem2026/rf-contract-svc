@@ -25,6 +25,9 @@ dependencies {
     implementation("org.apache.commons:commons-lang3:3.18.0") {
         because("CVE-2025-48924 - Security fix")
     }
+    implementation("ch.qos.logback:logback-classic:1.5.19") {
+        because("CVE-2025-11226 - Security fix")
+    }
 }
 
 dependencyManagement {

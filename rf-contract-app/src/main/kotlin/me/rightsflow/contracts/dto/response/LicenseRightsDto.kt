@@ -4,13 +4,12 @@ import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
-@Schema(description = "Привязка типов прав к лицензии")
-data class LicenseRtDto(
+@Schema(description = "Привязка права к лицензии")
+data class LicenseRightsDto(
     @field:Schema(description = "ID", example = "1") val id: Long,
     @field:Schema(description = "ID лицензии", example = "1") val idLicense: Long,
     @field:Schema(description = "Номер лицензии", example = "Л-1234/2025") val licenseNum: String?,
-    @field:Schema(description = "ID типа прав", example = "1") val idRightType: Int,
-    @field:Schema(description = "Название типа прав", example = "SVOD") val rightTypeName: String?,
+    @field:Schema(description = "Типы прав") val licenseRightsRt: List<LicenseRightsRtDto>,
     @field:Schema(description = "Дата начала действия holdback-а", example = "2023-01-01") val hbStartDate: LocalDate?,
     @field:Schema(description = "Количество дней действия holdback-а", example = "30") val hbDays: Int?,
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,

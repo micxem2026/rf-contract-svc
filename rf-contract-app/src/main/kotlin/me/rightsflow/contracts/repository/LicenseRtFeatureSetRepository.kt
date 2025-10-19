@@ -6,5 +6,5 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface LicenseRtFeatureSetRepository : JpaRepository<LicenseRtFeatureSet, Long> {
-    fun findByIdLicRt(idLicRt: Long, pageable: Pageable): Page<LicenseRtFeatureSet>
+    fun findByIdLicRights(idLicRights: Long, pageable: Pageable): Page<LicenseRtFeatureSet>
 }

@@ -22,7 +22,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/contracts/fmt-rt-fs")
+@RequestMapping("/formats/fmt-rt-fs")
 @Tag(name = "Набор характеристик права для формата", description = "Операции с набором характеристик права для формата")
 class FormatRtFeatureSetController(
     private val service: FormatRtFeatureSetService,

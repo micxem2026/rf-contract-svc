@@ -17,8 +17,8 @@ class FormatRtFeatureSet(
     @Column(name = "ID", nullable = false)
     var id: Long? = null,
 
-    @Column(name = "ID_FMT_RT", nullable = false)
-    var idFmtRt: Long,
+    @Column(name = "ID_FMT_RIGHTS", nullable = false)
+    var idFmtRights: Long,
 
     @Column(name = "IS_EXCLUSIVE", nullable = false)
     var isExclusive: Boolean = false,
@@ -33,8 +33,8 @@ class FormatRtFeatureSet(
 ) : BaseAudit() {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_FMT_RT", referencedColumnName = "ID", insertable = false, updatable = false)
-    var formatRt: FormatRt? = null
+    @JoinColumn(name = "ID_FMT_RIGHTS", referencedColumnName = "ID", insertable = false, updatable = false)
+    var fmtRights: FormatRights? = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

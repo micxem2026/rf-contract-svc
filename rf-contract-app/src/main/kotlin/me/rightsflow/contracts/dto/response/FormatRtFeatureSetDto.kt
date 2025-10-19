@@ -7,8 +7,8 @@ import java.time.OffsetDateTime
 @Schema(description = "Набор характеристик для формата")
 data class FormatRtFeatureSetDto(
     @field:Schema(description = "ID", example = "1") val id: Long,
-    @field:Schema(description = "ID привязки формата к типу прав", example = "1") val idFmtRt: Long,
-    @field:Schema(description = "Наименование типа права", example = "SVOD") val rightTypeName: String,
+    @field:Schema(description = "ID привязки прав к формату", example = "1") val idFmtRights: Long,
+    @field:Schema(description = "Типы прав") val formatRightsRt: List<FormatRightsRtDto>,
     @field:Schema(description = "Признак исключительности", example = "true") val isExclusive: Boolean,
     @field:Schema(description = "Признак использования права", example = "false") val isUseRight: Boolean,
     @field:Schema(description = "Период действия набора характеристик (начало)", example = "2022-01-01") val validityPeriodStart: LocalDate?,

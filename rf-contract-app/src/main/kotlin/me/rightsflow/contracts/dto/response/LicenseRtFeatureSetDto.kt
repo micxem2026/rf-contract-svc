@@ -7,8 +7,8 @@ import java.time.OffsetDateTime
 @Schema(description = "Набор характеристик права")
 data class LicenseRtFeatureSetDto(
     @field:Schema(description = "ID", example = "1") val id: Long,
-    @field:Schema(description = "ID привязки типа права к лицензии", example = "1") val idLicRt: Long,
-    @field:Schema(description = "Наименование типа права", example = "SVOD") val rightTypeName: String,
+    @field:Schema(description = "ID привязки права к лицензии", example = "1") val idLicRights: Long,
+    @field:Schema(description = "Типы прав") val licenseRightsRt: List<LicenseRightsRtDto>,
     @field:Schema(description = "Признак исключительности права", example = "true") val isExclusive: Boolean,
     @field:Schema(description = "Признак использования права при эксклюзивной продаже", example = "true") val isUseRight: Boolean,
     @field:Schema(description = "Период действия набора характеристик (начало)", example = "2022-01-01") val validityPeriodStart: LocalDate?,

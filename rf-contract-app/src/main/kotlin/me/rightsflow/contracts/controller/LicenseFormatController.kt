@@ -19,7 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/contracts/formats")
+@RequestMapping("/formats")
 @Tag(name = "Форматы лицензий", description = "Операции с форматами лицензий")
 class LicenseFormatController(
     private val service: LicenseFormatService

@@ -34,7 +34,7 @@ class FormatRtFeaturesService(
     fun create(req: FormatRtFeaturesCreateRequest): FormatRtFeaturesDto {
         val query = em.createNativeQuery(
             "SELECT pkg_contract.ins_format_rt_features(" +
-                    ":pIdFmtRt, " +
+                    ":pIdFmtRights, " +
                     ":pIdFeatureSet, " +
                     ":pIdFeature, " +
                     ":pIncluded, " +
@@ -42,7 +42,7 @@ class FormatRtFeaturesService(
                     ")"
         )
 
-        query.setParameter("pIdFmtRt", req.idFmtRt)
+        query.setParameter("pIdFmtRights", req.idFmtRights)
         query.setParameter("pIdFeatureSet", req.idFeatureSet)
         query.setParameter("pIdFeature", req.idFeature)
         query.setParameter("pIncluded", req.isIncluded)
@@ -71,8 +71,7 @@ class FormatRtFeaturesService(
 
     private fun FormatRtFeatures.toDto() = FormatRtFeaturesDto(
         id = this.id!!,
-        idFmtRt = this.idFmtRt,
-        rightTypeName = this.formatRt?.rightType?.name ?: "",
+        idFmtRights = this.idFmtRights,
         idFeatureSet = this.idFeatureSet,
         idFeatureCategory = this.idFeatureCategory,
         featureCategoryName = this.featureCategory?.name ?: "",

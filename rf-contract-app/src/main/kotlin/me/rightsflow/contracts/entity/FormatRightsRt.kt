@@ -6,18 +6,18 @@ import org.hibernate.Hibernate
 
 @Entity
 @Table(
-    name = "FORMAT_RT",
-    uniqueConstraints = [UniqueConstraint(columnNames = ["ID_LIC_FORMAT", "ID_RIGHT_TYPE"])]
+    name = "FORMAT_RIGHTS_RT",
+    uniqueConstraints = [UniqueConstraint(columnNames = ["ID_FMT_RIGHTS", "ID_RIGHT_TYPE"])]
 )
-class FormatRt(
+class FormatRightsRt(
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "ID", nullable = false)
     var id: Long? = null,
 
-    @Column(name = "ID_LIC_FORMAT", nullable = false)
-    var idLicFormat: Long,
+    @Column(name = "ID_FMT_RIGHTS", nullable = false)
+    var idFmtRights: Long,
 
     @Column(name = "ID_RIGHT_TYPE", nullable = false)
     var idRightType: Int
@@ -25,8 +25,8 @@ class FormatRt(
 ) : BaseAudit() {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_LIC_FORMAT", referencedColumnName = "ID", insertable = false, updatable = false)
-    var licenseFormat: LicenseFormat? = null
+    @JoinColumn(name = "ID_FMT_RIGHTS", referencedColumnName = "ID", insertable = false, updatable = false)
+    var fmtRights: FormatRights? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_RIGHT_TYPE", referencedColumnName = "ID", insertable = false, updatable = false)
@@ -38,7 +38,7 @@ class FormatRt(
 
         if (Hibernate.getClass(this) != Hibernate.getClass(other)) return false
 
-        other as FormatRt
+        other as FormatRightsRt
 
         return id != null && id == other.id
     }

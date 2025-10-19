@@ -15,7 +15,7 @@ data class ContractDto(
     @field:Schema(description = "Наименование организации второго участника ВГО-контракта", example = "АО 'Рога и Копыта'") val nameOrgParty: String?,
     @field:Schema(description = "Период действия (начало)", example = "2023-01-01") val validityPeriodStart: LocalDate?,
     @field:Schema(description = "Период действия (конец)", example = "2024-01-01") val validityPeriodEnd: LocalDate?,
-    @field:Schema(description = "Дата подписания", example = "2023-01-01") val signDate: LocalDate?,
+    @field:Schema(description = "Дата создания контракта", example = "2023-01-01") val contractDate: LocalDate?,
     @field:Schema(description = "ID типа контракта", example = "1") val idContractType: Int,
     @field:Schema(description = "Наименование типа контракта", example = "Договор") val contractTypeName: String,
     @field:Schema(description = "ID статуса контракта", example = "1") val idContractStatus: Int,

@@ -7,8 +7,8 @@ import java.time.LocalDate
 @Schema(description = "Запрос на создание набора характеристик права для формата")
 data class FormatRtFeatureSetCreateRequest(
 
-    @field:Schema(description = "ID привязки типа права к лицензии", example = "1")
-    @field:NotNull val idFmtRt: Long,
+    @field:Schema(description = "ID привязки права к формату", example = "1")
+    @field:NotNull var idFmtRights: Long,
 
     @field:Schema(description = "Признак исключительности права", example = "true")
     @field:NotNull val isExclusive: Boolean,

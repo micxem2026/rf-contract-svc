@@ -10,10 +10,10 @@ import me.rightsflow.common.util.realUpper
 import me.rightsflow.contracts.dto.request.FormatRtFeatureSetCreateRequest
 import me.rightsflow.contracts.dto.request.FormatRtFeatureSetUpdateRequest
 import me.rightsflow.contracts.dto.response.FormatRtFeatureSetDto
-import me.rightsflow.contracts.entity.FormatRt
+import me.rightsflow.contracts.entity.FormatRights
 import me.rightsflow.contracts.entity.FormatRtFeatureSet
 import me.rightsflow.contracts.repository.FormatRtFeatureSetRepository
-import me.rightsflow.contracts.repository.FormatRtRepository
+import me.rightsflow.contracts.repository.FormatRightsRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class FormatRtFeatureSetService(
     private val repo: FormatRtFeatureSetRepository,
-    private val formatRtRepo: FormatRtRepository,
+    private val formatRtRepo: FormatRightsRepository,
     private val subProvider: SecuritySubjectProvider,
     @PersistenceContext private val em: EntityManager
 ) {
@@ -32,15 +32,15 @@ class FormatRtFeatureSetService(
     }
 
     fun findByFormatRt(id: Long, pageable: Pageable): Page<FormatRtFeatureSetDto> {
-        formatRtRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, FormatRt::class.java) }
-        return repo.findByIdFmtRt(id, pageable).map { it.toDto() }
+        formatRtRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, FormatRights::class.java) }
+        return repo.findByIdFmtRights(id, pageable).map { it.toDto() }
     }
 
     @Transactional
     fun create(req: FormatRtFeatureSetCreateRequest): FormatRtFeatureSetDto {
         val query = em.createNativeQuery(
             "SELECT pkg_contract.ins_format_rt_feature_set(" +
-                    ":pIdFmtRt, " +
+                    ":pIdFmtRights, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
                     ":pBegDate, " +
@@ -49,7 +49,7 @@ class FormatRtFeatureSetService(
                     ")"
         )
 
-        query.setParameter("pIdFmtRt", req.idFmtRt)
+        query.setParameter("pIdFmtRights", req.idFmtRights)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
         query.setParameter("pBegDate", req.validityPeriodStart)
@@ -69,7 +69,6 @@ class FormatRtFeatureSetService(
         val query = em.createNativeQuery(
             "SELECT pkg_contract.upd_format_rt_feature_set(" +
                     ":pId, " +
-                    ":pIdFmtRt, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
                     ":pBegDate, " +
@@ -79,7 +78,6 @@ class FormatRtFeatureSetService(
         )
 
         query.setParameter("pId", id)
-        query.setParameter("pIdFmtRt", req.idFmtRt)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
         query.setParameter("pBegDate", req.validityPeriodStart)
@@ -110,8 +108,8 @@ class FormatRtFeatureSetService(
 
     private fun FormatRtFeatureSet.toDto() = FormatRtFeatureSetDto(
         id = this.id!!,
-        idFmtRt = this.idFmtRt,
-        rightTypeName = this.formatRt?.rightType?.name ?: "",
+        idFmtRights = this.idFmtRights,
+        formatRightsRt = this.fmtRights?.getFormatRightsRt() ?: emptyList(),
         isExclusive = this.isExclusive,
         isUseRight = this.isUseRight,
         validityPeriodStart = this.validityPeriod.realLower(),

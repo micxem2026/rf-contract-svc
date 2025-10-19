@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface FormatRtFeatureSetRepository : JpaRepository<FormatRtFeatureSet, Long> {
 
-    fun findByIdFmtRt(idFmtRt: Long, pageable: Pageable): Page<FormatRtFeatureSet>
+    fun findByIdFmtRights(idFmtRights: Long, pageable: Pageable): Page<FormatRtFeatureSet>
 }

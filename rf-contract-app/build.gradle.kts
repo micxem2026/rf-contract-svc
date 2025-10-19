@@ -34,7 +34,7 @@ kotlin {
 dependencies {
 
     // RightsFlow libs
-    implementation("me.rightsflow:rf-common-lib:1.0.2")
+    implementation("me.rightsflow:rf-common-lib:${property("rfCommonLibVersion")}")
     implementation(project(":rf-intersync-svc"))
 
     // Spring Boot starters
@@ -63,7 +63,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     // Swagger/OpenAPI
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${property("springDocVersion")}")
     implementation("org.apache.commons:commons-lang3:3.18.0") {
         because("CVE-2025-48924 - Security fix")
     }

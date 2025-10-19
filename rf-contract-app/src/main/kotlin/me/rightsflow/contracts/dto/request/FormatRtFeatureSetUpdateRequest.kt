@@ -6,8 +6,8 @@ import java.time.LocalDate
 @Schema(description = "Запрос на обновление набора характеристик права для формата")
 data class FormatRtFeatureSetUpdateRequest(
 
-    @field:Schema(description = "ID привязки типа права к лицензии")
-    val idFmtRt: Long?,
+//    @field:Schema(description = "ID привязки права к формату")
+//    val idFmtRights: Long?,
 
     @field:Schema(description = "Признак исключительности права")
     val isExclusive: Boolean?,

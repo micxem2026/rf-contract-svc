@@ -13,8 +13,8 @@ class LicenseRtFeatures(
     @Column(name = "ID", nullable = false)
     var id: Long? = null,
 
-    @Column(name = "ID_LIC_RT", nullable = false)
-    var idLicRt: Long,
+    @Column(name = "ID_LIC_RIGHTS", nullable = false)
+    var idLicRights: Long,
 
     @Column(name = "ID_FEATURE_SET", nullable = false)
     var idFeatureSet: Long,
@@ -34,8 +34,8 @@ class LicenseRtFeatures(
 ) : BaseAudit() {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_LIC_RT", referencedColumnName = "ID", insertable = false, updatable = false)
-    var licenseRt: LicenseRt? = null
+    @JoinColumn(name = "ID_LIC_RIGHTS", referencedColumnName = "ID", insertable = false, updatable = false)
+    var licenseRights: LicenseRights? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_FEATURE_SET", referencedColumnName = "ID", insertable = false, updatable = false)

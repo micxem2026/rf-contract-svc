@@ -29,8 +29,8 @@ data class ContractCreateRequest(
     @field:Schema(description = "Период действия контракта (конец)", example = "2022-01-31")
     val validityPeriodEnd: LocalDate?,
 
-    @field:Schema(description = "Дата подписания контракта", example = "2022-01-01")
-    val signDate: LocalDate?,
+    @field:Schema(description = "Дата создания контракта", example = "2022-01-01")
+    val contractDate: LocalDate?,
 
     @field:Schema(description = "ID типа контракта (сделка/договор)", example = "1")
     @field:NotNull

@@ -13,8 +13,8 @@ class FormatRtFeatures(
     @Column(name = "ID", nullable = false)
     var id: Long? = null,
 
-    @Column(name = "ID_FMT_RT", nullable = false)
-    var idFmtRt: Long,
+    @Column(name = "ID_FMT_RIGHTS", nullable = false)
+    var idFmtRights: Long,
 
     @Column(name = "ID_FEATURE_SET", nullable = false)
     var idFeatureSet: Long,
@@ -34,8 +34,8 @@ class FormatRtFeatures(
 ) : BaseAudit() {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_FMT_RT", referencedColumnName = "ID", insertable = false, updatable = false)
-    var formatRt: FormatRt? = null
+    @JoinColumn(name = "ID_FMT_RIGHTS", referencedColumnName = "ID", insertable = false, updatable = false)
+    var fmtRights: FormatRights? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_FEATURE_SET", referencedColumnName = "ID", insertable = false, updatable = false)

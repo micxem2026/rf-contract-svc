@@ -25,8 +25,8 @@ data class ContractUpdateRequest(
     @field:Schema(description = "Период действия контракта (конец)")
     val validityPeriodEnd: LocalDate?,
 
-    @field:Schema(description = "Дата подписания контракта")
-    val signDate: LocalDate?,
+    @field:Schema(description = "Дата создания контракта")
+    val contractDate: LocalDate?,
 
     @field:Schema(description = "ID типа контракта (сделка/договор)")
     val idContractType: Int?,

@@ -6,8 +6,8 @@ import java.time.LocalDate
 @Schema(description = "Запрос на обновление набора характеристик права для лицензии")
 data class LicenseRtFeatureSetUpdateRequest(
 
-    @field:Schema(description = "ID привязки типа права к лицензии")
-    val idLicRt: Long?,
+    @field:Schema(description = "ID привязки права к лицензии")
+    val idLicRights: Long?,
 
     @field:Schema(description = "Признак исключительности права")
     val isExclusive: Boolean?,
