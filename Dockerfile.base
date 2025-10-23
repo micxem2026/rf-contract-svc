@@ -1,0 +1,7 @@
+FROM bellsoft/liberica-openjdk-alpine-musl:17.0.13-cds
+
+RUN apk update && apk add tzdata && apk --no-cache add curl
+RUN apk --no-cache add msttcorefonts-installer fontconfig && update-ms-fonts && fc-cache -f
+
+ENV TZ=Europe/Moscow
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone

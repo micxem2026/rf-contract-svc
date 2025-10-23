@@ -72,7 +72,8 @@ class OipDlqHandler(
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val oipDto = when (value) {
             null -> KlfOipAvroMessage(null,"",null,null,"",null,
-                null,null,null,"",null,null,null)
+                null,null,null,false,false,
+                "",null,null,null)
             else -> MessageConverter.convertToKlfOipAvroMessage(value)
         }
         replicationService.processOip(syncId, oipDto)

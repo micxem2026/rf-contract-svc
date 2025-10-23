@@ -67,6 +67,8 @@ data class KlfOipAvroMessage(
     val part_count: Int?,
     val duration: Long?, //io.debezium.time.MicroDuration
     val description: String?,
+    val has_parent: Boolean?,
+    val has_children: Boolean?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,

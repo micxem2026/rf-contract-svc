@@ -132,8 +132,8 @@ class StreamProcessors(
                 val oipDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfOipAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfOipAvroMessage(null,null,null,null,
-                        "", null, null, null, null, "", Instant.EPOCH,
-                        null, null)
+                        "", null, null, null, null, false, false,
+                        "", Instant.EPOCH, null, null)
                     else -> throw IllegalArgumentException("oipProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
                 replicationService.processOip(syncId, oipDto)
@@ -394,9 +394,9 @@ object MessageConverter {
             display_name = record.getString("display_name"),
             email = record.getString("email"),
             password_hash = record.getString("password_hash"),
-            enabled = record.get("enabled") as Boolean?,
-            account_non_expired = record.get("account_non_expired") as Boolean?,
-            account_non_locked = record.get("account_non_locked") as Boolean?,
+            enabled = record.getBooleanOrNull("enabled"),
+            account_non_expired = record.getBooleanOrNull("account_non_expired"),
+            account_non_locked = record.getBooleanOrNull("account_non_locked"),
             expiration_date = record.get("expiration_date") as Long?,
             last_logon = record.get("last_logon") as Long?,
             created_at = record.get("created_at") as Long?,
@@ -455,6 +455,8 @@ object MessageConverter {
             part_num = record.get("part_num") as Int?,
             part_count = record.get("part_count") as Int?,
             duration = record.get("duration") as Long?,
+            has_parent = record.getBoolean("has_parent"),
+            has_children = record.getBoolean("has_children"),
             description = record.getString("description"),
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
@@ -536,6 +538,18 @@ object MessageConverter {
             updated_by = record.getStringOrNull("updated_by"),
             updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
         )
+    }
+
+    private fun GenericRecord.getBooleanOrNull(fieldName: String): Boolean? {
+        this.schema.getField(fieldName) ?: return null;
+        return when (val value = this.get(fieldName)) {
+            is Boolean -> value
+            else -> null
+        }
+    }
+
+    private fun GenericRecord.getBoolean(fieldName: String): Boolean {
+        return getBooleanOrNull(fieldName) ?: false
     }
 
     private fun GenericRecord.getStringOrNull(fieldName: String): String? {

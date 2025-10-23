@@ -36,6 +36,10 @@ spec:
       name: rf-contract-svc
       labels:
         app: rf-contract-svc
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/api/contract/v1/actuator/prometheus"
+        prometheus.io/port: "8082" # <-- порт приложения
     spec:
       #      hostAliases:
       #        - ip: "192.168.1.22"
@@ -46,7 +50,8 @@ spec:
           image: gitlab.micxem:5050/rights-flow/rf-contract-svc:latest
           imagePullPolicy: Always
           ports:
-            - containerPort: 8082
+            - name: http
+              containerPort: 8082
               protocol: TCP
           args: [ "--spring.profiles.active=$(RF_CONTRACT_SVC_PROFILES)"]
           env:

@@ -208,6 +208,8 @@ CREATE OR REPLACE FUNCTION pkg_sync.sync_klf_oip(
     p_part_count integer DEFAULT 0,
     p_duration character varying DEFAULT NULL::character varying,
     p_description character varying DEFAULT NULL::character varying,
+    p_has_parent boolean DEFAULT false,
+    p_has_children boolean DEFAULT false,
     p_created_by character varying DEFAULT 'admin',
     p_created_at timestamptz DEFAULT CURRENT_TIMESTAMP,
     p_updated_by character varying DEFAULT NULL::character varying,
@@ -224,14 +226,14 @@ BEGIN
         DELETE FROM sync__klf_oip WHERE id = p_sync_id;
     ELSE
         INSERT INTO sync__klf_oip (
-            id, guid, id_oip_super_type, id_oip_type,
-            name, part_num, part_count, duration, description,
-            created_by, created_at, updated_by, updated_at
+            id, guid, id_oip_super_type, id_oip_type, name, part_num, part_count, duration, description,
+            has_parent, has_children, created_by, created_at, updated_by, updated_at
         )
         VALUES (
                    p_sync_id, p_guid, p_id_oip_super_type, p_id_oip_type, p_name,
                    p_part_num, p_part_count, p_duration::interval, p_description,
-                   p_created_by, p_created_at, p_updated_by, p_updated_at
+                   p_has_parent, p_has_children,p_created_by, p_created_at,
+                   p_updated_by, p_updated_at
                )
         ON CONFLICT (id) DO UPDATE SET
             guid = EXCLUDED.guid,
@@ -242,6 +244,8 @@ BEGIN
             part_count = EXCLUDED.part_count,
             duration = EXCLUDED.duration::interval,
             description = EXCLUDED.description,
+            has_parent = EXCLUDED.has_parent,
+            has_children = EXCLUDED.has_children,
             created_by = EXCLUDED.created_by,
             updated_by = EXCLUDED.updated_by,
             updated_at = EXCLUDED.updated_at

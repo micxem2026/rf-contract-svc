@@ -162,6 +162,8 @@ class SyncService {
                     ":pPartCount, " +
                     ":pDuration, " +
                     ":pDescription, " +
+                    ":pHasParent, " +
+                    ":pHasChildren, " +
                     ":pCreatedBy, " +
                     ":pCreatedAt, " +
                     ":pUpdatedBy, " +
@@ -179,6 +181,8 @@ class SyncService {
         query.setParameter("pPartCount", dto.part_count)
         query.setParameter("pDuration", dto.duration?.let { microsToHms(it) })
         query.setParameter("pDescription", dto.description)
+        query.setParameter("pHasParent", dto.has_parent)
+        query.setParameter("pHasChildren", dto.has_children)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
         query.setParameter("pUpdatedBy", dto.updated_by)
