@@ -115,6 +115,16 @@ spec:
                 configMapKeyRef:
                   name: kafka-props
                   key: schema-registry-url
+            - name: RF_OTLP_ENDPOINT
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-props
+                  key: otlp_endpoint
+            - name: RF_TRACE_ENABLED
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-props
+                  key: rf_trace_enabled
 
           readinessProbe:
             httpGet:

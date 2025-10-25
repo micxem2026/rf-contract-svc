@@ -27,5 +27,6 @@ subprojects {
     extra["springBootVersion"] = "3.5.5"
     extra["springDocVersion"] = "2.8.9"
     extra["rfCommonLibVersion"] = "1.0.3"
+    extra["micrometerVersion"] = "1.5.5"
 
 }

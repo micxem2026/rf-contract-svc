@@ -33,6 +33,8 @@ kotlin {
 
 dependencies {
 
+    implementation(platform("io.micrometer:micrometer-tracing-bom:${property("micrometerVersion")}"))
+
     // RightsFlow libs
     implementation("me.rightsflow:rf-common-lib:${property("rfCommonLibVersion")}")
     implementation(project(":rf-intersync-svc"))
@@ -60,6 +62,15 @@ dependencies {
     implementation("org.flywaydb:flyway-core")
     implementation("org.flywaydb:flyway-database-postgresql")
     implementation("io.hypersistence:hypersistence-utils-hibernate-63:3.10.3")
+
+    // Structured Logging
+    implementation("net.logstash.logback:logstash-logback-encoder:8.1")
+
+    // Micrometer Tracing
+    implementation("io.micrometer:micrometer-tracing")
+    implementation("io.micrometer:micrometer-observation")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
 
     // Kotlin
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
