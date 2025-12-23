@@ -9,19 +9,25 @@ repositories {
     maven {
         url = uri("https://packages.confluent.io/maven/")
     }
-    maven {
-        name = "GitLab"
-        url = uri(findProperty("gitlab.registry.url") ?: "")
 
-        credentials(HttpHeaderCredentials::class) {
-            name = "Private-Token"
-            value = findProperty("gitlab.registry.token")?.toString() ?: ""
-        }
+    // Безопасное получение свойства
+    val gitlabRegistryUrl = findProperty("gitlab.registry.url")?.toString()
+    // Добавляем репозиторий только если URL задан и не пуст
+    if (!gitlabRegistryUrl.isNullOrEmpty()) {
+        maven {
+            name = "GitLab"
+            url = uri(gitlabRegistryUrl)
 
-        authentication {
-            create<HttpHeaderAuthentication>("header")
+            credentials(HttpHeaderCredentials::class) {
+                name = "Private-Token"
+                value = findProperty("gitlab.registry.token")?.toString() ?: ""
+            }
+
+            authentication {
+                create<HttpHeaderAuthentication>("header")
+            }
+            isAllowInsecureProtocol = project.findProperty("gitlab.allow.insecure") == "true"
         }
-        isAllowInsecureProtocol = project.findProperty("gitlab.allow.insecure") == "true"
     }
 }
 
