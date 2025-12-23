@@ -133,7 +133,8 @@ class StreamProcessors(
                     is GenericRecord -> MessageConverter.convertToKlfOipAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfOipAvroMessage(null,null,null,null,
                         "", null, null, null, null, false, false,
-                        "", Instant.EPOCH, null, null)
+                        0, null, "", "", "", Instant.EPOCH,
+                        null, null)
                     else -> throw IllegalArgumentException("oipProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
                 replicationService.processOip(syncId, oipDto)
@@ -457,6 +458,10 @@ object MessageConverter {
             duration = record.get("duration") as Long?,
             has_parent = record.getBoolean("has_parent"),
             has_children = record.getBoolean("has_children"),
+            children_count = record.get("children_count") as Int?,
+            root_id = record.get("root_id") as Int?,
+            native_name = record.getStringOrNull("native_name"),
+            release_year = record.getStringOrNull("release_year"),
             description = record.getString("description"),
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},

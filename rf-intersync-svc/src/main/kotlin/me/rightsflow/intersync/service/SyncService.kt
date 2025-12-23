@@ -164,6 +164,10 @@ class SyncService {
                     ":pDescription, " +
                     ":pHasParent, " +
                     ":pHasChildren, " +
+                    ":pChildrenCount, " +
+                    ":pRootId, " +
+                    ":pNativeName, " +
+                    ":pReleaseYear, " +
                     ":pCreatedBy, " +
                     ":pCreatedAt, " +
                     ":pUpdatedBy, " +
@@ -183,6 +187,10 @@ class SyncService {
         query.setParameter("pDescription", dto.description)
         query.setParameter("pHasParent", dto.has_parent)
         query.setParameter("pHasChildren", dto.has_children)
+        query.setParameter("pChildrenCount", dto.children_count)
+        query.setParameter("pRootId", dto.root_id)
+        query.setParameter("pNativeName", dto.native_name)
+        query.setParameter("pReleaseYear", dto.release_year)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
         query.setParameter("pUpdatedBy", dto.updated_by)

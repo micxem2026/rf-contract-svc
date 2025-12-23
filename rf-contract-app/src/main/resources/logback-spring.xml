@@ -27,6 +27,10 @@
         <appender name="JSON_STDOUT" class="ch.qos.logback.core.ConsoleAppender">
             <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
                 <providers>
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                        <pattern>yyyy-MM-dd'T'HH:mm:ss.SSSX</pattern>
+                    </timestamp>
                     <logLevel>
                         <fieldName>level</fieldName>
                     </logLevel>
@@ -46,7 +50,6 @@
                     <pattern>
                         <pattern>
                             {
-                            "service": "${spring_app_name:-unknown}",
                             "pid": "${PID:-}"
                             }
                         </pattern>
