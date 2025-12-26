@@ -33,21 +33,23 @@ class License(
     @Column(name = "PRICE", nullable = false)
     var price: BigDecimal = BigDecimal.ZERO,
 
-    @Column(name = "ID_CURRENCY", nullable = false)
-    var idCurrency: Int,
-
     @Type(PostgreSQLRangeType::class)
     @Column(name = "VALIDITY_PERIOD", nullable = false, columnDefinition = "daterange")
     var validityPeriod: Range<LocalDate> = Range.emptyRange(LocalDate::class.java),
 
     @Column(name = "DESCRIPTION", length = 511)
-    var description: String? = null
+    var description: String? = null,
+
+    @Column(name = "VAT_RATE", nullable = false)
+    var vatRate: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "VAT_AMOUNT", nullable = false)
+    var vatAmount: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "TOTAL_AMOUNT", nullable = false)
+    var totalAmount: BigDecimal = BigDecimal.ZERO
 
 ) : BaseAudit() {
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ID_CURRENCY", referencedColumnName = "ID", insertable = false, updatable = false)
-    var currency: Currency? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_LIC_FORMAT", referencedColumnName = "ID", insertable = false, updatable = false)

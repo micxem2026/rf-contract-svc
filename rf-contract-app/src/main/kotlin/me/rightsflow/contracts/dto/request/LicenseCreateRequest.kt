@@ -27,8 +27,14 @@ data class LicenseCreateRequest(
     @field:Schema(description = "Стоимость", example = "100.00")
     @field:NotNull var price: BigDecimal,
 
-    @field:Schema(description = "ID валюты", example = "1")
-    @field:NotNull var idCurrency: Int,
+    @field:Schema(description = "Ставка НДС", example = "20.00")
+    @field:NotNull var vatRate: BigDecimal,
+
+    @field:Schema(description = "Сумма НДС", example = "20.00")
+    @field:NotNull var vatAmount: BigDecimal,
+
+    @field:Schema(description = "Всего", example = "120.00")
+    @field:NotNull var totalAmount: BigDecimal,
 
     @field:Schema(description = "Период действия лицензии (начало)", example = "2022-01-01")
     val validityPeriodStart: LocalDate?,

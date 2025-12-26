@@ -23,9 +23,22 @@ data class ContractDto(
     @field:Schema(description = "Вид контракта (внешняя покупка/продажа, внутренняя покупка/продажа)", example = "eS") val inOut: String,
     @field:Schema(description = "Описание", example = "Договор на поставку товаров") val description: String?,
     @field:Schema(description = "Предупреждения целостности контракта", example = "Контракт не содержит лицензий!") val warning: String?,
+
     @field:Schema(description = "ID родственного контракта для сделки", example = "1") val idSibling: Long?,
     @field:Schema(description = "GUID родственного контракта для сделки", example = "013-123456789") val guidSibling: String?,
     @field:Schema(description = "Номер родственного контракта для сделки", example = "С-0123/2025") val numSibling: String?,
+
+    @field:Schema(description = "ID родительского контракта", example = "1") val idParent: Long?,
+    @field:Schema(description = "GUID родительского контракта", example = "013-123456789") val guidParent: String?,
+    @field:Schema(description = "Номер родительского контракта", example = "С-0123/2025") val numParent: String?,
+
+    @field:Schema(description = "ID валюты контракта", example = "1") val idCurrency: Int?,
+    @field:Schema(description = "Код валюты контракта", example = "USD") val currencyCode: String?,
+    @field:Schema(description = "Название валюты контракта", example = "Доллар США") val currencyName: String?,
+    @field:Schema(description = "ID валюты платежа", example = "1") val idCurrencyPayment: Int?,
+    @field:Schema(description = "Код валюты платежа", example = "USD") val currencyCodePayment: String?,
+    @field:Schema(description = "Название валюты платежа", example = "Доллар США") val currencyNamePayment: String?,
+
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,

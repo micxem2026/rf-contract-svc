@@ -42,7 +42,9 @@ class LicenseService(
                     ":pIdContract, " +
                     ":pIdLicFormat, " +
                     ":pPrice, " +
-                    ":pIdCurrency, " +
+                    ":pVatRate, " +
+                    ":pVatAmount, " +
+                    ":pTotalAmount, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pDescription, " +
@@ -55,7 +57,9 @@ class LicenseService(
         query.setParameter("pIdContract", req.idContract)
         query.setParameter("pIdLicFormat", req.idLicFormat)
         query.setParameter("pPrice", req.price)
-        query.setParameter("pIdCurrency", req.idCurrency)
+        query.setParameter("pVatRate", req.vatRate)
+        query.setParameter("pVatAmount", req.vatAmount)
+        query.setParameter("pTotalAmount", req.totalAmount)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pDescription", req.description)
@@ -78,7 +82,9 @@ class LicenseService(
                     ":pNum, " +
                     ":pIdLicFormat, " +
                     ":pPrice, " +
-                    ":pIdCurrency, " +
+                    ":pVatRate, " +
+                    ":pVatAmount, " +
+                    ":pTotalAmount, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pDescription, " +
@@ -91,7 +97,9 @@ class LicenseService(
         query.setParameter("pNum", req.num)
         query.setParameter("pIdLicFormat", req.idLicFormat)
         query.setParameter("pPrice", req.price)
-        query.setParameter("pIdCurrency", req.idCurrency)
+        query.setParameter("pVatRate", req.vatRate)
+        query.setParameter("pVatAmount", req.vatAmount)
+        query.setParameter("pTotalAmount", req.totalAmount)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pDescription", req.description)
@@ -128,9 +136,9 @@ class LicenseService(
         guid = this.guid,
         num = this.num,
         price = this.price,
-        idCurrency = this.idCurrency,
-        currencyCode = this.currency?.isoCharCode ?: "",
-        currencyName = this.currency?.name ?: "",
+        vatRate = this.vatRate,
+        vatAmount = this.vatAmount,
+        totalAmount = this.totalAmount,
         validityPeriodStart = this.validityPeriod.realLower(),
         validityPeriodEnd = this.validityPeriod.realUpper(),
         description = this.description,

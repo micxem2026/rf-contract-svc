@@ -42,6 +42,12 @@ data class ContractCreateRequest(
 
     @field:Schema(description = "Описание", example = "Описание")
     @field:Size(max = 511)
-    val description: String?
+    val description: String?,
+
+    @field:Schema(description = "ID валюты контракта", example = "1")
+    var idCurrency: Int?,
+
+    @field:Schema(description = "ID валюты платежа", example = "1")
+    var idCurrencyPayment: Int?,
 
 )

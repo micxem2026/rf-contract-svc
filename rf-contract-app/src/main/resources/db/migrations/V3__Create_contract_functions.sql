@@ -227,6 +227,8 @@ create or replace function pkg_contract.ins_contract(p_guid character varying,
                                                      p_id_contract_type integer,
                                                      p_in_out char(2),
                                                      p_description character varying,
+                                                     p_id_currency integer,
+                                                     p_id_currency_payment integer,
                                                      p_username character varying
 ) returns bigint
     security definer
@@ -240,6 +242,8 @@ DECLARE
     v_id_contract_type integer;
     v_id_contract_status integer;
     v_id_org_party integer;
+    v_id_currency integer;
+    v_id_currency_payment integer;
 BEGIN
 
     v_id_contract_type := pkg_contract.get_def_contract_type(p_id_contract_type);
@@ -253,9 +257,12 @@ BEGIN
         v_id_org_party := p_id_org_party;
     end if;
 
-    insert into contract (guid, num, id_org, id_org_party, validity_period,contract_date, id_contract_type, id_contract_status, in_out, description, created_by)
+    v_id_currency := pkg_contract.get_def_currency(p_id_currency);
+    v_id_currency_payment := pkg_contract.get_def_currency(p_id_currency_payment);
+
+    insert into contract (guid, num, id_org, id_org_party, validity_period,contract_date, id_contract_type, id_contract_status, in_out, description, id_currency, id_currency_payment, created_by)
     values (p_guid, v_num, p_id_org, v_id_org_party, v_validity_period, p_contract_date, v_id_contract_type,
-            v_id_contract_status, p_in_out, p_description, p_username)
+            v_id_contract_status, p_in_out, p_description, v_id_currency, v_id_currency_payment, p_username)
     returning id into r_result;
 
     return r_result;
@@ -273,6 +280,8 @@ create or replace function pkg_contract.upd_contract(p_id bigint,
                                                      p_id_contract_type integer,
                                                      p_in_out char(2),
                                                      p_description character varying,
+                                                     p_id_currency integer,
+                                                     p_id_currency_payment integer,
                                                      p_username character varying
 ) returns bigint
     security definer
@@ -314,6 +323,8 @@ BEGIN
         id_contract_type = v_id_contract_type,
         in_out = coalesce(p_in_out, in_out),
         description = p_description,
+        id_currency = p_id_currency,
+        id_currency_payment = p_id_currency_payment,
         updated_by = p_username,
         updated_at = current_timestamp
     where
@@ -328,7 +339,9 @@ create or replace function pkg_contract.ins_license(p_guid character varying,
                                                     p_id_contract bigint,
                                                     p_id_lic_format bigint,
                                                     p_price numeric,
-                                                    p_id_currency integer,
+                                                    p_vat_rate numeric,
+                                                    p_vat_amount numeric,
+                                                    p_total_amount numeric,
                                                     p_beg_date date,
                                                     p_end_date date,
                                                     p_description character varying,
@@ -343,7 +356,6 @@ DECLARE
     v_contract contract%rowtype;
     v_validity_period daterange;
     v_num contract.num%type;
-    v_id_currency integer;
 BEGIN
 
     if p_id_contract is null then
@@ -363,11 +375,9 @@ BEGIN
         v_validity_period := v_contract.validity_period * v_validity_period;
     end if;
 
-    v_id_currency := pkg_contract.get_def_currency(p_id_currency);
-
-    insert into license (id_contract, id_lic_format, guid, num, price, id_currency, validity_period, description, created_by)
-    values (p_id_contract, p_id_lic_format, p_guid, v_num, p_price, v_id_currency,
-            v_validity_period, p_description, p_username)
+    insert into license (id_contract, id_lic_format, guid, num, price, vat_rate, vat_amount, total_amount, validity_period, description, created_by)
+    values (p_id_contract, p_id_lic_format, p_guid, v_num, p_price, p_vat_rate, p_vat_amount,
+            p_total_amount, v_validity_period, p_description, p_username)
     returning id into r_result;
 
     return r_result;
@@ -379,7 +389,9 @@ create or replace function pkg_contract.upd_license(p_id bigint,
                                                     p_num character varying,
                                                     p_id_lic_format bigint,
                                                     p_price numeric,
-                                                    p_id_currency integer,
+                                                    p_vat_rate numeric,
+                                                    p_vat_amount numeric,
+                                                    p_total_amount numeric,
                                                     p_beg_date date,
                                                     p_end_date date,
                                                     p_description character varying,
@@ -422,7 +434,9 @@ BEGIN
         guid = p_guid,
         num = coalesce(p_num, num),
         price = coalesce(p_price, price),
-        id_currency = coalesce(p_id_currency, id_currency),
+        vat_rate = coalesce(p_vat_rate, vat_rate),
+        vat_amount = coalesce(p_vat_amount, vat_amount),
+        total_amount = coalesce(p_total_amount, total_amount),
         validity_period = v_validity_period,
         description = p_description,
         updated_by = p_username,
@@ -682,9 +696,17 @@ BEGIN
 END;
 $$ language plpgsql;
 
+drop function if exists pkg_contract.ins_license_rt_feature_set(p_id_fmt_rights bigint,
+                                                               p_is_exclusive boolean,
+                                                               p_is_use_right boolean,
+                                                               p_beg_date date,
+                                                               p_end_date date,
+                                                               p_username character varying);
+
 create or replace function pkg_contract.ins_license_rt_feature_set(p_id_lic_rights bigint,
                                                                    p_is_exclusive boolean,
                                                                    p_is_use_right boolean,
+                                                                   p_is_sub_license boolean,
                                                                    p_beg_date date,
                                                                    p_end_date date,
                                                                    p_username character varying
@@ -716,19 +738,28 @@ BEGIN
         v_validity_period := v_license.validity_period * v_validity_period;
     end if;
 
-    insert into license_rt_feature_set (id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
+    insert into license_rt_feature_set (id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
     values (p_id_lic_rights, coalesce(p_is_exclusive, false), coalesce(p_is_use_right, false),
-            v_validity_period, p_username)
+            coalesce(p_is_sub_license, false), v_validity_period, p_username)
     returning id into r_result;
 
     return r_result;
 END;
 $$ language plpgsql;
 
+drop function if exists pkg_contract.upd_license_rt_feature_set(p_id bigint,
+                                                                p_id_lic_rights bigint,
+                                                                p_is_exclusive boolean,
+                                                                p_is_use_right boolean,
+                                                                p_beg_date date,
+                                                                p_end_date date,
+                                                                p_username character varying);
+
 create or replace function pkg_contract.upd_license_rt_feature_set(p_id bigint,
                                                                    p_id_lic_rights bigint,
                                                                    p_is_exclusive boolean,
                                                                    p_is_use_right boolean,
+                                                                   p_is_sub_license boolean,
                                                                    p_beg_date date,
                                                                    p_end_date date,
                                                                    p_username character varying
@@ -770,6 +801,7 @@ BEGIN
     set
         is_exclusive = coalesce(p_is_exclusive, is_exclusive),
         is_use_right = coalesce(p_is_use_right, is_use_right),
+        is_sub_license = coalesce(p_is_sub_license, is_sub_license),
         validity_period = v_validity_period,
         updated_by = p_username,
         updated_at = current_timestamp
@@ -1015,9 +1047,17 @@ BEGIN
 END;
 $$ language plpgsql;
 
+drop function if exists pkg_contract.ins_format_rt_feature_set(p_id_fmt_rights bigint,
+                                                               p_is_exclusive boolean,
+                                                               p_is_use_right boolean,
+                                                               p_beg_date date,
+                                                               p_end_date date,
+                                                               p_username character varying);
+
 create or replace function pkg_contract.ins_format_rt_feature_set(p_id_fmt_rights bigint,
                                                                   p_is_exclusive boolean,
                                                                   p_is_use_right boolean,
+                                                                  p_is_sub_license boolean,
                                                                   p_beg_date date,
                                                                   p_end_date date,
                                                                   p_username character varying
@@ -1032,18 +1072,26 @@ DECLARE
 BEGIN
 
     v_validity_period = daterange(p_beg_date, p_end_date, '[]');
-    insert into format_rt_feature_set (id_fmt_rights, is_exclusive, is_use_right, validity_period, created_by)
+    insert into format_rt_feature_set (id_fmt_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
     values (p_id_fmt_rights, coalesce(p_is_exclusive, false), coalesce(p_is_use_right, false),
-            v_validity_period, p_username)
+            coalesce(p_is_sub_license, false), v_validity_period, p_username)
     returning id into r_result;
 
     return r_result;
 END;
 $$ language plpgsql;
 
+drop function if exists pkg_contract.upd_format_rt_feature_set(p_id bigint,
+                                                               p_is_exclusive boolean,
+                                                               p_is_use_right boolean,
+                                                               p_beg_date date,
+                                                               p_end_date date,
+                                                               p_username character varying);
+
 create or replace function pkg_contract.upd_format_rt_feature_set(p_id bigint,
                                                                   p_is_exclusive boolean,
                                                                   p_is_use_right boolean,
+                                                                  p_is_sub_license boolean,
                                                                   p_beg_date date,
                                                                   p_end_date date,
                                                                   p_username character varying
@@ -1061,6 +1109,7 @@ BEGIN
     set
         is_exclusive = coalesce(p_is_exclusive, is_exclusive),
         is_use_right = coalesce(p_is_use_right, is_use_right),
+        is_sub_license = coalesce(p_is_sub_license, is_sub_license),
         validity_period = v_validity_period,
         updated_by = p_username,
         updated_at = current_timestamp
@@ -1738,6 +1787,8 @@ $$ language plpgsql;
 comment on function pkg_contract.get_features_set_hash(bigint, bigint, integer, varchar, boolean, boolean) is
     'Вычисляет хэш набора характеристик прав. Использует соответствующие таблицы для расчёта и кеширования';
 
+drop function if exists pkg_contract.get_elemental_rights(p_id_oip integer, p_id_org integer, p_in_out character, p_beg_date date, p_end_date date, p_username character varying);
+
 create or replace function pkg_contract.get_elemental_rights(
     p_id_oip        int,
     p_id_org        int,
@@ -1756,6 +1807,7 @@ create or replace function pkg_contract.get_elemental_rights(
                       sign_date       date,
                       is_exclusive    boolean,
                       is_use_right    boolean,
+                      is_sub_license  boolean,
                       features_hash   text
                   )
     security definer
@@ -1795,6 +1847,7 @@ begin
             lic.sign_date,
             lic.is_exclusive,
             lic.is_use_right,
+            lic.is_sub_license,
             ntab.features_hash
         from lic
         cross join lateral unnest(
@@ -2568,8 +2621,8 @@ BEGIN
     -- Если нет holdback-а -> просто копируем все feature-sets
     IF hb_start IS NULL THEN
         INSERT INTO license_rt_feature_set_ext
-        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
-        SELECT id, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by
+        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
+        SELECT id, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by
         FROM license_rt_feature_set
         WHERE id_lic_rights = NEW.id;
 
@@ -2580,20 +2633,21 @@ BEGIN
 
     -- 1) Копируем feature-sets, которые уже являются эксклюзивными, без изменений
     INSERT INTO license_rt_feature_set_ext
-    (id_feature_set, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
-    SELECT id, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by
+    (id_feature_set, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
+    SELECT id, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by
     FROM license_rt_feature_set
     WHERE id_lic_rights = NEW.id
       AND is_exclusive;
 
     -- 2) Для не эксклюзивных feature-sets распределяем их по частям: before / hold / after
     INSERT INTO license_rt_feature_set_ext
-    (id_feature_set, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
+    (id_feature_set, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
     SELECT
         fs.id,
         fs.id_lic_rights,
         CASE parts.part WHEN 'hold' THEN true ELSE fs.is_exclusive END AS is_exclusive,
         fs.is_use_right,
+        fs.is_sub_license,
         daterange(parts.part_lower, parts.part_upper, '[)') AS validity_period,
         fs.created_by
     FROM license_rt_feature_set fs
@@ -2641,9 +2695,9 @@ BEGIN
     -- Простой случай: эксклюзивность или отсутствие holdback
     if v_lic_rights.hb_start_date is null or NEW.is_exclusive then
         insert into license_rt_feature_set_ext
-        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
+        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
         values
-            (NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, NEW.validity_period, NEW.created_by);
+            (NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, NEW.is_sub_license, NEW.validity_period, NEW.created_by);
         return null;
     end if;
 
@@ -2655,30 +2709,30 @@ BEGIN
     if not lower_inf(NEW.validity_period) and lower(NEW.validity_period) = v_lic_rights.hb_start_date then
         -- Первый период (holdback) - всегда эксклюзивный
         insert into license_rt_feature_set_ext
-        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
-        select NEW.id, NEW.id_lic_rights, true, NEW.is_use_right,
+        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, is_sub_license, validity_period, created_by)
+        select NEW.id, NEW.id_lic_rights, true, NEW.is_use_right, NEW.is_sub_license,
                daterange(v_lic_rights.hb_start_date, least(v_hb_end_date, upper(NEW.validity_period)), '[)'),
                NEW.created_by
         union all
         -- Второй период (после holdback) - с исходной эксклюзивностью
-        select NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, v_period, NEW.created_by
+        select NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, NEW.is_sub_license, v_period, NEW.created_by
         where not isempty(v_period);
 
         -- Holdback внутри периода
     elsif v_lic_rights.hb_start_date <@ NEW.validity_period then
         insert into license_rt_feature_set_ext
-        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, validity_period, created_by)
-        select NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right,
+        (id_feature_set, id_lic_rights, is_exclusive, is_use_right, is_sub_license,  validity_period, created_by)
+        select NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, NEW.is_sub_license,
                daterange(lower(NEW.validity_period), v_lic_rights.hb_start_date, '[)'), NEW.created_by
         where not isempty(daterange(lower(NEW.validity_period), v_lic_rights.hb_start_date, '[)'))
         union all
         -- Holdback период - эксклюзивный
-        select NEW.id, NEW.id_lic_rights, true, NEW.is_use_right,
+        select NEW.id, NEW.id_lic_rights, true, NEW.is_use_right, NEW.is_sub_license,
                daterange(v_lic_rights.hb_start_date, least(v_hb_end_date, upper(NEW.validity_period)), '[)'),
                NEW.created_by
         union all
         -- После holdback - исходная эксклюзивность
-        select NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, v_period, NEW.created_by
+        select NEW.id, NEW.id_lic_rights, NEW.is_exclusive, NEW.is_use_right, NEW.is_sub_license, v_period, NEW.created_by
         where not isempty(v_period);
     end if;
 

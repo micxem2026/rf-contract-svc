@@ -8,6 +8,7 @@ import jakarta.persistence.*
 import me.rightsflow.common.entity.BaseAudit
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Type
+import java.math.BigDecimal
 import java.time.LocalDate
 
 
@@ -59,7 +60,16 @@ class Contract(
     var warning: String? = null,
 
     @Column(name = "ID_SIBLING")
-    var idSibling: Long? = null
+    var idSibling: Long? = null,
+
+    @Column(name = "ID_PARENT")
+    var idParent: Long? = null,
+
+    @Column(name = "ID_CURRENCY")
+    var idCurrency: Int? = null,
+
+    @Column(name = "ID_CURRENCY_PAYMENT")
+    var idCurrencyPayment: Int? = null
 
 ) : BaseAudit() {
 
@@ -74,8 +84,20 @@ class Contract(
     }
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_CURRENCY", referencedColumnName = "ID", insertable = false, updatable = false)
+    var currency: Currency? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_CURRENCY_PAYMENT", referencedColumnName = "ID", insertable = false, updatable = false)
+    var currencyPayment: Currency? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_SIBLING", referencedColumnName = "ID", insertable = false, updatable = false)
     var siblingContract: Contract? = null
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ID_PARENT", referencedColumnName = "ID", insertable = false, updatable = false)
+    var parentContract: Contract? = null
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ID_ORG", referencedColumnName = "ID", insertable = false, updatable = false)

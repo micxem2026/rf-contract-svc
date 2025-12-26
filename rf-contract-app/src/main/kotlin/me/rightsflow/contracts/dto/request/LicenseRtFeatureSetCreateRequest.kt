@@ -13,8 +13,11 @@ data class LicenseRtFeatureSetCreateRequest(
     @field:Schema(description = "Признак исключительности права", example = "true")
     @field:NotNull val isExclusive: Boolean,
 
-    @field:Schema(description = "Признак использования права при эксклюзивной продаже", example = "true")
+    @field:Schema(description = "Признак использования права при эксклюзивной продаже", example = "false")
     @field:NotNull val isUseRight: Boolean,
+
+    @field:Schema(description = "Признак сублицензирования", example = "false")
+    @field:NotNull val isSubLicense: Boolean,
 
     @field:Schema(description = "Период действия набора характеристик (начало)", example = "2022-01-01")
     val validityPeriodStart: LocalDate?,

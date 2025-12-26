@@ -42,6 +42,7 @@ class LicenseRtFeatureSetService(
                     ":pIdLicRights, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
+                    ":pIsSubLicense, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pCreatedBy" +
@@ -51,6 +52,7 @@ class LicenseRtFeatureSetService(
         query.setParameter("pIdLicRights", req.idLicRights)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
+        query.setParameter("pIsSubLicense", req.isSubLicense)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pCreatedBy", subProvider.currentSub())
@@ -71,6 +73,7 @@ class LicenseRtFeatureSetService(
                     ":pIdLicRights, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
+                    ":pIsSubLicense, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pUpdatedBy" +
@@ -81,6 +84,7 @@ class LicenseRtFeatureSetService(
         query.setParameter("pIdLicRights", req.idLicRights)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
+        query.setParameter("pIsSubLicense", req.isSubLicense)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pUpdatedBy", subProvider.currentSub())
@@ -113,6 +117,7 @@ class LicenseRtFeatureSetService(
         licenseRightsRt = this.licenseRights?.getLicenseRightsRt() ?: emptyList(),
         isExclusive = this.isExclusive,
         isUseRight = this.isUseRight,
+        isSubLicense = this.isSubLicense,
         validityPeriodStart = this.validityPeriod.realLower(),
         validityPeriodEnd = this.validityPeriod.realUpper(),
         createdBy = this.createdBy,

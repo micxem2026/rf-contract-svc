@@ -16,6 +16,9 @@ data class FormatRtFeatureSetCreateRequest(
     @field:Schema(description = "Признак использования права при эксклюзивной продаже", example = "true")
     @field:NotNull val isUseRight: Boolean,
 
+    @field:Schema(description = "Признак сублицензирования", example = "false")
+    @field:NotNull val isSubLicense: Boolean,
+
     @field:Schema(description = "Период действия набора характеристик (начало)", example = "2022-01-01")
     val validityPeriodStart: LocalDate?,
 

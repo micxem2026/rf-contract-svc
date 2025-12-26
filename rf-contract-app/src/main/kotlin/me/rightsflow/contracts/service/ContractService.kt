@@ -55,6 +55,8 @@ class ContractService(
                     ":pIdContractType, " +
                     ":pInOut, " +
                     ":pDescription, " +
+                    ":pIdCurrency, " +
+                    ":pIdCurrencyPayment, " +
                     ":pCreatedBy" +
                     ")"
         )
@@ -69,6 +71,8 @@ class ContractService(
         query.setParameter("pIdContractType", req.idContractType)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
+        query.setParameter("pIdCurrency", req.idCurrency)
+        query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         val id = query.singleResult as Long
@@ -94,6 +98,8 @@ class ContractService(
                     ":pIdContractType, " +
                     ":pInOut, " +
                     ":pDescription, " +
+                    ":pIdCurrency, " +
+                    ":pIdCurrencyPayment, " +
                     ":pCreatedBy" +
                     ")"
         )
@@ -109,6 +115,8 @@ class ContractService(
         query.setParameter("pIdContractType", req.idContractType)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
+        query.setParameter("pIdCurrency", req.idCurrency)
+        query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         query.singleResult as Long
@@ -182,6 +190,15 @@ class ContractService(
         idSibling = this.idSibling,
         guidSibling = this.siblingContract?.guid ?: "",
         numSibling = this.siblingContract?.num ?: "",
+        idParent = this.idParent,
+        guidParent = this.parentContract?.guid ?: "",
+        numParent = this.parentContract?.num ?: "",
+        idCurrency = this.idCurrency,
+        currencyCode = this.currency?.isoCharCode ?: "",
+        currencyName = this.currency?.name ?: "",
+        idCurrencyPayment = this.idCurrencyPayment,
+        currencyCodePayment = this.currencyPayment?.isoCharCode ?: "",
+        currencyNamePayment = this.currencyPayment?.name ?: "",
         createdBy = this.createdBy,
         createdAt = this.createdAt,
         updatedBy = this.updatedBy,

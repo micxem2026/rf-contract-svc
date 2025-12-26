@@ -43,6 +43,7 @@ class FormatRtFeatureSetService(
                     ":pIdFmtRights, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
+                    ":pIsSubLicense, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pCreatedBy" +
@@ -52,6 +53,7 @@ class FormatRtFeatureSetService(
         query.setParameter("pIdFmtRights", req.idFmtRights)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
+        query.setParameter("pIsSubLicense", req.isSubLicense)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pCreatedBy", subProvider.currentSub())
@@ -71,6 +73,7 @@ class FormatRtFeatureSetService(
                     ":pId, " +
                     ":pIsExclusive, " +
                     ":pIsUseRight, " +
+                    ":pIsSubLicense, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pUpdatedBy" +
@@ -80,6 +83,7 @@ class FormatRtFeatureSetService(
         query.setParameter("pId", id)
         query.setParameter("pIsExclusive", req.isExclusive)
         query.setParameter("pIsUseRight", req.isUseRight)
+        query.setParameter("pIsSubLicense", req.isSubLicense)
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pUpdatedBy", subProvider.currentSub())
@@ -112,6 +116,7 @@ class FormatRtFeatureSetService(
         formatRightsRt = this.fmtRights?.getFormatRightsRt() ?: emptyList(),
         isExclusive = this.isExclusive,
         isUseRight = this.isUseRight,
+        isSubLicense = this.isSubLicense,
         validityPeriodStart = this.validityPeriod.realLower(),
         validityPeriodEnd = this.validityPeriod.realUpper(),
         createdBy = this.createdBy,

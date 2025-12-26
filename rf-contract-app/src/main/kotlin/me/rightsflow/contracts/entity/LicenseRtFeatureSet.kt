@@ -26,6 +26,9 @@ class LicenseRtFeatureSet(
     @Column(name = "IS_USE_RIGHT", nullable = false)
     var isUseRight: Boolean = false,
 
+    @Column(name = "IS_SUB_LICENSE", nullable = false)
+    var isSubLicense: Boolean = false,
+
     @Type(PostgreSQLRangeType::class)
     @Column(name = "VALIDITY_PERIOD", nullable = false, columnDefinition = "daterange")
     var validityPeriod: Range<LocalDate> = Range.emptyRange(LocalDate::class.java)

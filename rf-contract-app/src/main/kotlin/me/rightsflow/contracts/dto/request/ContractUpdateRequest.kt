@@ -1,6 +1,7 @@
 package me.rightsflow.contracts.dto.request
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
 
@@ -35,5 +36,11 @@ data class ContractUpdateRequest(
     val inOut: String?,
 
     @field:Schema(description = "Описание")
-    @field:Size(max = 511) val description: String?
+    @field:Size(max = 511) val description: String?,
+
+    @field:Schema(description = "ID валюты контракта", example = "1")
+    var idCurrency: Int?,
+
+    @field:Schema(description = "ID валюты платежа", example = "1")
+    var idCurrencyPayment: Int?,
 )
