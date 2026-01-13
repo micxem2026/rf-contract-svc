@@ -72,6 +72,7 @@ data class KlfOipAvroMessage(
     val children_count: Int?,
     val root_id: Int?,
     val native_name: String?,
+    val full_name: String?,
     val release_year: String?,
     val created_by: String,
     val created_at: Instant?,
@@ -146,4 +147,62 @@ data class KlfOipHierarchyAvroMessage(
     val created_at: Instant?,
     val updated_by: String?,
     val updated_at: Instant?
+)
+
+// SYNC__LOV_OBJECT
+data class LovObjectAvroMessage(
+    val id: Int?,
+    val name: String,
+    val table_name: String,
+    val where_filter: String?,
+    val svc_id: Int
+)
+
+// SYNC__LOV_PGE_PG_LAYER
+data class LovPgePgLayerAvroMessage(
+    val id: Int?,
+    val id_pg: Int,
+    val sel_value: String
+)
+
+// SYNC__LOV_PGE_PG_TO_OBJ
+data class LovPgePgToObjAvroMessage(
+    val id: Int?,
+    val id_obj: Int,
+    val code_pg: String
+)
+
+// SYNC__LOV_PGE_PGL_DTL
+data class LovPgePglDtlAvroMessage(
+    val id: Int?,
+    val id_pgl: Int,
+    val id_property: Int,
+    val property_format: String?,
+    val default_value: String?,
+    val pg_order: Int
+)
+
+// SYNC__LOV_PGE_PROP_TYPE
+data class LovPgePropTypeAvroMessage(
+    val id: Int?,
+    val name: String,
+    val id_obj: Int?,
+    val use_multi_select: Boolean
+)
+
+// SYNC__LOV_PGE_PROPERTY
+data class LovPgePropertyAvroMessage(
+    val id: Int?,
+    val code: String,
+    val name: String,
+    val id_prop_type: Int
+)
+
+// SYNC__LOV_PGE_PROPERTY_GROUP
+data class LovPgePropertyGroupAvroMessage(
+    val id: Int?,
+    val code: String,
+    val name: String,
+    val layer_sel_query: String,
+    val svc_id: Int
 )

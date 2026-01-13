@@ -7,6 +7,7 @@ import jakarta.validation.Valid
 import me.rightsflow.common.config.*
 import me.rightsflow.contracts.dto.request.LicenseRightsCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseRightsUpdateRequest
+import me.rightsflow.contracts.dto.request.ShortPropertyUpdateBatchRequest
 import me.rightsflow.contracts.dto.response.LicenseRightsDto
 import me.rightsflow.contracts.service.LicenseRightsService
 import org.springdoc.core.annotations.ParameterObject
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/contracts/lic-rt")
-@Tag(name = "Права лицензии", description = "Операции с привязками типов прав к лицензии")
+@Tag(name = "Права лицензии", description = "Операции с привязками права (способа использования) к лицензии")
 class LicenseRightsController(
     private val service: LicenseRightsService
 ) {
@@ -72,6 +73,30 @@ class LicenseRightsController(
     @InternalServerErrorResponse
     fun update(@PathVariable id: Long, @Valid @RequestBody req: LicenseRightsUpdateRequest): LicenseRightsDto =
         service.update(id, req)
+
+    @PutMapping("/finCond/{id}")
+    @Operation(summary = "Обновить свойства финансовых условий для ID сущности licenseRightsRt")
+    @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
+    @ApiResponse(responseCode = "200", description = "Свойства финансовых условий обновлены")
+    @ConflictResponse
+    @NotFoundResponse
+    @ValidationErrorResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun updateFinCond(@PathVariable id: Long, @Valid @RequestBody req: ShortPropertyUpdateBatchRequest): Int =
+        service.updateFinCond(id, req)
+
+    @PutMapping("/addCond/{id}")
+    @Operation(summary = "Обновить свойства дополнительных условий для ID сущности licenseRightsRt")
+    @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
+    @ApiResponse(responseCode = "200", description = "Свойства дополнительных условий обновлены")
+    @ConflictResponse
+    @NotFoundResponse
+    @ValidationErrorResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun updateAddCond(@PathVariable id: Long, @Valid @RequestBody req: ShortPropertyUpdateBatchRequest): Int =
+        service.updateAddCond(id, req)
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить привязку права к лицензии по ID записи")

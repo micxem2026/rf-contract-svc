@@ -167,6 +167,7 @@ class SyncService {
                     ":pChildrenCount, " +
                     ":pRootId, " +
                     ":pNativeName, " +
+                    ":pFullName," +
                     ":pReleaseYear, " +
                     ":pCreatedBy, " +
                     ":pCreatedAt, " +
@@ -190,6 +191,7 @@ class SyncService {
         query.setParameter("pChildrenCount", dto.children_count)
         query.setParameter("pRootId", dto.root_id)
         query.setParameter("pNativeName", dto.native_name)
+        query.setParameter("pFullName", dto.full_name)
         query.setParameter("pReleaseYear", dto.release_year)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
@@ -363,6 +365,157 @@ class SyncService {
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
         query.setParameter("pUpdatedBy", dto.updated_by)
         query.setParameter("pUpdatedAt", dto.updated_at?.let { microsToOffsetDateTime(it) })
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovObject(pSyncId: Int, dto: LovObjectAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_object(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pName," +
+                    ":pTableName," +
+                    ":pWhereFilter," +
+                    ":pSvcId" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pName", dto.name)
+        query.setParameter("pTableName", dto.table_name)
+        query.setParameter("pWhereFilter", dto.where_filter)
+        query.setParameter("pSvcId", dto.svc_id)
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovPgePgLayer(pSyncId: Int, dto: LovPgePgLayerAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_pge_pg_layer(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pIdPg," +
+                    ":pSelValue" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pIdPg", dto.id_pg)
+        query.setParameter("pSelValue", dto.sel_value)
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovPgePgToObj(pSyncId: Int, dto: LovPgePgToObjAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_pge_pg_to_obj(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pIdObj," +
+                    ":pCodePg" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pIdObj", dto.id_obj)
+        query.setParameter("pCodePg", dto.code_pg)
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovPgePglDtl(pSyncId: Int, dto: LovPgePglDtlAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_pge_pgl_dtl(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pIdPgl," +
+                    ":pIdProperty," +
+                    ":pPropertyFormat," +
+                    ":pDefaultValue," +
+                    ":pPgOrder" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pIdPgl", dto.id_pgl)
+        query.setParameter("pIdProperty", dto.id_property)
+        query.setParameter("pPropertyFormat", dto.property_format)
+        query.setParameter("pDefaultValue", dto.default_value)
+        query.setParameter("pPgOrder", dto.pg_order)
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovPgePropType(pSyncId: Int, dto: LovPgePropTypeAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_pge_prop_type(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pName," +
+                    ":pIdObj," +
+                    ":pUseMultiSelect" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pName", dto.name)
+        query.setParameter("pIdObj", dto.id_obj)
+        query.setParameter("pUseMultiSelect", dto.use_multi_select)
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovPgeProperty(pSyncId: Int, dto: LovPgePropertyAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_pge_property(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pCode," +
+                    ":pName," +
+                    ":pIdPropType" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pName", dto.name)
+        query.setParameter("pCode", dto.code)
+        query.setParameter("pIdPropType", dto.id_prop_type)
+
+        return query.singleResult as Int
+    }
+
+    @Transactional
+    fun syncLovPgePropertyGroup(pSyncId: Int, dto: LovPgePropertyGroupAvroMessage): Int {
+        val query = entityManager.createNativeQuery(
+            "SELECT pkg_sync.sync_lov_pge_property_group(" +
+                    ":pSyncId, " +
+                    ":pId, " +
+                    ":pCode," +
+                    ":pName," +
+                    ":pLayerSelQuery," +
+                    ":pSvcId" +
+                    ")"
+        )
+
+        query.setParameter("pSyncId", pSyncId)
+        query.setParameter("pId", dto.id)
+        query.setParameter("pName", dto.name)
+        query.setParameter("pCode", dto.code)
+        query.setParameter("pLayerSelQuery", dto.layer_sel_query)
+        query.setParameter("pSvcId", dto.svc_id)
 
         return query.singleResult as Int
     }

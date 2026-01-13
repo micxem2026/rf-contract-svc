@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 class LicenseRtFeatureSetService(
     private val repo: LicenseRtFeatureSetRepository,
     private val licenseRtRepo: LicenseRightsRepository,
+    private val pgeService: PgeService,
     private val subProvider: SecuritySubjectProvider,
     @PersistenceContext private val em: EntityManager
 ) {
@@ -114,7 +115,7 @@ class LicenseRtFeatureSetService(
     private fun LicenseRtFeatureSet.toDto() = LicenseRtFeatureSetDto(
         id = this.id!!,
         idLicRights = this.idLicRights,
-        licenseRightsRt = this.licenseRights?.getLicenseRightsRt() ?: emptyList(),
+        licenseRightsRt = this.licenseRights?.getLicenseRightsRt(pgeService, subProvider) ?: emptyList(),
         isExclusive = this.isExclusive,
         isUseRight = this.isUseRight,
         isSubLicense = this.isSubLicense,

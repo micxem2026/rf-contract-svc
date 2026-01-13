@@ -73,7 +73,7 @@ class OipDlqHandler(
         val oipDto = when (value) {
             null -> KlfOipAvroMessage(null,"",null,null,"",null,
                 null,null,null,false,false, 0,
-                null, "", "", "",null,null,null)
+                null, "", "", "", "",null,null,null)
             else -> MessageConverter.convertToKlfOipAvroMessage(value)
         }
         replicationService.processOip(syncId, oipDto)
@@ -217,3 +217,125 @@ class OipHierarchyDlqHandler(
         replicationService.processOipHierarchy(syncId, oipHierarchyDto)
     }
 }
+
+
+@Component
+class ObjectDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.objectProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val objectDto = when (value) {
+            null -> LovObjectAvroMessage(null,"","","",0)
+            else -> MessageConverter.convertToLovObjectAvroMessage(value)
+        }
+        replicationService.processObject(syncId, objectDto)
+    }
+}
+
+@Component
+class PgePgLayerDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.pgePgLayerProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val pgePgLayerDto = when (value) {
+            null -> LovPgePgLayerAvroMessage(null,0,"")
+            else -> MessageConverter.convertToLovPgePgLayerAvroMessage(value)
+        }
+        replicationService.processPgePgLayer(syncId, pgePgLayerDto)
+    }
+}
+
+@Component
+class PgePgToObjDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.pgePgToObjProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val pgePgToObjDto = when (value) {
+            null -> LovPgePgToObjAvroMessage(null,0,"")
+            else -> MessageConverter.convertToLovPgePgToObjAvroMessage(value)
+        }
+        replicationService.processPgePgToObj(syncId, pgePgToObjDto)
+    }
+}
+
+
+@Component
+class PgePglDtlDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.pgePglDtlProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val pgePglDtlDto = when (value) {
+            null -> LovPgePglDtlAvroMessage(null,0,0, "", "", 0)
+            else -> MessageConverter.convertToLovPgePglDtlAvroMessage(value)
+        }
+        replicationService.processPgePglDtl(syncId, pgePglDtlDto)
+    }
+}
+
+@Component
+class PgePropTypeDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.pgePropTypeProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val pgePropTypeDto = when (value) {
+            null -> LovPgePropTypeAvroMessage(null,"",null, false)
+            else -> MessageConverter.convertToLovPgePropTypeAvroMessage(value)
+        }
+        replicationService.processPgePropType(syncId, pgePropTypeDto)
+    }
+}
+
+@Component
+class PgePropertyDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.pgePropertyProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val pgePropertyDto = when (value) {
+            null -> LovPgePropertyAvroMessage(null,"","", 0)
+            else -> MessageConverter.convertToLovPgePropertyAvroMessage(value)
+        }
+        replicationService.processPgeProperty(syncId, pgePropertyDto)
+    }
+}
+
+@Component
+class PgePropertyGroupDlqHandler(
+    private val replicationService: ReplicationService,
+    @param:Value("\${spring.cloud.stream.kafka.bindings.pgePropertyGroupProcessor-in-0.consumer.dlq-name}")
+    override val topic: String
+) : DlqHandler {
+
+    override fun process(key: String, value: GenericRecord?) {
+        val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
+        val pgePropertyGroupDto = when (value) {
+            null -> LovPgePropertyGroupAvroMessage(null,"","", "", 0)
+            else -> MessageConverter.convertToLovPgePropertyGroupAvroMessage(value)
+        }
+        replicationService.processPgePropertyGroup(syncId, pgePropertyGroupDto)
+    }
+}
+

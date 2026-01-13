@@ -5,14 +5,14 @@ import jakarta.persistence.ParameterMode
 import jakarta.persistence.PersistenceContext
 import me.rightsflow.common.config.SecuritySubjectProvider
 import me.rightsflow.common.exception.EntityNotFoundWithClsException
-import me.rightsflow.contracts.dto.request.LicenseRightsCreateRequest
-import me.rightsflow.contracts.dto.request.LicenseRightsUpdateRequest
-import me.rightsflow.contracts.dto.response.LicenseRightsRtDto
+import me.rightsflow.contracts.dto.request.*
 import me.rightsflow.contracts.dto.response.LicenseRightsDto
+import me.rightsflow.contracts.dto.response.LicenseRightsRtDto
 import me.rightsflow.contracts.entity.License
 import me.rightsflow.contracts.entity.LicenseRights
 import me.rightsflow.contracts.repository.LicenseRepository
 import me.rightsflow.contracts.repository.LicenseRightsRepository
+import org.slf4j.LoggerFactory
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
@@ -22,9 +22,12 @@ import org.springframework.transaction.annotation.Transactional
 class LicenseRightsService(
     private val repo: LicenseRightsRepository,
     private val licenseRepo: LicenseRepository,
+    private val pgeService: PgeService,
     private val subProvider: SecuritySubjectProvider,
     @PersistenceContext private val em: EntityManager
 ) {
+
+    private val log = LoggerFactory.getLogger(LicenseRightsService::class.java)
 
     fun getById(id: Long): LicenseRightsDto =
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }.toDto()
@@ -86,6 +89,31 @@ class LicenseRightsService(
         return e.toDto()
     }
 
+    fun updateFinCond(id: Long, req: ShortPropertyUpdateBatchRequest): Int {
+        val updates = req.updates.map {
+            PropertyUpdateBatchDto(
+                id,
+                "PG_FIN_COND", it.property, it.value
+            )
+        }
+        val res = pgeService.updatePropertiesBatch(PropertyUpdateBatchRequest(updates))
+        log.info("Updated: {}", res)
+        return res
+    }
+
+    fun updateAddCond(id: Long, req: ShortPropertyUpdateBatchRequest): Int {
+        val updates = req.updates.map {
+            PropertyUpdateBatchDto(
+                id,
+                "PG_RT_COND", it.property, it.value
+            )
+        }
+        val res = pgeService.updatePropertiesBatch(PropertyUpdateBatchRequest(updates))
+        log.info("Updated: {}", res)
+        return res
+    }
+
+
     @Transactional
     fun delete(id: Long, useCascade: Boolean) {
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
@@ -106,7 +134,7 @@ class LicenseRightsService(
         id = this.id!!,
         idLicense = this.idLicense,
         licenseNum = this.license?.num ?: "",
-        licenseRightsRt = this.getLicenseRightsRt(),
+        licenseRightsRt = this.getLicenseRightsRt(pgeService, subProvider),
         hbStartDate = this.hbStartDate,
         hbDays = this.hbDays,
         createdBy = this.createdBy,
@@ -114,15 +142,33 @@ class LicenseRightsService(
         updatedBy = this.updatedBy,
         updatedAt = this.updatedAt
     )
+
 }
 
-internal fun LicenseRights.getLicenseRightsRt(): List<LicenseRightsRtDto> {
-    return this.rights.map { LicenseRightsRtDto(
-        id = it.id!!,
-        idLicRights = it.idLicRights,
-        idRightType = it.idRightType,
-        nameRightType = it.rightType?.name ?: "",
-        createdBy = it.createdBy,
-        createdAt = it.createdAt)
+internal fun LicenseRights.getLicenseRightsRt(
+    pgeService: PgeService,
+    subProvider: SecuritySubjectProvider
+): List<LicenseRightsRtDto> {
+
+    val entIds = this.rights.map { it.id!! }
+    val fc = pgeService.getPgData("PG_FIN_COND", entIds, subProvider.currentSub())
+        .groupBy { it.idEntity }
+    val ac = pgeService.getPgData("PG_RT_COND", entIds, subProvider.currentSub())
+        .groupBy { it.idEntity }
+
+    return this.rights.map {
+
+        LicenseRightsRtDto(
+            id = it.id!!,
+            idLicRights = it.idLicRights,
+            idRightType = it.idRightType,
+            nameRightType = it.rightType?.name ?: "",
+            financeConditions = fc.getOrDefault(it.id!!, emptyList()),
+            additionalConditions = ac.getOrDefault(it.id!!, emptyList()),
+            createdBy = it.createdBy,
+            createdAt = it.createdAt
+        )
+
     }
+
 }

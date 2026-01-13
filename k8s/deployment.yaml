@@ -17,6 +17,7 @@ metadata:
 data:
   hostname: contract-svc
   hostname-external: rights.flow.me
+  protocol-external: https
   profiles: local,kafka
   contract-db: pg-contract-db-svc
 ---
@@ -75,6 +76,11 @@ spec:
                 configMapKeyRef:
                   name: rf-contract-svc
                   key: hostname-external
+            - name: RF_CONTRACT_SVC_PROTOCOL_EXTERNAL
+              valueFrom:
+                configMapKeyRef:
+                  name: rf-contract-svc
+                  key: protocol-external
             - name: RF_AUTH_SVC_HOSTNAME
               valueFrom:
                 configMapKeyRef:

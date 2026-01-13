@@ -131,4 +131,74 @@ class ReplicationService(
             throw exception
         }
     }
+
+    @Transactional
+    fun processObject(syncId: Int, message: LovObjectAvroMessage) {
+        try {
+            syncService.syncLovObject(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing object with id: $syncId", exception)
+            throw exception
+        }
+    }
+
+    @Transactional
+    fun processPgePgLayer(syncId: Int, message: LovPgePgLayerAvroMessage) {
+        try {
+            syncService.syncLovPgePgLayer(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing PgePgLayer with id: $syncId", exception)
+            throw exception
+        }
+    }
+
+    @Transactional
+    fun processPgePgToObj(syncId: Int, message: LovPgePgToObjAvroMessage) {
+        try {
+            syncService.syncLovPgePgToObj(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing PgePgToObj with id: $syncId", exception)
+            throw exception
+        }
+    }
+
+    @Transactional
+    fun processPgePglDtl(syncId: Int, message: LovPgePglDtlAvroMessage) {
+        try {
+            syncService.syncLovPgePglDtl(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing PgePglDtl with id: $syncId", exception)
+            throw exception
+        }
+    }
+
+    @Transactional
+    fun processPgePropType(syncId: Int, message: LovPgePropTypeAvroMessage) {
+        try {
+            syncService.syncLovPgePropType(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing PgePropType with id: $syncId", exception)
+            throw exception
+        }
+    }
+
+    @Transactional
+    fun processPgeProperty(syncId: Int, message: LovPgePropertyAvroMessage) {
+        try {
+            syncService.syncLovPgeProperty(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing PgeProperty with id: $syncId", exception)
+            throw exception
+        }
+    }
+
+    @Transactional
+    fun processPgePropertyGroup(syncId: Int, message: LovPgePropertyGroupAvroMessage) {
+        try {
+            syncService.syncLovPgePropertyGroup(syncId, message)
+        } catch (exception: Exception) {
+            log.error("Error processing PgePropertyGroup with id: $syncId", exception)
+            throw exception
+        }
+    }
 }

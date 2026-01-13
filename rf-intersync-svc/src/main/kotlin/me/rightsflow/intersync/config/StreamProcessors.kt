@@ -133,7 +133,7 @@ class StreamProcessors(
                     is GenericRecord -> MessageConverter.convertToKlfOipAvroMessage(message.payload as GenericRecord)
                     is KafkaNull -> KlfOipAvroMessage(null,null,null,null,
                         "", null, null, null, null, false, false,
-                        0, null, "", "", "", Instant.EPOCH,
+                        0, null, "", "","", "", Instant.EPOCH,
                         null, null)
                     else -> throw IllegalArgumentException("oipProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -383,6 +383,216 @@ class StreamProcessors(
         }
     }
 
+    @Bean
+    fun objectProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("objectProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("objectProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("objectProcessor -> Received sync message with id: $syncId")
+                val objectDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovObjectAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovObjectAvroMessage(null,"","","",0)
+                    else -> throw IllegalArgumentException("objectProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processObject(syncId, objectDto)
+                acknowledgment?.acknowledge()
+                log.info("objectProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
+    @Bean
+    fun pgePgLayerProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("pgePgLayerProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("pgePgLayerProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("pgePgLayerProcessor -> Received sync message with id: $syncId")
+                val pgePgLayerDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovPgePgLayerAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovPgePgLayerAvroMessage(null,0,"")
+                    else -> throw IllegalArgumentException("pgePgLayerProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processPgePgLayer(syncId, pgePgLayerDto)
+                acknowledgment?.acknowledge()
+                log.info("pgePgLayerProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
+    @Bean
+    fun pgePgToObjProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("pgePgToObjProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("pgePgToObjProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("pgePgToObjProcessor -> Received sync message with id: $syncId")
+                val pgePgToObjDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovPgePgToObjAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovPgePgToObjAvroMessage(null,0,"")
+                    else -> throw IllegalArgumentException("pgePgToObjProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processPgePgToObj(syncId, pgePgToObjDto)
+                acknowledgment?.acknowledge()
+                log.info("pgePgToObjProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
+    @Bean
+    fun pgePglDtlProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("pgePglDtlProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("pgePglDtlProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("pgePglDtlProcessor -> Received sync message with id: $syncId")
+                val pgePglDtlDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovPgePglDtlAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovPgePglDtlAvroMessage(null,0,0,"","",0)
+                    else -> throw IllegalArgumentException("pgePglDtlProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processPgePglDtl(syncId, pgePglDtlDto)
+                acknowledgment?.acknowledge()
+                log.info("pgePglDtlProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
+    @Bean
+    fun pgePropTypeProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("pgePropTypeProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("pgePropTypeProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("pgePropTypeProcessor -> Received sync message with id: $syncId")
+                val pgePropTypeDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovPgePropTypeAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovPgePropTypeAvroMessage(null,"",null, false)
+                    else -> throw IllegalArgumentException("pgePropTypeProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processPgePropType(syncId, pgePropTypeDto)
+                acknowledgment?.acknowledge()
+                log.info("pgePropTypeProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
+    @Bean
+    fun pgePropertyProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("pgePropertyProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("pgePropertyProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("pgePropertyProcessor -> Received sync message with id: $syncId")
+                val pgePropertyDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovPgePropertyAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovPgePropertyAvroMessage(null,"","", 0)
+                    else -> throw IllegalArgumentException("pgePropertyProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processPgeProperty(syncId, pgePropertyDto)
+                acknowledgment?.acknowledge()
+                log.info("pgePropertyProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
+    @Bean
+    fun pgePropertyGroupProcessor(): Consumer<Message<Any>> {
+        return Consumer { message ->
+
+            // Извлечение ключа из заголовков
+            val keyString = message.headers["kafka_receivedMessageKey"]?.toString()
+            if (keyString == null) {
+                log.warn("pgePropertyGroupProcessor -> A tombstone message without a key was received. The message will be ignored.")
+            }
+            // Извлечение Acknowledgment из заголовков
+            val acknowledgment = message.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            if (acknowledgment == null) {
+                log.warn("pgePropertyGroupProcessor -> No Acknowledgment found in headers for message with id: $keyString")
+            }
+            if (keyString != null) {
+                val syncId = keyString.substringAfter("=").substringBefore("}").trim().toInt()
+                log.info("pgePropertyGroupProcessor -> Received sync message with id: $syncId")
+                val pgePropertyGroupDto = when (message.payload) {
+                    is GenericRecord -> MessageConverter.convertToLovPgePropertyGroupAvroMessage(message.payload as GenericRecord)
+                    is KafkaNull -> LovPgePropertyGroupAvroMessage(null,"","", "", 0)
+                    else -> throw IllegalArgumentException("pgePropertyGroupProcessor -> Unsupported message type: ${message.payload.javaClass}")
+                }
+                replicationService.processPgePropertyGroup(syncId, pgePropertyGroupDto)
+                acknowledgment?.acknowledge()
+                log.info("pgePropertyGroupProcessor -> Successfully processed message with id: ${syncId}")
+            }
+
+        }
+    }
+
 
 }
 
@@ -461,6 +671,7 @@ object MessageConverter {
             children_count = record.get("children_count") as Int?,
             root_id = record.get("root_id") as Int?,
             native_name = record.getStringOrNull("native_name"),
+            full_name = record.getStringOrNull("full_name"),
             release_year = record.getStringOrNull("release_year"),
             description = record.getString("description"),
             created_by = record.getString("created_by"),
@@ -542,6 +753,71 @@ object MessageConverter {
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),
             updated_at = record.getStringOrNull("updated_at")?.let { Instant.parse(it)}
+        )
+    }
+
+    fun convertToLovObjectAvroMessage(record: GenericRecord): LovObjectAvroMessage {
+        return LovObjectAvroMessage(
+            id = record.get("id") as Int?,
+            name = record.getString("name"),
+            table_name = record.getString("table_name"),
+            where_filter = record.getStringOrNull("where_filter"),
+            svc_id = record.get("svc_id") as Int
+        )
+    }
+
+    fun convertToLovPgePgLayerAvroMessage(record: GenericRecord): LovPgePgLayerAvroMessage {
+        return LovPgePgLayerAvroMessage(
+            id = record.get("id") as Int?,
+            id_pg = record.get("id_pg") as Int,
+            sel_value = record.getString("sel_value")
+        )
+    }
+
+    fun convertToLovPgePgToObjAvroMessage(record: GenericRecord): LovPgePgToObjAvroMessage {
+        return LovPgePgToObjAvroMessage(
+            id = record.get("id") as Int?,
+            id_obj = record.get("id_obj") as Int,
+            code_pg = record.getString("code_pg")
+        )
+    }
+
+    fun convertToLovPgePglDtlAvroMessage(record: GenericRecord): LovPgePglDtlAvroMessage {
+        return LovPgePglDtlAvroMessage(
+            id = record.get("id") as Int?,
+            id_pgl = record.get("id_pgl") as Int,
+            id_property = record.get("id_property") as Int,
+            property_format = record.getStringOrNull("property_format"),
+            default_value = record.getStringOrNull("default_value"),
+            pg_order = record.get("pg_order") as Int
+        )
+    }
+
+    fun convertToLovPgePropTypeAvroMessage(record: GenericRecord): LovPgePropTypeAvroMessage {
+        return LovPgePropTypeAvroMessage(
+            id = record.get("id") as Int?,
+            id_obj = record.get("id_obj") as Int?,
+            name = record.getString("name"),
+            use_multi_select = record.getBoolean("use_multi_select")
+        )
+    }
+
+    fun convertToLovPgePropertyAvroMessage(record: GenericRecord): LovPgePropertyAvroMessage {
+        return LovPgePropertyAvroMessage(
+            id = record.get("id") as Int?,
+            code = record.getString("code"),
+            name = record.getString("name"),
+            id_prop_type = record.get("id_prop_type") as Int
+        )
+    }
+
+    fun convertToLovPgePropertyGroupAvroMessage(record: GenericRecord): LovPgePropertyGroupAvroMessage {
+        return LovPgePropertyGroupAvroMessage(
+            id = record.get("id") as Int?,
+            code = record.getString("code"),
+            name = record.getString("name"),
+            layer_sel_query = record.getString("layer_sel_query"),
+            svc_id = record.get("svc_id") as Int
         )
     }
 

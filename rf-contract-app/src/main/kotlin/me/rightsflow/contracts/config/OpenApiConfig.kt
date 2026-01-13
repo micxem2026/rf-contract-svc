@@ -21,6 +21,9 @@ class OpenApiConfig {
     @Value("\${RF_CONTRACT_SVC_HOSTNAME_EXTERNAL:localhost:8090}")
     private lateinit var contractHost: String
 
+    @Value("\${RF_CONTRACT_SVC_PROTOCOL_EXTERNAL:http}")
+    private lateinit var protocol: String
+
     @Bean
     fun openAPI(): OpenAPI {
         return OpenAPI()
@@ -38,7 +41,7 @@ class OpenApiConfig {
             .servers(
                 listOf(
                     Server()
-                        .url("http://$contractHost/api/contract/v1")
+                        .url("$protocol://$contractHost/api/contract/v1")
                         .description("Основной адрес микро-сервиса")
                 )
             )
@@ -67,8 +70,8 @@ class OpenApiConfig {
                                     )*/
                                     .clientCredentials(
                                         OAuthFlow()
-                                            .tokenUrl("http://$contractHost/auth/oauth2/token")
-                                            .refreshUrl("http://$contractHost/auth/oauth2/token")
+                                            .tokenUrl("$protocol://$contractHost/auth/oauth2/token")
+                                            .refreshUrl("$protocol://$contractHost/auth/oauth2/token")
                                             .scopes(
                                                 Scopes()
                                                     .addString("read", "Чтение записей")
