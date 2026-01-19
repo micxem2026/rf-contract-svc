@@ -71,8 +71,8 @@ class StreamProcessors(
                 log.info("counterpartyProcessor -> Received sync message with id: $syncId")
                 val counterpartyDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfCounterpartyAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null,"",null,"", Instant.EPOCH,
-                        null,null)
+                    is KafkaNull -> KlfCounterpartyAvroMessage(null,null, "", "",null,"",
+                        Instant.EPOCH, null,null)
                     else -> throw IllegalArgumentException("counterpartyProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
                 replicationService.processCounterparty(syncId, counterpartyDto)
@@ -101,7 +101,7 @@ class StreamProcessors(
                 log.info("organizationProcessor -> Received sync message with id: $syncId")
                 val organizationDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfOrganizationAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfOrganizationAvroMessage(null,null,"","",
+                    is KafkaNull -> KlfOrganizationAvroMessage(null,null,"","","",
                         Instant.EPOCH,null,null)
                     else -> throw IllegalArgumentException("organizationProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -620,6 +620,7 @@ object MessageConverter {
         return KlfCounterpartyAvroMessage(
             id = record.get("id") as Int?,
             guid = record.getStringOrNull("guid"),
+            code_1c = record.getStringOrNull("code_1c"),
             name = record.getString("name"),
             id_org_ref = record.get("id_org_ref") as Int?,
             created_by = record.getString("created_by"),
@@ -633,6 +634,7 @@ object MessageConverter {
         return KlfOrganizationAvroMessage(
             id = record.get("id") as Int?,
             guid = record.getStringOrNull("guid"),
+            code_1c = record.getStringOrNull("code_1c"),
             name = record.getString("name"),
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},

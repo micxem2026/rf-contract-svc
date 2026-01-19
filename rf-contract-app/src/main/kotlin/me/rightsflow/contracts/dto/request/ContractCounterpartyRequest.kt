@@ -10,7 +10,7 @@ data class ContractCounterpartyRequest (
     @field:NotNull
     val idContract: Long,
 
-    @field:Schema(description = "ID контрагента", example = "1")
+    @field:Schema(description = "ID контрагента (можно передать 1C код контрагента)", example = "1")
     @field:NotNull
-    val idCpart: Int
+    val idCpart: String
 )

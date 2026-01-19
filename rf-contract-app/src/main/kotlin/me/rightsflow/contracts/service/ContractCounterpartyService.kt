@@ -71,6 +71,7 @@ class ContractCounterpartyService(
         idContract = this.idContract,
         contractNum = this.contract?.num ?: "",
         idCpart = this.idCpart,
+        code1c = this.counterparty?.code_1c ?: "",
         cpartName = this.counterparty?.name ?: "",
         createdBy = this.createdBy,
         createdAt = this.createdAt,

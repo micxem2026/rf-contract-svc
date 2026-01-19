@@ -90,7 +90,7 @@ class OrganizationDlqHandler(
     override fun process(key: String, value: GenericRecord?) {
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val organizationDto = when (value) {
-            null -> KlfOrganizationAvroMessage(null,"","","",null,null,null)
+            null -> KlfOrganizationAvroMessage(null,"","","","",null,null,null)
             else -> MessageConverter.convertToKlfOrganizationAvroMessage(value)
         }
         replicationService.processOrganization(syncId, organizationDto)
@@ -107,7 +107,7 @@ class CounterpartyDlqHandler(
     override fun process(key: String, value: GenericRecord?) {
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val counterpartyDto = when (value) {
-            null -> KlfCounterpartyAvroMessage(null,"","",null,"",null,null,null)
+            null -> KlfCounterpartyAvroMessage(null,"","","",null,"",null,null,null)
             else -> MessageConverter.convertToKlfCounterpartyAvroMessage(value)
         }
         replicationService.processCounterparty(syncId, counterpartyDto)

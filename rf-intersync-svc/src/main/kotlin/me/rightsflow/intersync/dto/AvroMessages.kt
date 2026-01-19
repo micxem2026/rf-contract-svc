@@ -24,6 +24,7 @@ data class UsersAvroMessage(
 data class KlfCounterpartyAvroMessage(
     val id: Int?,
     val guid: String?,
+    val code_1c: String?,
     val name: String,
     val id_org_ref: Int?,
     val created_by: String,
@@ -36,6 +37,7 @@ data class KlfCounterpartyAvroMessage(
 data class KlfOrganizationAvroMessage(
     val id: Int?,
     val guid: String?,
+    val code_1c: String?,
     val name: String,
     val created_by: String,
     val created_at: Instant?,

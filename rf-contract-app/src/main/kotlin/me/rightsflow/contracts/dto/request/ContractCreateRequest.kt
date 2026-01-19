@@ -16,9 +16,9 @@ data class ContractCreateRequest(
     @field:Size(max = 255)
     val num: String?,
 
-    @field:Schema(description = "ID организации владельца контракта", example = "1")
+    @field:Schema(description = "ID организации владельца контракта (можно передать 1C код организации)", example = "1")
     @field:NotNull
-    var idOrg: Int,
+    var idOrg: String,
 
     @field:Schema(description = "ID организации партнёра для внутригруппового контракта", example = "1")
     val idOrgParty: Int?,

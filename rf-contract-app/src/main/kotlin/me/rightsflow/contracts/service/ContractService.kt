@@ -174,6 +174,7 @@ class ContractService(
         guid = this.guid,
         num = this.num,
         idOrg = this.idOrg,
+        code1c = this.organization?.code_1c ?:  "",
         nameOrg = this.organization?.name ?: "",
         idOrgParty = this.idOrgParty,
         nameOrgParty = this.organizationParty?.name ?: "",

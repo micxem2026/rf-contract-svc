@@ -18,6 +18,9 @@ class Counterparty(
     @Column(name = "GUID", length = 255, unique = true)
     val guid: String? = null,
 
+    @Column(name = "CODE_1C", length = 50, unique = true)
+    val code_1c: String? = null,
+
     @Column(name = "NAME", nullable = false, length = 255)
     val name: String,
 

@@ -10,6 +10,7 @@ data class ContractDto(
     @field:Schema(description = "GUID", example = "013-123456789") val guid: String?,
     @field:Schema(description = "Номер контракта", example = "С-0123/2025") val num: String,
     @field:Schema(description = "ID организации", example = "1") val idOrg: Int,
+    @field:Schema(description = "Код 1С организации", example = "1") val code1c: String?,
     @field:Schema(description = "Наименование организации", example = "АО 'Рога и Копыта'") val nameOrg: String,
     @field:Schema(description = "ID организации второго участника ВГО-контракта", example = "1") val idOrgParty: Int?,
     @field:Schema(description = "Наименование организации второго участника ВГО-контракта", example = "АО 'Рога и Копыта'") val nameOrgParty: String?,

@@ -63,6 +63,7 @@ class SyncService {
                     ":pSyncId, " +
                     ":pId, " +
                     ":pGuid, " +
+                    ":pCode1c, " +
                     ":pName, " +
                     ":pIdOrgRef, " +
                     ":pCreatedBy, " +
@@ -75,6 +76,7 @@ class SyncService {
         query.setParameter("pSyncId", pSyncId)
         query.setParameter("pId", dto.id)
         query.setParameter("pGuid", dto.guid)
+        query.setParameter("pCode1c", dto.code_1c)
         query.setParameter("pName", dto.name)
         query.setParameter("pIdOrgRef", dto.id_org_ref)
         query.setParameter("pCreatedBy", dto.created_by)
@@ -92,6 +94,7 @@ class SyncService {
                     ":pSyncId, " +
                     ":pId, " +
                     ":pGuid, " +
+                    ":pCode1c, " +
                     ":pName, " +
                     ":pCreatedBy, " +
                     ":pCreatedAt, " +
@@ -103,6 +106,7 @@ class SyncService {
         query.setParameter("pSyncId", pSyncId)
         query.setParameter("pId", dto.id)
         query.setParameter("pGuid", dto.guid)
+        query.setParameter("pCode1c", dto.code_1c)
         query.setParameter("pName", dto.name)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
