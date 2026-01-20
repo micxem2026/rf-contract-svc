@@ -27,12 +27,13 @@ SHELL ["/bin/bash", "-c"]
 # Диагностика сети
 RUN echo "=== Network diagnostics ===" && cat /etc/resolv.conf && ping -c 3 8.8.8.8 || true && curl -I https://cdn.amazonlinux.com/ || true
 
-# Установка xargs
-# Установка с retry и увеличенным таймаутом
-RUN dnf clean all && \
-    for i in 1 2 3; do \
-      dnf install -y --setopt=timeout=300 --setopt=retries=10 findutils && break || \
-      (echo "Retry $i failed, waiting..." && sleep 15); \
+# Настройка DNF и установка findutils с retry
+RUN echo "timeout=300" >> /etc/dnf/dnf.conf && \
+    echo "retries=10" >> /etc/dnf/dnf.conf && \
+    dnf clean all && \
+    for i in 1 2 3 4 5; do \
+      dnf install -y findutils && break || \
+      (echo "Attempt $i failed, retrying in 10 seconds..." && sleep 10); \
     done
 
 #RUN dnf install -y findutils
