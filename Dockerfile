@@ -42,7 +42,20 @@ RUN echo "timeout=300" >> /etc/dnf/dnf.conf && \
 ARG CI_JOB_TOKEN
 ARG GITLAB_REG_URL
 
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g"
+#ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g"
+# Настройка Gradle: отключаем auto-provisioning toolchain и используем текущий JDK
+ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g -Dorg.gradle.java.installations.auto-detect=false -Dorg.gradle.java.installations.auto-download=false"
+
+# Явно указываем JAVA_HOME для Gradle
+ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
+
+# Проверка наличия Java
+RUN echo "=== Java check ===" && \
+    echo "JAVA_HOME=$JAVA_HOME" && \
+    java -version && \
+    which java && \
+    ls -la $JAVA_HOME
+
 
 # Собираем проект
 RUN chmod +x ./gradlew && ./gradlew --no-daemon assemble -Pgitlab.registry.token=$CI_JOB_TOKEN -Pgitlab.registry.url=$GITLAB_REG_URL
