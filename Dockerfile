@@ -44,16 +44,19 @@ ARG GITLAB_REG_URL
 
 #ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g"
 # Настройка Gradle: отключаем auto-provisioning toolchain и используем текущий JDK
-ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g -Dorg.gradle.java.installations.auto-detect=false -Dorg.gradle.java.installations.auto-download=false"
+#ENV GRADLE_OPTS="-Dorg.gradle.daemon=false -Xmx1g -Dorg.gradle.java.installations.auto-detect=false -Dorg.gradle.java.installations.auto-download=false"
 
-# Явно указываем JAVA_HOME для Gradle
-ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
-
-# Проверка наличия Java
-RUN echo "=== Java check ===" && \
-    echo "JAVA_HOME=$JAVA_HOME" && \
+# Настройка Gradle для использования текущего JDK
+# Используем JAVA_HOME, который уже установлен в образе
+RUN echo "=== Java Configuration ===" && \
+    echo "JAVA_HOME: $JAVA_HOME" && \
+    REAL_JAVA_HOME=$(readlink -f "$JAVA_HOME" 2>/dev/null || echo "$JAVA_HOME") && \
+    echo "REAL_JAVA_HOME: $REAL_JAVA_HOME" && \
     java -version && \
-    ls -la $JAVA_HOME
+    ls -la "$REAL_JAVA_HOME" && \
+    echo "org.gradle.java.home=$REAL_JAVA_HOME" >> gradle.properties && \
+    echo "=== gradle.properties content ===" && \
+    cat gradle.properties
 
 
 # Собираем проект
