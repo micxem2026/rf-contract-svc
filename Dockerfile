@@ -24,8 +24,18 @@ COPY --chown=root:root .gradle /root/.gradle
 
 SHELL ["/bin/bash", "-c"]
 
+# Диагностика сети
+RUN echo "=== Network diagnostics ===" && cat /etc/resolv.conf && ping -c 3 8.8.8.8 || true && curl -I https://cdn.amazonlinux.com/ || true
+
 # Установка xargs
-RUN dnf install -y findutils
+# Установка с retry и увеличенным таймаутом
+RUN dnf clean all && \
+    for i in 1 2 3; do \
+      dnf install -y --setopt=timeout=300 --setopt=retries=10 findutils && break || \
+      (echo "Retry $i failed, waiting..." && sleep 15); \
+    done
+
+#RUN dnf install -y findutils
 
 # Объявляем аргумент, который мы будем получать из команды docker build
 ARG CI_JOB_TOKEN
