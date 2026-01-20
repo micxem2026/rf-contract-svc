@@ -28,7 +28,7 @@ SHELL ["/bin/bash", "-c"]
 RUN echo "=== Network diagnostics ===" && cat /etc/resolv.conf && ping -c 3 8.8.8.8 || true && curl -I https://cdn.amazonlinux.com/ || true
 
 # Настройка DNF и установка findutils с retry
-RUN echo "timeout=300" >> /etc/dnf/dnf.conf && \
+RUN echo "timeout=180" >> /etc/dnf/dnf.conf && \
     echo "retries=10" >> /etc/dnf/dnf.conf && \
     dnf clean all && \
     for i in 1 2 3 4 5; do \
@@ -53,7 +53,6 @@ ENV JAVA_HOME=/usr/lib/jvm/java-17-amazon-corretto
 RUN echo "=== Java check ===" && \
     echo "JAVA_HOME=$JAVA_HOME" && \
     java -version && \
-    which java && \
     ls -la $JAVA_HOME
 
 
