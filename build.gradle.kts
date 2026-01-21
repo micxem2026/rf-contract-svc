@@ -8,6 +8,25 @@ plugins {
 
 allprojects {
     repositories {
+        // Безопасное получение свойства
+        val gitlabCacheRegistryUrl = findProperty("gitlab.cache.registry.url")?.toString()
+        // Добавляем репозиторий только если URL задан и не пуст
+        if (!gitlabCacheRegistryUrl.isNullOrEmpty()) {
+            maven {
+                name = "GitLabCache"
+                url = uri(gitlabCacheRegistryUrl)
+
+                credentials(HttpHeaderCredentials::class) {
+                    name = "Private-Token"
+                    value = findProperty("gitlab.registry.token")?.toString() ?: ""
+                }
+
+                authentication {
+                    create<HttpHeaderAuthentication>("header")
+                }
+                isAllowInsecureProtocol = project.findProperty("gitlab.allow.insecure") == "true"
+            }
+        }
         mavenCentral()
         gradlePluginPortal()
     }

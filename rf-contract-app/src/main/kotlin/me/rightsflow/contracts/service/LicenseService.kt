@@ -39,6 +39,7 @@ class LicenseService(
             "SELECT pkg_contract.ins_license(" +
                     ":pGuid, " +
                     ":pNum, " +
+                    ":pName, " +
                     ":pIdContract, " +
                     ":pIdLicFormat, " +
                     ":pPrice, " +
@@ -54,6 +55,7 @@ class LicenseService(
 
         query.setParameter("pGuid", req.guid)
         query.setParameter("pNum", req.num)
+        query.setParameter("pName", req.name)
         query.setParameter("pIdContract", req.idContract)
         query.setParameter("pIdLicFormat", req.idLicFormat)
         query.setParameter("pPrice", req.price)
@@ -80,6 +82,7 @@ class LicenseService(
                     ":pId, " +
                     ":pGuid, " +
                     ":pNum, " +
+                    ":pName, " +
                     ":pIdLicFormat, " +
                     ":pPrice, " +
                     ":pVatRate, " +
@@ -95,6 +98,7 @@ class LicenseService(
         query.setParameter("pId", id)
         query.setParameter("pGuid", req.guid)
         query.setParameter("pNum", req.num)
+        query.setParameter("pName", req.name)
         query.setParameter("pIdLicFormat", req.idLicFormat)
         query.setParameter("pPrice", req.price)
         query.setParameter("pVatRate", req.vatRate)
@@ -135,6 +139,7 @@ class LicenseService(
         licFormatName = this.licenseFormat?.name ?: "",
         guid = this.guid,
         num = this.num,
+        name = this.name,
         price = this.price,
         vatRate = this.vatRate,
         vatAmount = this.vatAmount,

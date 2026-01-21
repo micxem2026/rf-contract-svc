@@ -331,3 +331,70 @@ BEGIN
     return r_result;
 END;
 $$ language plpgsql;
+
+ALTER TABLE LICENSE ADD COLUMN IF NOT EXISTS NAME VARCHAR(255);
+
+drop function if exists pkg_contract.ins_license(p_guid character varying,
+                                                 p_num character varying,
+                                                 p_id_contract bigint,
+                                                 p_id_lic_format bigint,
+                                                 p_price numeric,
+                                                 p_vat_rate numeric,
+                                                 p_vat_amount numeric,
+                                                 p_total_amount numeric,
+                                                 p_beg_date date,
+                                                 p_end_date date,
+                                                 p_description character varying,
+                                                 p_username character varying);
+
+create or replace function pkg_contract.ins_license(p_guid character varying,
+                                                    p_num character varying,
+                                                    p_name character varying,
+                                                    p_id_contract bigint,
+                                                    p_id_lic_format bigint,
+                                                    p_price numeric,
+                                                    p_vat_rate numeric,
+                                                    p_vat_amount numeric,
+                                                    p_total_amount numeric,
+                                                    p_beg_date date,
+                                                    p_end_date date,
+                                                    p_description character varying,
+                                                    p_username character varying)
+returns bigint
+    security definer
+    SET search_path = rightsflow
+    language plpgsql
+as
+$$
+DECLARE
+    r_result bigint;
+    v_contract contract%rowtype;
+    v_validity_period daterange;
+    v_num contract.num%type;
+BEGIN
+
+    if p_id_contract is null then
+        raise exception 'Ошибка создания лицензии! Не указан идентификатор договора (p_id_contract)!'
+            using errcode = 20104;
+    end if;
+
+    select * into v_contract from contract where id = p_id_contract;
+
+    v_num := coalesce(nullif(p_num, ''), pkg_contract.get_next_license_num());
+    v_validity_period := daterange(p_beg_date, p_end_date, '[]');
+
+    if isempty(v_contract.validity_period * v_validity_period) then
+        raise exception 'Лицензия не пересекается с периодом договора!'
+            using errcode = 20105;
+    else
+        v_validity_period := v_contract.validity_period * v_validity_period;
+    end if;
+
+    insert into license (id_contract, id_lic_format, guid, num, name, price, vat_rate, vat_amount, total_amount, validity_period, description, created_by)
+    values (p_id_contract, p_id_lic_format, p_guid, v_num, p_name, p_price, p_vat_rate,
+            p_vat_amount, p_total_amount, v_validity_period, p_description, p_username)
+    returning id into r_result;
+
+    return r_result;
+END;
+$$;

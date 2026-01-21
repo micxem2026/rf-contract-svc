@@ -14,6 +14,7 @@ data class LicenseDto(
     @field:Schema(description = "Название формата лицензии", example = "Forever young") val licFormatName: String?,
     @field:Schema(description = "GUID", example = "014-12345678") val guid: String?,
     @field:Schema(description = "Номер лицензии", example = "LIC-001") val num: String,
+    @field:Schema(description = "Название лицензии", example = "Лицензия 125") val name: String?,
     @field:Schema(description = "Стоимость", example = "100.00") val price: BigDecimal,
     @field:Schema(description = "Ставка НДС", example = "20.00") val vatRate: BigDecimal,
     @field:Schema(description = "Сумма НДС", example = "20.00") val vatAmount: BigDecimal,

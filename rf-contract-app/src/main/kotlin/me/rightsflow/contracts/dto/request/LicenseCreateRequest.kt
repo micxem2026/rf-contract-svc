@@ -24,6 +24,10 @@ data class LicenseCreateRequest(
     @field:Size(max = 255)
     val num: String?,
 
+    @field:Schema(description = "Название лицензии", example = "Лицензия 125")
+    @field:Size(max = 255)
+    val name: String?,
+
     @field:Schema(description = "Стоимость", example = "100.00")
     @field:NotNull var price: BigDecimal,
 

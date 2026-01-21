@@ -30,6 +30,9 @@ class License(
     @Column(name = "NUM", nullable = false, length = 255)
     var num: String,
 
+    @Column(name = "NAME", length = 255)
+    var name: String? = null,
+
     @Column(name = "PRICE", nullable = false)
     var price: BigDecimal = BigDecimal.ZERO,
 

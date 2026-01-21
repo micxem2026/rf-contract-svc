@@ -18,6 +18,9 @@ data class LicenseUpdateRequest(
     @field:Schema(description = "Номер лицензии")
     @field:Size(max = 255) val num: String?,
 
+    @field:Schema(description = "Название лицензии")
+    @field:Size(max = 255) val name: String?,
+
     @field:Schema(description = "Стоимость")
     val price: BigDecimal?,
 
