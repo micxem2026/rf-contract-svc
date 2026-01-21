@@ -5,6 +5,7 @@ import jakarta.persistence.ParameterMode
 import jakarta.persistence.PersistenceContext
 import me.rightsflow.common.config.SecuritySubjectProvider
 import me.rightsflow.common.exception.EntityNotFoundWithClsException
+import me.rightsflow.contracts.dto.request.LicenseRtFeaturesCreateBulkRequest
 import me.rightsflow.contracts.dto.request.LicenseRtFeaturesCreateRequest
 import me.rightsflow.contracts.dto.response.LicenseRtFeaturesDto
 import me.rightsflow.contracts.entity.LicenseRtFeatureSet
@@ -53,6 +54,29 @@ class LicenseRtFeaturesService(
         val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java) }
         em.refresh(e)
         return e.toDto()
+    }
+
+    @Transactional
+    fun createBulk(req: LicenseRtFeaturesCreateBulkRequest): String {
+        val query = em.createNativeQuery(
+            "SELECT pkg_contract.ins_license_rt_features_bulk(" +
+                    ":pIdLicRights, " +
+                    ":pIdFeatureSet, " +
+                    ":pIdFeatures, " +
+                    ":pIncluded, " +
+                    ":pCreatedBy" +
+                    ")"
+        )
+
+        query.setParameter("pIdLicRights", req.idLicRights)
+        query.setParameter("pIdFeatureSet", req.idFeatureSet)
+        query.setParameter("pIdFeatures", req.idFeatures.joinToString(","))
+        query.setParameter("pIncluded", req.isIncluded)
+        query.setParameter("pCreatedBy", subProvider.currentSub())
+
+        val ids = query.singleResult as String
+
+        return ids
     }
 
     @Transactional

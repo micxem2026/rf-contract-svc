@@ -7,6 +7,7 @@ import jakarta.validation.Valid
 import me.rightsflow.common.config.*
 import me.rightsflow.contracts.dto.request.LicenseRtFeatureSetCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseRtFeatureSetUpdateRequest
+import me.rightsflow.contracts.dto.request.LicenseRtFeaturesCreateBulkRequest
 import me.rightsflow.contracts.dto.request.LicenseRtFeaturesCreateRequest
 import me.rightsflow.contracts.dto.response.LicenseRtFeatureSetDto
 import me.rightsflow.contracts.dto.response.LicenseRtFeaturesDto
@@ -85,6 +86,18 @@ class LicenseRtFeatureSetController(
     @InternalServerErrorResponse
     fun addFeatureToFeatureSet(@Valid @RequestBody req: LicenseRtFeaturesCreateRequest): LicenseRtFeaturesDto =
         licenseRtFeaturesService.create(req)
+
+    @PostMapping(value = ["/features-by-fs-bulk"])
+    @Operation(summary = "Добавить несколько характеристик в набор характеристик")
+    @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
+    @ResponseStatus(HttpStatus.CREATED)
+    @ApiResponse(responseCode = "201", description = "Характеристики добавлены")
+    @ConflictResponse
+    @ValidationErrorResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun addFeatureToFeatureSetBulk(@Valid @RequestBody req: LicenseRtFeaturesCreateBulkRequest): String =
+        licenseRtFeaturesService.createBulk(req)
 
     @PutMapping("/{id}")
     @Operation(summary = "Изменить набор характеристик права по ID записи")

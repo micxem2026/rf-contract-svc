@@ -398,3 +398,42 @@ BEGIN
     return r_result;
 END;
 $$;
+
+create or replace function pkg_contract.ins_license_rt_features_bulk(p_id_lic_rights bigint,
+                                                                     p_id_feature_set bigint,
+                                                                     p_id_features text,
+                                                                     p_is_included boolean,
+                                                                     p_username character varying) returns text
+    security definer
+    SET search_path = rightsflow
+    language plpgsql
+as
+$$
+declare
+    v_array integer[];
+    v_id_feature integer;
+    v_id integer;
+    v_ids integer[];
+begin
+
+    begin
+        v_array := string_to_array(p_id_features, ',')::integer[];
+    exception
+        when invalid_text_representation then
+            raise notice 'невалидное значение в строке';
+            v_array := null;
+    end;
+
+    if v_array is null then
+        raise exception 'Ошибка создания характеристики! Не обнаружено ни одной характеристики!'
+            using errcode = 20100;
+    end if;
+
+    for v_id_feature in select a.id from unnest(v_array) as a(id) loop
+        v_id := pkg_contract.ins_license_rt_features(p_id_lic_rights, p_id_feature_set, v_id_feature, p_is_included, p_username);
+        v_ids := v_ids || v_id;
+    end loop;
+
+    return array_to_string(v_ids, ',') ;
+end;
+$$;
