@@ -140,4 +140,18 @@ class LicenseRtFeatureSetController(
     fun deleteFeatureFromFeatureSet(@PathVariable id: Long) {
         licenseRtFeaturesService.delete(id)
     }
+
+    @DeleteMapping("/features-by-fs-bulk")
+    @Operation(summary = "Удалить несколько характеристик из набора характеристик по заданным в массиве ID записей")
+    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiResponse(responseCode = "204", description = "Характеристики удалены из набора характеристик")
+    @NotFoundResponse
+    @ConflictResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun deleteFeatureFromFeatureSetBulk(@RequestBody ids: List<Long>) {
+        licenseRtFeaturesService.deleteBulk(ids)
+    }
+
 }

@@ -14,6 +14,7 @@ import me.rightsflow.contracts.repository.LicenseRtFeatureSetRepository
 import me.rightsflow.contracts.repository.LicenseRtFeaturesRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import kotlin.collections.joinToString
 
 @Service
 class LicenseRtFeaturesService(
@@ -88,6 +89,23 @@ class LicenseRtFeaturesService(
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
+        sp.setParameter("p_username", subProvider.currentSub())
+
+        sp.execute()
+    }
+
+    @Transactional
+    fun deleteBulk(ids: List<Long>) {
+
+        for (id in ids) {
+            repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java) }
+        }
+        val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rt_features_bulk")
+
+        sp.registerStoredProcedureParameter("p_ids", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+
+        sp.setParameter("p_ids", ids.joinToString(","))
         sp.setParameter("p_username", subProvider.currentSub())
 
         sp.execute()

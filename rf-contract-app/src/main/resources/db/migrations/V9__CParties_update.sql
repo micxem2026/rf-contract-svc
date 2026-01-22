@@ -437,3 +437,34 @@ begin
     return array_to_string(v_ids, ',') ;
 end;
 $$;
+
+create or replace procedure pkg_contract.del_license_rt_features_bulk(IN p_ids text, IN p_username character varying)
+    security definer
+    SET search_path = rightsflow
+    language plpgsql
+as
+$$
+declare
+    v_array integer[];
+    v_id_feature integer;
+begin
+
+    begin
+        v_array := string_to_array(p_ids, ',')::integer[];
+    exception
+        when invalid_text_representation then
+            raise notice 'невалидное значение в строке';
+            v_array := null;
+    end;
+
+    if v_array is null then
+        raise exception 'Ошибка удаления характеристик! Не обнаружено ни одной характеристики!'
+            using errcode = 20100;
+    end if;
+
+    for v_id_feature in select a.id from unnest(v_array) as a(id) loop
+        call pkg_contract.del_license_rt_features(v_id_feature, p_username);
+    end loop;
+
+end;
+$$;
