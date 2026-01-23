@@ -468,3 +468,90 @@ begin
 
 end;
 $$;
+
+CREATE OR REPLACE FUNCTION pkg_contract.ins_license_rights(
+    p_id_license bigint,
+    p_id_right_types text,
+    p_hb_start_date date,
+    p_hb_days integer,
+    p_username character varying)
+    RETURNS bigint
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE SECURITY DEFINER PARALLEL UNSAFE
+    SET search_path=rightsflow
+AS $BODY$
+
+DECLARE
+    r_result bigint;
+    v_license license%rowtype;
+    v_array integer[];
+    v_cnt integer;
+BEGIN
+
+    begin
+        v_array := string_to_array(p_id_right_types, ',')::integer[];
+    exception
+        when invalid_text_representation then
+            raise notice 'невалидное значение в строке';
+            v_array := null;
+    end;
+
+    if v_array is null then
+        raise exception 'Ошибка создания права! Не обнаружено ни одного типа права!'
+            using errcode = 20100;
+    end if;
+
+    select count(*) into v_cnt from sync__klf_right_type as rt
+                                        right join unnest(v_array) as rt0(id) on rt.id = rt0.id
+    where rt.id is null;
+
+    if v_cnt > 0 then
+        raise exception 'Ошибка создания права! Передано некорректное значение типа права!'
+            using errcode = 20100;
+    end if;
+/*
+    select count(distinct coalesce(rt.id_parent, -1)) into v_cnt from sync__klf_right_type as rt
+       join unnest(v_array) as rt0(id) on rt.id = rt0.id;
+
+    if v_cnt > 1 then
+        raise exception 'Ошибка создания права! Типы прав из разных поддеревьев дерева прав в одной привязке права к лицензии не поддерживается!'
+            using errcode = 20100;
+    end if;
+*/
+    if p_id_license is null then
+        raise exception 'Ошибка создания права! Не указан идентификатор лицензии (p_id_license)!'
+            using errcode = 20106;
+    end if;
+
+    if p_hb_start_date is not null and coalesce(p_hb_days, 0) <= 0 then
+        raise exception 'Количество дней холдбэка должно быть больше 0!'
+            using errcode = 20107;
+    end if;
+
+    select * into v_license from license where id = p_id_license;
+
+    if p_hb_start_date is not null and not (p_hb_start_date <@ v_license.validity_period) then
+        raise exception 'Дата начала холдбэка [%] не попадает в период действия лицензии [%]', p_hb_start_date, v_license.validity_period
+            using errcode = 20108;
+    end if;
+
+    insert into license_rights (id_license, hb_start_date, hb_days, created_by)
+    values (p_id_license, p_hb_start_date,
+            case when p_hb_start_date is not null then p_hb_days else null end, p_username)
+    returning id into r_result;
+
+    insert into license_rights_rt (id_lic_rights, id_right_type, created_by)
+    select r_result,rt.id, p_username from unnest(v_array) as rt(id);
+
+    return r_result;
+END;
+$BODY$;
+
+
+ALTER TABLE IF EXISTS rightsflow.pge_props_lic_rights_rt DROP CONSTRAINT IF EXISTS pge_props_lic_rights_rt_id_lic_rights_rt_fkey;
+
+ALTER TABLE IF EXISTS rightsflow.pge_props_lic_rights_rt
+    ADD CONSTRAINT pge_props_lic_rights_rt_id_lic_rights_rt_fkey FOREIGN KEY (id_lic_rights_rt)
+        REFERENCES rightsflow.license_rights_rt (id) MATCH SIMPLE
+        ON DELETE CASCADE;
