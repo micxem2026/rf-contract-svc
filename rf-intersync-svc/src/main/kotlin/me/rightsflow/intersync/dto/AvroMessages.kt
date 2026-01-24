@@ -88,6 +88,7 @@ data class KlfRightTypeAvroMessage(
     val id_parent: Int?,
     val name: String,
     val description: String?,
+    val id_right_group: Int?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,

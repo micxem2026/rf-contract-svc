@@ -7,6 +7,7 @@ import java.time.OffsetDateTime
 data class LicenseRightsRtDto(
     @field:Schema(description = "ID", example = "1") val id: Long,
     @field:Schema(description = "ID привязки права к лицензии", example = "1") val idLicRights: Long,
+    @field:Schema(description = "ID группы прав") val idRightGroup: Int?,
     @field:Schema(description = "ID типа права") val idRightType: Int,
     @field:Schema(description = "Наименование типа права") val nameRightType: String,
     @field:Schema(description = "Финансовые условия") val financeConditions: List<PropertyDataDto>,

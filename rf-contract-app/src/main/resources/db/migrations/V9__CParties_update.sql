@@ -555,3 +555,60 @@ ALTER TABLE IF EXISTS rightsflow.pge_props_lic_rights_rt
     ADD CONSTRAINT pge_props_lic_rights_rt_id_lic_rights_rt_fkey FOREIGN KEY (id_lic_rights_rt)
         REFERENCES rightsflow.license_rights_rt (id) MATCH SIMPLE
         ON DELETE CASCADE;
+
+ALTER TABLE SYNC__KLF_RIGHT_TYPE ADD COLUMN IF NOT EXISTS ID_RIGHT_GROUP INTEGER;
+
+drop function if exists pkg_sync.sync_klf_right_type(
+    p_sync_id integer,
+    p_id integer,
+    p_id_parent integer,
+    p_name character varying,
+    p_description character varying,
+    p_created_by character varying,
+    p_created_at timestamp with time zone,
+    p_updated_by character varying,
+    p_updated_at timestamp with time zone
+);
+
+CREATE OR REPLACE FUNCTION pkg_sync.sync_klf_right_type(
+    p_sync_id integer,
+    p_id integer,
+    p_id_parent integer,
+    p_name character varying,
+    p_description character varying,
+    p_id_right_group integer,
+    p_created_by character varying,
+    p_created_at timestamp with time zone DEFAULT now(),
+    p_updated_by character varying DEFAULT NULL::character varying,
+    p_updated_at timestamp with time zone DEFAULT NULL::timestamp with time zone)
+    RETURNS integer
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE SECURITY DEFINER PARALLEL UNSAFE
+    SET search_path=rightsflow
+AS $BODY$
+BEGIN
+    IF p_id IS NULL THEN
+        DELETE FROM sync__klf_right_type WHERE id = p_sync_id;
+    ELSE
+        INSERT INTO sync__klf_right_type (
+            id, id_parent, name, description, id_right_group, created_by,
+            created_at, updated_by, updated_at
+        )
+        VALUES (
+                   p_sync_id, p_id_parent, p_name, p_description, p_id_right_group,
+                   p_created_by, p_created_at, p_updated_by, p_updated_at
+               )
+        ON CONFLICT (id) DO UPDATE SET
+           id_parent = EXCLUDED.id_parent,
+           name = EXCLUDED.name,
+           description = EXCLUDED.description,
+           id_right_group =  EXCLUDED.id_right_group,
+           created_by = EXCLUDED.created_by,
+           updated_by = EXCLUDED.updated_by,
+           updated_at = EXCLUDED.updated_at
+        WHERE EXCLUDED.updated_at > COALESCE(sync__klf_right_type.updated_at, '1970-01-01'::TIMESTAMPTZ);
+    END IF;
+    RETURN p_sync_id;
+END;
+$BODY$;

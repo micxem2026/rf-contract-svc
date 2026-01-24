@@ -16,7 +16,10 @@ class RightType(
     val idParent: Int? = null,
 
     @Column(name = "NAME", nullable = false, length = 255)
-    val name: String
+    val name: String,
+
+    @Column(name = "ID_RIGHT_GROUP")
+    val idRightGroup: Int? = null
 
 ) : BaseAudit() {
 

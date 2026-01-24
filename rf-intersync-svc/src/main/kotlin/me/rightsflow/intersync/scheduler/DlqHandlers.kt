@@ -124,7 +124,8 @@ class RightTypeDlqHandler(
     override fun process(key: String, value: GenericRecord?) {
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val rightTypeDto = when (value) {
-            null -> KlfRightTypeAvroMessage(null,null,"","","",null,null,null)
+            null -> KlfRightTypeAvroMessage(null,null,"","",null,
+                                            "",null,null,null)
             else -> MessageConverter.convertToKlfRightTypeAvroMessage(value)
         }
         replicationService.processRightType(syncId, rightTypeDto)

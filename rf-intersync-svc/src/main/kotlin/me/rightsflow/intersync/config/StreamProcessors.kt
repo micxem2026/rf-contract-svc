@@ -222,8 +222,8 @@ class StreamProcessors(
                 log.info("rightTypeProcessor -> Received sync message with id: $syncId")
                 val rightTypeDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfRightTypeAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfRightTypeAvroMessage(null,null,"","","",Instant.EPOCH,
-                        null,null)
+                    is KafkaNull -> KlfRightTypeAvroMessage(null,null,"","",null,
+                        "",Instant.EPOCH,null,null)
                     else -> throw IllegalArgumentException("rightTypeProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
                 replicationService.processRightType(syncId, rightTypeDto)
@@ -689,6 +689,7 @@ object MessageConverter {
             id_parent = record.get("id_parent") as Int?,
             name = record.getString("name"),
             description = record.getStringOrNull("description"),
+            id_right_group = record.get("id_right_group") as Int?,
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),

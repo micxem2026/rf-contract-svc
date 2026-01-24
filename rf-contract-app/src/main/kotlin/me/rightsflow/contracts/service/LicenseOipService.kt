@@ -7,6 +7,7 @@ import me.rightsflow.common.config.SecuritySubjectProvider
 import me.rightsflow.common.exception.EntityNotFoundWithClsException
 import me.rightsflow.contracts.dto.request.LicenseOipRequest
 import me.rightsflow.contracts.dto.response.LicenseOipDto
+import me.rightsflow.contracts.dto.response.ParentInfo
 import me.rightsflow.contracts.entity.License
 import me.rightsflow.contracts.entity.LicenseOip
 import me.rightsflow.contracts.repository.LicenseOipRepository
@@ -28,7 +29,43 @@ class LicenseOipService(
 
     fun findByLicense(id: Long): List<LicenseOipDto> {
         licenseRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
-        return repo.findByIdLicense(id).map { it.toDto() }
+
+        val result = repo.findByIdLicense(id)
+
+        // Собрать все ID_OIP
+        val oipIds = result.map { it.idOip }
+
+        // Получить родителей одним запросом для всех OIP на странице
+        val parentsMap = getParentsMapForOips(oipIds)
+
+        return result.map { oip ->
+            val parents = parentsMap[oip.idOip] ?: emptyList()
+            oip.toDto(parents)
+        }
+
+    }
+
+    // Получить Map<OipId, List<ParentInfo>> для множества OIP одним запросом
+    private fun getParentsMapForOips(oipIds: List<Int>): Map<Int, List<ParentInfo>> {
+        if (oipIds.isEmpty()) return emptyMap()
+
+        @Suppress("UNCHECKED_CAST")
+        val results = em.createQuery(
+            """
+            select h.idOip, p.id, p.name
+            from OipHierarchy h
+            join Oip p on p.id = h.idParent
+            where h.idOip in :oipIds
+            order by h.idOip, h.idParent
+            """
+        )
+            .setParameter("oipIds", oipIds)
+            .resultList as List<Array<Any>>
+
+        return results.groupBy(
+            keySelector = { it[0] as Int },
+            valueTransform = { ParentInfo(id = it[1] as Int, name = it[2] as String) }
+        )
     }
 
     @Transactional
@@ -84,12 +121,13 @@ class LicenseOipService(
         sp.execute()
     }
 
-    private fun LicenseOip.toDto() = LicenseOipDto(
+    private fun LicenseOip.toDto(parents: List<ParentInfo> = emptyList()) = LicenseOipDto(
         id = this.id!!,
         idLicense = this.idLicense,
         licenseNum = this.license?.num ?: "",
         idOip = this.idOip,
         oipName = this.oip?.name ?: "",
+        parents = parents,
         idRootOip = this.idRootOip,
         rootOipName = this.rootOip?.name ?: "",
         createdBy = this.createdBy,

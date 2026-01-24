@@ -161,6 +161,7 @@ internal fun LicenseRights.getLicenseRightsRt(
         LicenseRightsRtDto(
             id = it.id!!,
             idLicRights = it.idLicRights,
+            idRightGroup = it.rightType?.idRightGroup,
             idRightType = it.idRightType,
             nameRightType = it.rightType?.name ?: "",
             financeConditions = fc.getOrDefault(it.id!!, emptyList()),
