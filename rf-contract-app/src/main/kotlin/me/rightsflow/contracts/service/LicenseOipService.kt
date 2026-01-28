@@ -37,7 +37,7 @@ class LicenseOipService(
         val parentsMap = getParentsMapForOips(oipIds)
 
         return result.map { oip ->
-            val pList = (oip.parents?.split(",") ?: emptyList()).reversed()
+            val pList = (oip.parents?.split(",") ?: emptyList())
             val parents = pList.mapIndexedNotNull { i, e -> parentsMap[e.toInt()]?.apply { this.level = pList.size - i - 1} }
             oip.toDto(parents)
         }
