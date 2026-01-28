@@ -10,7 +10,17 @@ data class LicenseOipRequest (
     @field:NotNull
     var idLicense: Long,
 
-    @field:Schema(description = "Список ID ОИС для добавления в лицензию", example = "[1]")
+    @field:Schema(description = "Список ОИС для добавления в лицензию")
     @field:NotNull
-    var listIdOip: List<Int>
+    var listIdOip: List<OipStruct>
+)
+
+data class OipStruct (
+
+    @field:Schema(description = "Список ID родителей через запятую", example = "1,2")
+    var parents: String,
+
+    @field:Schema(description = "ID ОИС для добавления в лицензию", example = "3")
+    @field:NotNull
+    var idOip: Int
 )

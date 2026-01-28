@@ -14,7 +14,7 @@ class GarbagePgeScheduler(
     /**
      * Очистка мусора
      */
-    @Scheduled(fixedRate = 14400000) // каждые 4 часа
+    @Scheduled(fixedRateString = "\${rightsflow.app.scheduler.cleanup.interval:14400000}") // каждые 4 часа
     fun cleanupOldSearchResults() {
         log.info("Начало очистки данных осиротевших PGE-свойств...")
 

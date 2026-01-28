@@ -7,15 +7,12 @@ import me.rightsflow.common.config.SecuritySubjectProvider
 import me.rightsflow.common.exception.EntityNotFoundWithClsException
 import me.rightsflow.contracts.dto.request.LicenseOipRequest
 import me.rightsflow.contracts.dto.response.LicenseOipDto
-import me.rightsflow.contracts.dto.response.ParentInfo
 import me.rightsflow.contracts.entity.License
 import me.rightsflow.contracts.entity.LicenseOip
 import me.rightsflow.contracts.repository.LicenseOipRepository
 import me.rightsflow.contracts.repository.LicenseRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import java.math.BigDecimal
-import java.math.BigInteger
 
 @Service
 class LicenseOipService(
@@ -33,20 +30,17 @@ class LicenseOipService(
         val result = repo.findByIdLicense(id)
 
         // Собрать все ID_OIP
-        val oipIds = result.map { it.idOip }
+        //val oipIds = result.map { it.idOip }
 
         // Получить родителей одним запросом для всех OIP на странице
-        val parentsMap = getParentsMapForOips(oipIds)
+        //val parentsMap = getParentsMapForOips(oipIds)
 
-        return result.map { oip ->
-            val parents = parentsMap[oip.idOip] ?: emptyList()
-            oip.toDto(parents)
-        }
+        return result.map { oip -> oip.toDto() }
 
     }
 
     // Получить Map<OipId, List<ParentInfo>> для множества OIP одним запросом
-    private fun getParentsMapForOips(oipIds: List<Int>): Map<Int, List<ParentInfo>> {
+/*    private fun getParentsMapForOips(oipIds: List<Int>): Map<Int, List<ParentInfo>> {
         if (oipIds.isEmpty()) return emptyMap()
 
         @Suppress("UNCHECKED_CAST")
@@ -66,7 +60,7 @@ class LicenseOipService(
             keySelector = { it[0] as Int },
             valueTransform = { ParentInfo(id = it[1] as Int, name = it[2] as String) }
         )
-    }
+    }*/
 
     @Transactional
     fun create(req: LicenseOipRequest): List<LicenseOipDto> {
@@ -80,7 +74,7 @@ class LicenseOipService(
         )
 
         query.setParameter("pIdLicense", req.idLicense)
-        query.setParameter("pIdOipStr", req.listIdOip.joinToString(","))
+        query.setParameter("pIdOipStr", req.listIdOip.joinToString(separator = ";") { "${it.parents}:${it.idOip}" })
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         @Suppress("UNCHECKED_CAST")
@@ -121,13 +115,13 @@ class LicenseOipService(
         sp.execute()
     }
 
-    private fun LicenseOip.toDto(parents: List<ParentInfo> = emptyList()) = LicenseOipDto(
+    private fun LicenseOip.toDto() = LicenseOipDto(
         id = this.id!!,
         idLicense = this.idLicense,
         licenseNum = this.license?.num ?: "",
         idOip = this.idOip,
         oipName = this.oip?.name ?: "",
-        parents = parents,
+        parents = this.parents,
         idRootOip = this.idRootOip,
         rootOipName = this.rootOip?.name ?: "",
         createdBy = this.createdBy,

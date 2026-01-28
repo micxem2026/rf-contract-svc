@@ -169,6 +169,19 @@ class ContractService(
 
     }
 
+    /**
+     * Отправка события на пересчёт прав для сделки
+     */
+    @Transactional
+    fun makeOutboxEvent(): Int {
+        val sql = "SELECT pkg_contract.make_contract_outbox()"
+
+        val result = em.createNativeQuery(sql)
+            .singleResult
+
+        return (result as Number).toInt()
+    }
+
     private fun Contract.toDto() = ContractDto(
         id = this.id!!,
         guid = this.guid,

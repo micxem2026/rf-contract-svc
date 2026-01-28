@@ -23,7 +23,10 @@ class LicenseOip(
     var idOip: Int,
 
     @Column(name = "ID_ROOT_OIP", nullable = false)
-    var idRootOip: Int
+    var idRootOip: Int,
+
+    @Column(name = "PARENTS")
+    var parents: String
 
 ) : BaseAudit() {
 
