@@ -116,11 +116,11 @@ BEGIN
 
     create temp table temp_res (parents text, id_oip integer) on commit drop;
     -- Проверяем передали ли простой массив
-    v_simple_arr := strpos(p_id_oip_str, ';') = 0;
+    v_simple_arr := strpos(p_id_oip_str, ';') = 0 and strpos(p_id_oip_str, ':') = 0;
     if v_simple_arr = false then
         v_array := string_to_array(p_id_oip_str,';');
         insert into temp_res (parents, id_oip)
-        select split_part(a1.val, ':', 1)::text as parents,
+        select nullif(split_part(a1.val, ':', 1)::text, '') as parents,
                split_part(a1.val, ':', 2)::integer as id_oip
         from unnest(v_array) a1(val);
         select array_to_string(array_agg(id_oip),',') into v_id_oip_str from temp_res;

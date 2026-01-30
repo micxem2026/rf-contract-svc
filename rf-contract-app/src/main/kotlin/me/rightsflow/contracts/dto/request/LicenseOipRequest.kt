@@ -18,7 +18,7 @@ data class LicenseOipRequest (
 data class OipStruct (
 
     @field:Schema(description = "Список ID родителей через запятую", example = "1,2")
-    var parents: String,
+    var parents: String?,
 
     @field:Schema(description = "ID ОИС для добавления в лицензию", example = "3")
     @field:NotNull

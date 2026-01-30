@@ -77,7 +77,7 @@ class LicenseOipService(
         )
 
         query.setParameter("pIdLicense", req.idLicense)
-        query.setParameter("pIdOipStr", req.listIdOip.joinToString(separator = ";") { "${it.parents}:${it.idOip}" })
+        query.setParameter("pIdOipStr", req.listIdOip.joinToString(separator = ";") { "${it.parents?:""}:${it.idOip}" })
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         @Suppress("UNCHECKED_CAST")
