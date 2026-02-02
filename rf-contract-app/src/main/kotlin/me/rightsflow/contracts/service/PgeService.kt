@@ -151,7 +151,8 @@ class PgeService(
             namePropType = tuple.get("name_prop_type", String::class.java),
             useMultiSelect = tuple.get("use_multi_select", Boolean::class.javaObjectType),
             value = if (propertyValue != null && displayValue != null) {
-                propertyValue.split(",").zip(displayValue.split(",")) { propValue, dispValue ->
+                propertyValue.removeSurrounding("{", "}")
+                             .split(",").zip(displayValue.split(",")) { propValue, dispValue ->
                     PropertyValueDto(propValue, if (dispValue == "{}") "" else dispValue)
                 }
             } else {
