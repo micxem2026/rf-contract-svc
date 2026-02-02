@@ -9,6 +9,7 @@ import me.rightsflow.contracts.dto.request.PropertyUpdateBatchRequest
 import me.rightsflow.contracts.dto.request.PropertyUpdateRequest
 import me.rightsflow.contracts.dto.response.PropertyDataDto
 import me.rightsflow.contracts.dto.response.PropertyGroupDto
+import me.rightsflow.contracts.dto.response.PropertyValueDto
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -136,6 +137,8 @@ class PgeService(
     }
 
     private fun mapTupleToPropertyData(tuple: Tuple): PropertyDataDto {
+        val propertyValue = tuple.get("property_value", String::class.java)
+        val displayValue = tuple.get("display_value", String::class.java)
         return PropertyDataDto(
             idEntity = tuple.get("id_entity", Number::class.java).toLong(),
             //id = tuple.get("id", Number::class.java).toInt(),
@@ -146,9 +149,14 @@ class PgeService(
             codeProp = tuple.get("code_prop", String::class.java),
             idPropType = tuple.get("id_prop_type", Number::class.java).toInt(),
             namePropType = tuple.get("name_prop_type", String::class.java),
-            propertyValue = tuple.get("property_value", String::class.java),
             useMultiSelect = tuple.get("use_multi_select", Boolean::class.javaObjectType),
-            displayValue = tuple.get("display_value", String::class.java)
+            value = if (propertyValue != null && displayValue != null) {
+                propertyValue.split(",").zip(displayValue.split(",")) { propValue, dispValue ->
+                    PropertyValueDto(propValue, if (dispValue == "{}") "" else dispValue)
+                }
+            } else {
+                listOf(PropertyValueDto(null, ""))
+            }
         )
     }
 }

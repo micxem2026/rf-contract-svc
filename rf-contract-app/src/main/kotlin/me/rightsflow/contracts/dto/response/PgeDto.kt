@@ -24,7 +24,13 @@ data class PropertyDataDto(
     @field:Schema(description = "Код свойства", example = "subtitleLang")  val codeProp: String,
     @field:Schema(description = "ID типа свойства", example = "1")  val idPropType: Int,
     @field:Schema(description = "Название типа свойства", example = "Справочник языков")  val namePropType: String,
-    @field:Schema(description = "Хранимое значение свойства", example = "800")  val propertyValue: String?,
+    //@field:Schema(description = "Хранимое значение свойства", example = "800")  val propertyValue: String?,
     @field:Schema(description = "Использовать ли множественный выбор", example = "False")  val useMultiSelect: Boolean,
+    //@field:Schema(description = "Отображаемое значение свойства", example = "Русский")  val displayValue: String?,
+    @field:Schema(description = "Значение свойства") val value: List<PropertyValueDto>
+)
+
+data class PropertyValueDto(
+    @field:Schema(description = "Хранимое значение свойства", example = "800")  val propertyValue: String?,
     @field:Schema(description = "Отображаемое значение свойства", example = "Русский")  val displayValue: String?
 )
