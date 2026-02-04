@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS CONTRACT_OUTBOX_BUFFER
 
 CREATE UNIQUE INDEX IF NOT EXISTS UNQ_CONTRACT_OUTBOX_BUFFER ON CONTRACT_OUTBOX_BUFFER(ID_CONTRACT,ID_ORG,ID_OIP);
 
-
 CREATE OR REPLACE PROCEDURE pkg_contract.make_contract_outbox_event(IN p_id_contract bigint, IN p_status_mode integer, IN p_username character varying)
     LANGUAGE plpgsql
     SECURITY DEFINER
@@ -68,7 +67,6 @@ begin
 
 end;
 $procedure$;
-
 
 CREATE OR REPLACE FUNCTION pkg_contract.make_contract_outbox()
     RETURNS integer
@@ -348,3 +346,86 @@ exception
             using errcode = '20156';
 end;
 $$;
+
+DROP FUNCTION IF EXISTS pkg_contract.upd_license(int8, varchar, varchar, int8, numeric, numeric, numeric, numeric, date, date, varchar, varchar);
+
+CREATE OR REPLACE FUNCTION pkg_contract.upd_license(p_id bigint,
+                                                    p_guid character varying,
+                                                    p_num character varying,
+                                                    p_name character varying,
+                                                    p_id_lic_format bigint,
+                                                    p_price numeric,
+                                                    p_vat_rate numeric,
+                                                    p_vat_amount numeric,
+                                                    p_total_amount numeric,
+                                                    p_beg_date date,
+                                                    p_end_date date,
+                                                    p_description character varying,
+                                                    p_username character varying)
+    RETURNS bigint
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET search_path TO 'rightsflow'
+AS $function$
+DECLARE
+    v_contract contract%rowtype;
+    v_license license%rowtype;
+    v_validity_period daterange;
+BEGIN
+
+    select c.* into v_contract from contract c, license l
+    where l.id_contract = c.id
+      and l.id = p_id;
+
+    select l.* into v_license from license l
+    where l.id = p_id
+        for update;
+
+    v_validity_period := daterange(p_beg_date, p_end_date, '[]');
+
+    if isempty(v_contract.validity_period * v_validity_period) then
+        raise exception 'Лицензия не пересекается с периодом договора!'
+            using errcode = 20105;
+    else
+        v_validity_period := v_contract.validity_period * v_validity_period;
+    end if;
+
+    if coalesce(v_license.id_lic_format, -1) != coalesce(p_id_lic_format, -1) then
+        call pkg_contract.make_change_buffer(p_action => 'UPDATE', p_username => p_username, p_id_license => p_id);
+    end if;
+
+    update license
+    set
+        id_lic_format = p_id_lic_format,
+        guid = p_guid,
+        num = coalesce(p_num, num),
+        name = p_name,
+        price = coalesce(p_price, price),
+        vat_rate = coalesce(p_vat_rate, vat_rate),
+        vat_amount = coalesce(p_vat_amount, vat_amount),
+        total_amount = coalesce(p_total_amount, total_amount),
+        validity_period = v_validity_period,
+        description = p_description,
+        updated_by = p_username,
+        updated_at = current_timestamp
+    where
+        id = p_id;
+
+    update license_rt_feature_set fs
+    set validity_period = case
+        -- Для пересекающихся feature_set - пересечение с новым периодом лицензии
+        when not (fs.validity_period <@ ul.validity_period)
+          and (fs.validity_period && ul.validity_period) then
+          fs.validity_period * ul.validity_period
+        -- Для остальных случаев - просто новый период лицензии
+        else ul.validity_period
+        end
+    from license ul
+    join license_rights lr on lr.id_license = ul.id
+    where fs.id_lic_rights = lr.id
+      and ul.id = p_id;
+
+    return p_id;
+END;
+$function$
+;
