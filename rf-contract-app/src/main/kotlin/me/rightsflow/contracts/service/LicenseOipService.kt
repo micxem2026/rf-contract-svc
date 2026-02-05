@@ -118,6 +118,19 @@ class LicenseOipService(
         sp.execute()
     }
 
+    @Transactional
+    fun deleteByLic(idLicense: Long) {
+        val sp = em.createStoredProcedureQuery("pkg_contract.del_license_oip_by_lic")
+
+        sp.registerStoredProcedureParameter("p_id_license", Long::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+
+        sp.setParameter("p_id_license", idLicense)
+        sp.setParameter("p_username", subProvider.currentSub())
+
+        sp.execute()
+    }
+
     private fun LicenseOip.toDto(parents: List<ParentInfo> = emptyList()) = LicenseOipDto(
         id = this.id!!,
         idLicense = this.idLicense,

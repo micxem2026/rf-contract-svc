@@ -135,4 +135,17 @@ class LicenseController(
     fun deleteOipByRoot(@PathVariable idLicense: Long, @PathVariable idRoot: Long) {
         licenseOipService.deleteByRoot(idLicense, idRoot)
     }
+
+    @DeleteMapping("/oip-by-license/{idLicense}/license")
+    @Operation(summary = "Удалить ОИС(ы) из лицензии по заданному ID лицензии")
+    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @ApiResponse(responseCode = "204", description = "ОИС(ы) удален(ы) из лицензии")
+    @NotFoundResponse
+    @ConflictResponse
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun deleteOipByLicense(@PathVariable idLicense: Long) {
+        licenseOipService.deleteByLic(idLicense)
+    }
 }

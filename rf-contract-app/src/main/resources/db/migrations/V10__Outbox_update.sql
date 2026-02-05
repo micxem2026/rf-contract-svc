@@ -429,3 +429,22 @@ BEGIN
 END;
 $function$
 ;
+
+CREATE OR REPLACE PROCEDURE pkg_contract.del_license_oip_by_lic(IN p_id_license bigint, IN p_username character varying)
+    LANGUAGE plpgsql
+    SECURITY DEFINER
+    SET search_path TO 'rightsflow'
+AS $procedure$
+DECLARE
+    v_rec record;
+BEGIN
+    if not exists (select 1 from license where id = p_id_license) then
+        raise exception 'Лицензия не найдена! [id = %]', p_id_license using errcode = 20120;
+    end if;
+    for v_rec in select * from license_oip where id_license = p_id_license loop
+            call pkg_contract.make_change_buffer(p_action => 'DELETE', p_username => p_username, p_id_lic_oip => v_rec.id);
+        end loop;
+    delete from license_oip where id_license = p_id_license;
+END;
+$procedure$
+;
