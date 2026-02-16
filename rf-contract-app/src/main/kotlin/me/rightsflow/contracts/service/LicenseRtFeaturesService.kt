@@ -58,7 +58,7 @@ class LicenseRtFeaturesService(
     }
 
     @Transactional
-    fun createBulk(req: LicenseRtFeaturesCreateBulkRequest): String {
+    fun createBulk(req: LicenseRtFeaturesCreateBulkRequest): List<LicenseRtFeaturesDto> {
         val query = em.createNativeQuery(
             "SELECT pkg_contract.ins_license_rt_features_bulk(" +
                     ":pIdLicRights, " +
@@ -77,7 +77,7 @@ class LicenseRtFeaturesService(
 
         val ids = query.singleResult as String
 
-        return ids
+        return repo.findByIdFeatureSet(req.idFeatureSet).map { it.toDto() }
     }
 
     @Transactional

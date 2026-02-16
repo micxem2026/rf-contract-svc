@@ -96,7 +96,7 @@ class LicenseRtFeatureSetController(
     @ValidationErrorResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun addFeatureToFeatureSetBulk(@Valid @RequestBody req: LicenseRtFeaturesCreateBulkRequest): String =
+    fun addFeatureToFeatureSetBulk(@Valid @RequestBody req: LicenseRtFeaturesCreateBulkRequest): List<LicenseRtFeaturesDto> =
         licenseRtFeaturesService.createBulk(req)
 
     @PutMapping("/{id}")
