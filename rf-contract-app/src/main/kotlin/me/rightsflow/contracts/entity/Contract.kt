@@ -53,7 +53,7 @@ class Contract(
     @Column(name = "IN_OUT", nullable = false, length = 2)
     var inOut: ContractKind,
 
-    @Column(name = "DESCRIPTION", length = 511)
+    @Column(name = "DESCRIPTION", columnDefinition = "text")
     var description: String? = null,
 
     @Column(name = "WARNING", length = 511)
@@ -69,7 +69,10 @@ class Contract(
     var idCurrency: Int? = null,
 
     @Column(name = "ID_CURRENCY_PAYMENT")
-    var idCurrencyPayment: Int? = null
+    var idCurrencyPayment: Int? = null,
+
+    @Column(name = "ID_CONTRACT_VP")
+    var idContractVp: Int? = null
 
 ) : BaseAudit() {
 

@@ -33,6 +33,8 @@ data class ContractDto(
     @field:Schema(description = "GUID родительского контракта", example = "013-123456789") val guidParent: String?,
     @field:Schema(description = "Номер родительского контракта", example = "С-0123/2025") val numParent: String?,
 
+    @field:Schema(description = "ID контракта в VP", example = "1") val idContractVp: Int?,
+
     @field:Schema(description = "ID валюты контракта", example = "1") val idCurrency: Int?,
     @field:Schema(description = "Код валюты контракта", example = "USD") val currencyCode: String?,
     @field:Schema(description = "Название валюты контракта", example = "Доллар США") val currencyName: String?,

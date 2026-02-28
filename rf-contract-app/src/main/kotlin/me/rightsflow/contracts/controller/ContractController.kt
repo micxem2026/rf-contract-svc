@@ -60,7 +60,7 @@ class ContractController(
     fun findByFilter(
         @RequestParam(required = false) idContractType: Int?,
         @RequestParam(required = false) idContractStatus: Int?,
-        @RequestParam(required = false) idOrg: Int?,
+        @RequestParam(required = false) idOrg: String?,
         @RequestParam(required = false) numFilter: String?,
         @RequestParam(required = false)
         @Parameter(name = "inOut", schema = Schema(type = "string", allowableValues = ["eP", "eS", "iP", "iS"])) inOut: String?,

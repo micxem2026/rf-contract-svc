@@ -14,6 +14,7 @@ import org.springframework.data.web.config.EnableSpringDataWebSupport
     scanBasePackages = [
         "me.rightsflow.contracts", // нужен чтобы находился SecurityConfig
         "me.rightsflow.common",
+        "me.rightsflow.acl",
         "me.rightsflow.intersync"
     ]
 )

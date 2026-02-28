@@ -48,6 +48,7 @@ dependencies {
     // RightsFlow libs
     implementation("me.rightsflow:rf-common-lib:${property("rfCommonLibVersion")}")
     implementation(project(":rf-intersync-svc"))
+    implementation(project(":rf-acl-svc"))
 
     // Spring Boot starters
     implementation("org.springframework.boot:spring-boot-starter-web")

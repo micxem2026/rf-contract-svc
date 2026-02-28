@@ -28,4 +28,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         @Param("inOut") inOut: Contract.ContractKind?,
         pageable: Pageable
     ): Page<Contract>
+
+    @Query("select * from pkg_contract.get_org_id(:idOrg)", nativeQuery = true)
+    fun getIdOrg(@Param("idOrg") idOrg: String): Int
 }

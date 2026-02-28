@@ -4,3 +4,4 @@
 rootProject.name = "rf-contract-svc"
 include("rf-contract-app")
 include("rf-intersync-svc")
+include("rf-acl-svc")

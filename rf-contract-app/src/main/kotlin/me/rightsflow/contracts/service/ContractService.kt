@@ -31,13 +31,17 @@ class ContractService(
     fun findByFilter(
         idContractType: Int?,
         idContractStatus: Int?,
-        idOrg: Int?,
+        idOrg: String?,
         numFilter: String?,
         inOut: String?,
         pageable: Pageable
     ): Page<ContractDto> = run {
         val contractKind = inOut?.let { Contract.ContractKind.valueOf(it) }
-        repo.findByFilter(idContractType, idContractStatus, idOrg, numFilter, contractKind, pageable).map { it.toDto() }
+        var idOrgInt: Int? = null
+        if (idOrg != null) {
+            idOrgInt = repo.getIdOrg(idOrg)
+        }
+        repo.findByFilter(idContractType, idContractStatus, idOrgInt, numFilter, contractKind, pageable).map { it.toDto() }
     }
 
     @Transactional
@@ -213,6 +217,7 @@ class ContractService(
         idCurrencyPayment = this.idCurrencyPayment,
         currencyCodePayment = this.currencyPayment?.isoCharCode ?: "",
         currencyNamePayment = this.currencyPayment?.name ?: "",
+        idContractVp = this.idContractVp,
         createdBy = this.createdBy,
         createdAt = this.createdAt,
         updatedBy = this.updatedBy,
