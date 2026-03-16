@@ -45,7 +45,13 @@ class LicenseController(
     @CommonSecurityResponses
     @NotFoundResponse
     @InternalServerErrorResponse
-    fun findOipByLicenseId(@PathVariable id: Long): List<LicenseOipDto> = licenseOipService.findByLicense(id)
+    fun findOipByLicenseId(
+        @PathVariable id: Long,
+        @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
+    ): PagedModel<LicenseOipDto> {
+        val page = licenseOipService.findByLicense(id, pageable)
+        return PagedModel(page)
+    }
 
     @GetMapping("/by-contract/{id}")
     @Operation(summary = "Поиск лицензий контракта по фильтрам (с пагинацией)")

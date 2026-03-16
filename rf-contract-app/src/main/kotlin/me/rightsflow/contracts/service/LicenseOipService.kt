@@ -12,6 +12,8 @@ import me.rightsflow.contracts.entity.License
 import me.rightsflow.contracts.entity.LicenseOip
 import me.rightsflow.contracts.repository.LicenseOipRepository
 import me.rightsflow.contracts.repository.LicenseRepository
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -25,13 +27,13 @@ class LicenseOipService(
     fun getById(id: Long): LicenseOipDto =
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseOip::class.java) }.toDto()
 
-    fun findByLicense(id: Long): List<LicenseOipDto> {
+    fun findByLicense(id: Long, pageable: Pageable): Page<LicenseOipDto> {
         licenseRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
 
-        val result = repo.findByIdLicense(id)
+        val result = repo.findByIdLicense(id, pageable)
 
         // Собрать все ID_OIP для родителей
-        val oipIds = result.flatMap { it.parents?.split(",") ?: emptyList() }.map { it.toInt() }.toSet()
+        val oipIds = result.content.flatMap { it.parents?.split(",") ?: emptyList() }.map { it.toInt() }.toSet()
 
         // Получить родителей одним запросом для всех OIP на странице
         val parentsMap = getParentsMapForOips(oipIds)
