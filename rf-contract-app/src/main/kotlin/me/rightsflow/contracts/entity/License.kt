@@ -40,7 +40,7 @@ class License(
     @Column(name = "VALIDITY_PERIOD", nullable = false, columnDefinition = "daterange")
     var validityPeriod: Range<LocalDate> = Range.emptyRange(LocalDate::class.java),
 
-    @Column(name = "DESCRIPTION", length = 511)
+    @Column(name = "DESCRIPTION", columnDefinition = "text")
     var description: String? = null,
 
     @Column(name = "VAT_RATE", nullable = false)

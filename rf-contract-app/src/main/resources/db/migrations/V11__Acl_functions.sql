@@ -825,3 +825,197 @@ exception
         p_code_pg, p_property, p_id_entity, p_value, SQLERRM;
 end;
 $BODY$;
+
+----
+ALTER TABLE IF EXISTS LICENSE_RIGHTS ADD COLUMN IF NOT EXISTS PRICE DECIMAL NOT NULL DEFAULT 0.0;
+ALTER TABLE IF EXISTS LICENSE_RIGHTS ADD COLUMN IF NOT EXISTS VAT_AMOUNT DECIMAL NOT NULL DEFAULT 0.0;
+ALTER TABLE IF EXISTS LICENSE_RIGHTS ADD COLUMN IF NOT EXISTS TOTAL_AMOUNT DECIMAL NOT NULL DEFAULT 0.0;
+ALTER TABLE IF EXISTS LICENSE_RIGHTS ADD COLUMN IF NOT EXISTS DESCRIPTION TEXT;
+
+DROP FUNCTION IF EXISTS pkg_contract.ins_license_rights(bigint, text, date, integer, character varying);
+
+CREATE OR REPLACE FUNCTION pkg_contract.ins_license_rights(
+    p_id_license bigint,
+    p_id_right_types text,
+    p_hb_start_date date,
+    p_hb_days integer,
+    p_price numeric,
+    p_vat_amount numeric,
+    p_total_amount numeric,
+    p_description text,
+    p_username character varying)
+    RETURNS bigint
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE SECURITY DEFINER PARALLEL UNSAFE
+    SET search_path=rightsflow
+AS $BODY$
+
+
+DECLARE
+    r_result bigint;
+    v_license license%rowtype;
+    v_array integer[];
+    v_cnt integer;
+BEGIN
+
+    begin
+        v_array := string_to_array(p_id_right_types, ',')::integer[];
+    exception
+        when invalid_text_representation then
+            raise notice 'невалидное значение в строке';
+            v_array := null;
+    end;
+
+    if v_array is null then
+        raise exception 'Ошибка создания права! Не обнаружено ни одного типа права!'
+            using errcode = 20100;
+    end if;
+
+    select count(*) into v_cnt from sync__klf_right_type as rt
+      right join unnest(v_array) as rt0(id) on rt.id = rt0.id
+    where rt.id is null;
+
+    if v_cnt > 0 then
+        raise exception 'Ошибка создания права! Передано некорректное значение типа права!'
+            using errcode = 20100;
+    end if;
+/*
+    select count(distinct coalesce(rt.id_parent, -1)) into v_cnt from sync__klf_right_type as rt
+       join unnest(v_array) as rt0(id) on rt.id = rt0.id;
+
+    if v_cnt > 1 then
+        raise exception 'Ошибка создания права! Типы прав из разных поддеревьев дерева прав в одной привязке права к лицензии не поддерживается!'
+            using errcode = 20100;
+    end if;
+*/
+    if p_id_license is null then
+        raise exception 'Ошибка создания права! Не указан идентификатор лицензии (p_id_license)!'
+            using errcode = 20106;
+    end if;
+
+    if p_hb_start_date is not null and coalesce(p_hb_days, 0) <= 0 then
+        raise exception 'Количество дней холдбэка должно быть больше 0!'
+            using errcode = 20107;
+    end if;
+
+    select * into v_license from license where id = p_id_license;
+
+    if p_hb_start_date is not null and not (p_hb_start_date <@ v_license.validity_period) then
+        raise exception 'Дата начала холдбэка [%] не попадает в период действия лицензии [%]', p_hb_start_date, v_license.validity_period
+            using errcode = 20108;
+    end if;
+
+    insert into license_rights (id_license, hb_start_date, hb_days, price, vat_amount, total_amount, description, created_by)
+    values (p_id_license, p_hb_start_date,
+            case when p_hb_start_date is not null then p_hb_days end, p_price, p_vat_amount,
+            p_total_amount, p_description, p_username)
+    returning id into r_result;
+
+    insert into license_rights_rt (id_lic_rights, id_right_type, created_by)
+    select r_result,rt.id, p_username from unnest(v_array) as rt(id);
+
+    return r_result;
+END;
+$BODY$;
+
+DROP FUNCTION IF EXISTS pkg_contract.upd_license_rights(bigint, bigint, text, date, integer, character varying);
+
+CREATE OR REPLACE FUNCTION pkg_contract.upd_license_rights(
+    p_id bigint,
+    p_id_license bigint,
+    p_id_right_types text,
+    p_hb_start_date date,
+    p_hb_days integer,
+    p_price numeric,
+    p_vat_amount numeric,
+    p_total_amount numeric,
+    p_description text,
+    p_username character varying)
+    RETURNS bigint
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE SECURITY DEFINER PARALLEL UNSAFE
+    SET search_path=rightsflow
+AS $BODY$
+
+DECLARE
+    v_license license%rowtype;
+    v_license_rights license_rights%rowtype;
+    v_array integer[];
+    v_cnt integer;
+BEGIN
+
+    begin
+        v_array := string_to_array(p_id_right_types, ',')::integer[];
+    exception
+        when invalid_text_representation then
+            raise notice 'невалидное значение в строке';
+            v_array := null;
+    end;
+
+    if v_array is not null then
+        select count(*) into v_cnt from sync__klf_right_type as rt
+          right join unnest(v_array) as rt0(id) on rt.id = rt0.id
+        where rt.id is null;
+        if v_cnt > 0 then
+            raise exception 'Ошибка обновления права! Передано некорректное значение типа права!'
+                using errcode = 20100;
+        end if;
+        /*
+        select count(distinct coalesce(rt.id_parent, -1)) into v_cnt from sync__klf_right_type as rt
+          join unnest(v_array) as rt0(id) on rt.id = rt0.id;
+        if v_cnt > 1 then
+            raise exception 'Ошибка создания права! Типы прав из разных поддеревьев дерева прав в одной привязке права к лицензии не поддерживается!'
+                using errcode = 20100;
+        end if;
+        */
+    end if;
+
+    if p_id_license is null then
+        raise exception 'Ошибка обновления права! Не указан идентификатор лицензии (p_id_license)!'
+            using errcode = 20109;
+    end if;
+
+    if p_hb_start_date is not null and coalesce(p_hb_days, 0) <= 0 then
+        raise exception 'Количество дней холдбэка должно быть больше 0!'
+            using errcode = 20107;
+    end if;
+
+    select * into v_license from license where id = p_id_license;
+
+    if p_hb_start_date is not null and not (p_hb_start_date <@ v_license.validity_period) then
+        raise exception 'Дата начала холдбэка [%] не попадает в период действия лицензии [%]', p_hb_start_date, v_license.validity_period
+            using errcode = 20108;
+    end if;
+
+    select * into v_license_rights from license_rights where id = p_id for update;
+
+    if coalesce(v_license_rights.hb_start_date, '1900-01-01'::date) != coalesce(p_hb_start_date, '1900-01-01'::date) or
+       coalesce(v_license_rights.hb_days, 0) != coalesce(p_hb_days, 0) then
+        call pkg_contract.make_change_buffer(p_action => 'UPDATE', p_username => p_username, p_id_lic_rights => p_id);
+    end if;
+
+    update license_rights
+    set
+        hb_start_date = p_hb_start_date,
+        hb_days = case when p_hb_start_date is null then null else p_hb_days end,
+        price = coalesce(p_price, price),
+        vat_amount = coalesce(p_vat_amount, vat_amount),
+        total_amount = coalesce(p_total_amount, total_amount),
+        description = p_description,
+        updated_by = p_username,
+        updated_at = current_timestamp
+    where
+        id = p_id;
+
+    if v_array is not null then
+        delete from license_rights_rt
+        where id_lic_rights = p_id;
+        insert into license_rights_rt (id_lic_rights, id_right_type, created_by)
+        select p_id, rt.id, p_username from unnest(v_array) as rt(id);
+    end if;
+
+    return p_id;
+END;
+$BODY$;

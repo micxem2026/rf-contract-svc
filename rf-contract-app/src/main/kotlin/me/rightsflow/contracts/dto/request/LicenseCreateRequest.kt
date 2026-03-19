@@ -47,6 +47,5 @@ data class LicenseCreateRequest(
     val validityPeriodEnd: LocalDate?,
 
     @field:Schema(description = "Описание", example = "Лицензия на использование видео контента")
-    @field:Size(max = 511)
     val description: String?
 )

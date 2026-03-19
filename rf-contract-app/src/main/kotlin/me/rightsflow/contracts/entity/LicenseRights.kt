@@ -1,8 +1,12 @@
 package me.rightsflow.contracts.entity
 
+import io.hypersistence.utils.hibernate.type.range.PostgreSQLRangeType
+import io.hypersistence.utils.hibernate.type.range.Range
 import jakarta.persistence.*
 import me.rightsflow.common.entity.BaseAudit
 import org.hibernate.Hibernate
+import org.hibernate.annotations.Type
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Entity
@@ -23,7 +27,20 @@ class LicenseRights(
     var hbStartDate: LocalDate? = null,
 
     @Column(name = "HB_DAYS")
-    var hbDays: Int? = null
+    var hbDays: Int? = null,
+
+    @Column(name = "PRICE", nullable = false)
+    var price: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "VAT_AMOUNT", nullable = false)
+    var vatAmount: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "TOTAL_AMOUNT", nullable = false)
+    var totalAmount: BigDecimal = BigDecimal.ZERO,
+
+    @Column(name = "DESCRIPTION", columnDefinition = "text")
+    var description: String? = null
+
 
 ) : BaseAudit() {
 

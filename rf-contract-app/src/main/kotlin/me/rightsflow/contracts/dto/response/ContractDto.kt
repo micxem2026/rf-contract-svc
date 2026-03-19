@@ -1,6 +1,8 @@
 package me.rightsflow.contracts.dto.response
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -42,8 +44,45 @@ data class ContractDto(
     @field:Schema(description = "Код валюты платежа", example = "USD") val currencyCodePayment: String?,
     @field:Schema(description = "Название валюты платежа", example = "Доллар США") val currencyNamePayment: String?,
 
+    @field:Schema(description = "Сумма по лицензиям (цена)", example = "1000.00") val contractPrice: BigDecimal,
+    @field:Schema(description = "Сумма НДС по лицензиям", example = "200.00") val contractVatAmount: BigDecimal,
+    @field:Schema(description = "Итоговая сумма по лицензиям", example = "1200.00") val contractTotalAmount: BigDecimal,
+
+    @field:Schema(description = "Контрагенты договора") val cParties: List<ContractCounterpartyShortDto>,
+
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
     @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?
 )
+
+interface ContractWithTotalsProjection {
+    // Все поля Contract
+    fun getId(): Long
+    fun getGuid(): String?
+    fun getNum(): String
+    fun getIdOrg(): Int
+    fun getIdOrgParty(): Int?
+    fun getValidityPeriodStart(): LocalDate?
+    fun getValidityPeriodEnd(): LocalDate?
+    fun getContractDate(): LocalDate?
+    fun getIdContractType(): Int
+    fun getIdContractStatus(): Int
+    fun getInOut(): String
+    fun getDescription(): String?
+    fun getWarning(): String?
+    fun getIdSibling(): Long?
+    fun getIdParent(): Long?
+    fun getIdCurrency(): Int?
+    fun getIdCurrencyPayment(): Int?
+    fun getIdContractVp(): Int?
+    fun getCreatedBy(): String
+    fun getCreatedAt(): Instant
+    fun getUpdatedBy(): String?
+    fun getUpdatedAt(): Instant?
+
+    // Агрегаты из лицензий
+    fun getContractPrice(): BigDecimal?
+    fun getContractVatAmount(): BigDecimal?
+    fun getContractTotalAmount(): BigDecimal?
+}

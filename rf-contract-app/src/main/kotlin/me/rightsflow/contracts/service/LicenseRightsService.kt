@@ -45,6 +45,10 @@ class LicenseRightsService(
                     ":pIdRightTypes, " +
                     ":phbStartDate, " +
                     ":phbDays, " +
+                    ":pPrice, " +
+                    ":pVatAmount, " +
+                    ":pTotalAmount, " +
+                    ":pDescription, " +
                     ":pCreatedBy" +
                     ")"
         )
@@ -53,6 +57,10 @@ class LicenseRightsService(
         query.setParameter("pIdRightTypes", req.listIdRightTypes.joinToString(","))
         query.setParameter("phbStartDate", req.hbStartDate)
         query.setParameter("phbDays", req.hbDays)
+        query.setParameter("pPrice", req.price)
+        query.setParameter("pVatAmount", req.vatAmount)
+        query.setParameter("pTotalAmount", req.totalAmount)
+        query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         val id = query.singleResult as Long
@@ -72,6 +80,10 @@ class LicenseRightsService(
                     ":pIdRightTypes, " +
                     ":phbStartDate, " +
                     ":phbDays, " +
+                    ":pPrice, " +
+                    ":pVatAmount, " +
+                    ":pTotalAmount, " +
+                    ":pDescription, " +
                     ":pCreatedBy" +
                     ")"
         )
@@ -81,6 +93,10 @@ class LicenseRightsService(
         query.setParameter("pIdRightTypes", req.listIdRightTypes?.joinToString(","))
         query.setParameter("phbStartDate", req.hbStartDate)
         query.setParameter("phbDays", req.hbDays)
+        query.setParameter("pPrice", req.price)
+        query.setParameter("pVatAmount", req.vatAmount)
+        query.setParameter("pTotalAmount", req.totalAmount)
+        query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
 
         query.singleResult as Long
@@ -137,6 +153,10 @@ class LicenseRightsService(
         licenseRightsRt = this.getLicenseRightsRt(pgeService, subProvider),
         hbStartDate = this.hbStartDate,
         hbDays = this.hbDays,
+        price = this.price,
+        vatAmount = this.vatAmount,
+        totalAmount = this.totalAmount,
+        description = this.description,
         createdBy = this.createdBy,
         createdAt = this.createdAt,
         updatedBy = this.updatedBy,

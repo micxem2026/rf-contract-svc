@@ -40,6 +40,5 @@ data class LicenseUpdateRequest(
     val validityPeriodEnd: LocalDate?,
 
     @field:Schema(description = "Описание")
-    @field:Size(max = 511)
     val description: String?
 )

@@ -16,3 +16,11 @@ data class ContractCounterpartyDto (
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
     @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?
 )
+
+@Schema(description = "Контрагент контракта (сокращённый вариант)")
+data class ContractCounterpartyShortDto (
+    @field:Schema(description = "ID", example = "1") val id: Long,
+    @field:Schema(description = "ID контрагента", example = "1") val idCpart: Int,
+    @field:Schema(description = "Код 1С контрагента", example = "1") val code1c: String?,
+    @field:Schema(description = "Наименование контрагента", example = "АО 'Рога и Копыта'") val cpartName: String
+)

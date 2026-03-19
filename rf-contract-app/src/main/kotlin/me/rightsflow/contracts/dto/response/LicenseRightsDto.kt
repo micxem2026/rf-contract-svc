@@ -1,6 +1,7 @@
 package me.rightsflow.contracts.dto.response
 
 import io.swagger.v3.oas.annotations.media.Schema
+import java.math.BigDecimal
 import java.time.LocalDate
 import java.time.OffsetDateTime
 
@@ -12,6 +13,10 @@ data class LicenseRightsDto(
     @field:Schema(description = "Типы прав") val licenseRightsRt: List<LicenseRightsRtDto>,
     @field:Schema(description = "Дата начала действия holdback-а", example = "2023-01-01") val hbStartDate: LocalDate?,
     @field:Schema(description = "Количество дней действия holdback-а", example = "30") val hbDays: Int?,
+    @field:Schema(description = "Стоимость", example = "100.00") val price: BigDecimal,
+    @field:Schema(description = "Сумма НДС", example = "20.00") val vatAmount: BigDecimal,
+    @field:Schema(description = "Всего", example = "120.00") val totalAmount: BigDecimal,
+    @field:Schema(description = "Описание", example = "Тестовое описание") val description: String?,
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
