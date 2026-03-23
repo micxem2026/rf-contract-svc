@@ -24,8 +24,16 @@ class LicenseOipService(
     private val subProvider: SecuritySubjectProvider,
     @PersistenceContext private val em: EntityManager
 ) {
-    fun getById(id: Long): LicenseOipDto =
-        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseOip::class.java) }.toDto()
+
+    fun getById(id: Long): LicenseOipDto {
+        val oip = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseOip::class.java) }
+        return oip.toDto(oip.buildParents())
+    }
+
+    fun getFirstByIdLicense(id: Long): LicenseOipDto {
+        val oip = repo.findFirstByIdLicense(id) ?: throw EntityNotFoundWithClsException(id, LicenseOip::class.java)
+        return oip.toDto(oip.buildParents())
+    }
 
     fun findByLicense(id: Long, pageable: Pageable): Page<LicenseOipDto> {
         licenseRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
@@ -60,11 +68,6 @@ class LicenseOipService(
             .resultList as List<Array<Any>>
 
           return results.associateBy({ it[0] as Int }, { ParentInfo(it[0] as Int, it[1] as String, null) })
-
-/*        return results.groupBy(
-            keySelector = { it[0] as Int },
-            valueTransform = { ParentInfo(id = it[1] as Int, name = it[2] as String, null) }
-        )*/
     }
 
     @Transactional
@@ -88,7 +91,7 @@ class LicenseOipService(
         val entities = repo.findAllById(ids)
         entities.forEach { em.refresh(it) }
 
-        return entities.map { it.toDto() }
+        return entities.map { it.toDto(it.buildParents()) }
     }
 
     @Transactional
@@ -133,6 +136,17 @@ class LicenseOipService(
         sp.execute()
     }
 
+    // Построить список parents для одного LicenseOip
+    private fun LicenseOip.buildParents(): List<ParentInfo> {
+        val pList = this.parents?.split(",") ?: emptyList()
+        if (pList.isEmpty()) return emptyList()
+
+        val oipIds = pList.map { it.toInt() }.toSet()
+        val parentsMap = getParentsMapForOips(oipIds)
+
+        return pList.mapIndexedNotNull { i, e -> parentsMap[e.toInt()]?.apply { this.level = pList.size - i - 1 } }
+    }
+
     private fun LicenseOip.toDto(parents: List<ParentInfo> = emptyList()) = LicenseOipDto(
         id = this.id!!,
         idLicense = this.idLicense,
@@ -140,7 +154,7 @@ class LicenseOipService(
         idOip = this.idOip,
         oipName = this.oip?.name ?: "",
         parents = parents,
-        idRootOip = this.idRootOip,
+        rootOipId = this.idRootOip,
         rootOipName = this.rootOip?.name ?: "",
         createdBy = this.createdBy,
         createdAt = this.createdAt,

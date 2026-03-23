@@ -11,7 +11,7 @@ data class LicenseOipDto(
     @field:Schema(description = "ID ОИС", example = "1") val idOip: Int,
     @field:Schema(description = "Название ОИС") val oipName: String?,
     @field:Schema(description = "Список ID родительских ОИС") val parents: List<ParentInfo>,
-    @field:Schema(description = "ID корневого ОИС") val idRootOip: Int,
+    @field:Schema(description = "ID корневого ОИС") val rootOipId: Int,
     @field:Schema(description = "Название корневого ОИС") val rootOipName: String,
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,

@@ -8,4 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface LicenseOipRepository : JpaRepository<LicenseOip, Long> {
 
     fun findByIdLicense(idLicense: Long, pageable: Pageable): Page<LicenseOip>
+
+    fun findFirstByIdLicense(idLicense: Long): LicenseOip?
+
 }

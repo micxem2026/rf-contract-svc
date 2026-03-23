@@ -22,6 +22,10 @@ data class LicenseDto(
     @field:Schema(description = "Период действия лицензии (начало)", example = "2023-01-01") val validityPeriodStart: LocalDate?,
     @field:Schema(description = "Период действия лицензии (конец)", example = "2024-01-01") val validityPeriodEnd: LocalDate?,
     @field:Schema(description = "Описание", example = "Тестовое описание") val description: String?,
+
+    @field:Schema(description = "ID главного ОИС", example = "1") val rootOipId: Int,
+    @field:Schema(description = "Название главного ОИС", example = "ТАЙНЫ ЕДЫ. 10 выпуск. Сыр") val rootOipName: String,
+
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,

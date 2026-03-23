@@ -10,6 +10,7 @@ import me.rightsflow.common.util.realUpper
 import me.rightsflow.contracts.dto.request.LicenseCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseUpdateRequest
 import me.rightsflow.contracts.dto.response.LicenseDto
+import me.rightsflow.contracts.dto.response.ParentInfo
 import me.rightsflow.contracts.entity.License
 import me.rightsflow.contracts.repository.LicenseRepository
 import org.springframework.data.domain.Page
@@ -21,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 class LicenseService(
     private val repo: LicenseRepository,
     private val subProvider: SecuritySubjectProvider,
+    private val licenseOipService: LicenseOipService,
     @PersistenceContext private val em: EntityManager
 ) {
 
@@ -131,25 +133,32 @@ class LicenseService(
         sp.execute()
     }
 
-    private fun License.toDto() = LicenseDto(
-        id = this.id!!,
-        idContract = this.idContract,
-        contractNum = this.contract?.num ?: "",
-        idLicFormat = this.idLicFormat,
-        licFormatName = this.licenseFormat?.name ?: "",
-        guid = this.guid,
-        num = this.num,
-        name = this.name,
-        price = this.price,
-        vatRate = this.vatRate,
-        vatAmount = this.vatAmount,
-        totalAmount = this.totalAmount,
-        validityPeriodStart = this.validityPeriod.realLower(),
-        validityPeriodEnd = this.validityPeriod.realUpper(),
-        description = this.description,
-        createdBy = this.createdBy,
-        createdAt = this.createdAt,
-        updatedBy = this.updatedBy,
-        updatedAt = this.updatedAt
-    )
+    private fun License.toDto() = run {
+        val licOip = licenseOipService.getFirstByIdLicense(this.id!!)
+        val licIdOip = licOip.parents.filter { it.level == 0 }
+            .getOrNull(0) ?: ParentInfo(licOip.idOip, licOip.oipName ?: "", null)
+        LicenseDto(
+            id = this.id!!,
+            idContract = this.idContract,
+            contractNum = this.contract?.num ?: "",
+            idLicFormat = this.idLicFormat,
+            licFormatName = this.licenseFormat?.name ?: "",
+            guid = this.guid,
+            num = this.num,
+            name = this.name,
+            price = this.price,
+            vatRate = this.vatRate,
+            vatAmount = this.vatAmount,
+            totalAmount = this.totalAmount,
+            validityPeriodStart = this.validityPeriod.realLower(),
+            validityPeriodEnd = this.validityPeriod.realUpper(),
+            rootOipId = licIdOip.id,
+            rootOipName = licIdOip.name,
+            description = this.description,
+            createdBy = this.createdBy,
+            createdAt = this.createdAt,
+            updatedBy = this.updatedBy,
+            updatedAt = this.updatedAt
+        )
+    }
 }
