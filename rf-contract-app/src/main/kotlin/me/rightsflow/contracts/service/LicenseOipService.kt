@@ -30,9 +30,9 @@ class LicenseOipService(
         return oip.toDto(oip.buildParents())
     }
 
-    fun getFirstByIdLicense(id: Long): LicenseOipDto {
-        val oip = repo.findFirstByIdLicense(id) ?: throw EntityNotFoundWithClsException(id, LicenseOip::class.java)
-        return oip.toDto(oip.buildParents())
+    fun getFirstByIdLicense(id: Long): LicenseOipDto? {
+        val oip = repo.findFirstByIdLicense(id)
+        return oip?.toDto(oip.buildParents())
     }
 
     fun findByLicense(id: Long, pageable: Pageable): Page<LicenseOipDto> {

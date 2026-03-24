@@ -135,8 +135,10 @@ class LicenseService(
 
     private fun License.toDto() = run {
         val licOip = licenseOipService.getFirstByIdLicense(this.id!!)
-        val licIdOip = licOip.parents.filter { it.level == 0 }
-            .getOrNull(0) ?: ParentInfo(licOip.idOip, licOip.oipName ?: "", null)
+        val licIdOip = if (licOip != null)
+                           licOip.parents.filter { it.level == 0 }
+                           .getOrNull(0) ?: ParentInfo(licOip.idOip, licOip.oipName ?: "", null)
+                       else ParentInfo(0, "", null)
         LicenseDto(
             id = this.id!!,
             idContract = this.idContract,
@@ -152,8 +154,8 @@ class LicenseService(
             totalAmount = this.totalAmount,
             validityPeriodStart = this.validityPeriod.realLower(),
             validityPeriodEnd = this.validityPeriod.realUpper(),
-            rootOipId = licIdOip.id,
-            rootOipName = licIdOip.name,
+            rootOipId = if (licOip != null) licIdOip.id else null,
+            rootOipName = if (licOip != null) licIdOip.name else null,
             description = this.description,
             createdBy = this.createdBy,
             createdAt = this.createdAt,
