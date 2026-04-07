@@ -58,15 +58,24 @@ class ContractController(
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun findByFilter(
+        @Parameter(description = "Фильтр по ID типа контракта")
         @RequestParam(required = false) idContractType: Int?,
+        @Parameter(description = "Фильтр по ID статуса контракта")
         @RequestParam(required = false) idContractStatus: Int?,
+        @Parameter(description = "Фильтр по ID организации или коду 1С организации")
         @RequestParam(required = false) idOrg: String?,
-        @RequestParam(required = false) numFilter: String?,
+        @Parameter(description = "Фильтр по номеру договора, коду 1C контрагента или названию контрагента")
+        @RequestParam(required = false) filter: String?,
         @RequestParam(required = false)
-        @Parameter(name = "inOut", schema = Schema(type = "string", allowableValues = ["eP", "eS", "iP", "iS"])) inOut: String?,
+        @Parameter(name = "inOut", schema = Schema(type = "string", allowableValues = ["eP", "eS", "iP", "iS"]),
+            description = "Фильтр по виду контракта:\n\n" +
+                    " - *eP* — внешняя покупка\n\n" +
+                    " - *eS* — внешняя продажа\n\n" +
+                    " - *iP* — внутренняя покупка\n\n"+
+                    " - *iS* — внутренняя продажа") inOut: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<ContractDto> {
-        val page = service.findByFilter(idContractType, idContractStatus, idOrg, numFilter, inOut,pageable)
+        val page = service.findByFilter(idContractType, idContractStatus, idOrg, filter, inOut,pageable)
         return PagedModel(page)
     }
 
