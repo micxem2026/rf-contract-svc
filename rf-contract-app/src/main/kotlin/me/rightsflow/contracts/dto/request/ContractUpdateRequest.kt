@@ -16,15 +16,15 @@ data class ContractUpdateRequest(
 
     @field:Schema(description = "ID организации владельца контракта (можно передать 1C код организации)", example = "1")
     @field:Pattern(
-        regexp = "^[a-zA-Z0-9_-]+$",
+        regexp = "^[а-яА-Яa-zA-Z0-9_-]+$",
         message = "idOrg can only contain letters, digits, hyphens and underscores"
     )
     val idOrg: String?,
 
     @field:Schema(description = "ID организации партнёра для внутригруппового контракта", example = "1")
     @field:Pattern(
-        regexp = "^[a-zA-Z0-9_-]+$",
-        message = "idOrgPerty can only contain letters, digits, hyphens and underscores"
+        regexp = "^[а-яА-Яa-zA-Z0-9_-]+$",
+        message = "idOrgParty can only contain letters, digits, hyphens and underscores"
     )
     val idOrgParty: String?,
 
