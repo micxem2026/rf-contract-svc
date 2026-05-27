@@ -1,10 +1,12 @@
 package me.rightsflow.contracts.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import me.rightsflow.common.config.*
+import me.rightsflow.common.permission.annotation.RequiresPermission
 import me.rightsflow.contracts.dto.request.LicenseCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseOipRequest
 import me.rightsflow.contracts.dto.request.LicenseUpdateRequest
@@ -31,21 +33,23 @@ class LicenseController(
 
     @GetMapping("/{id}")
     @Operation(summary = "Получить лицензию по ID записи")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("LicenseController:GetLicenseById", description = "Получение лицензии по ID")
     @ApiResponse(responseCode = "200", description = "Лицензия найдена")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun findById(@PathVariable id: Long): LicenseDto = service.getById(id)
+    fun findById(@Parameter(description = "ID лицензии")
+                 @PathVariable id: Long): LicenseDto = service.getById(id)
 
     @GetMapping("/oip-by-license/{id}")
     @Operation(summary = "Получить список ОИС лицензии по ID лицензии")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("LicenseController:GetLicenseOipByLicenseId", description = "Получение списка ОИС лицензии")
     @ApiResponse(responseCode = "200", description = "Список ОИС лицензии получен")
     @CommonSecurityResponses
     @NotFoundResponse
     @InternalServerErrorResponse
     fun findOipByLicenseId(
+        @Parameter(description = "ID лицензии")
         @PathVariable id: Long,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<LicenseOipDto> {
@@ -55,11 +59,12 @@ class LicenseController(
 
     @GetMapping("/by-contract/{id}")
     @Operation(summary = "Поиск лицензий контракта по фильтрам (с пагинацией)")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("LicenseController:FindAllLicensesByContractId", description = "Поиск лицензий контракта по фильтрам (с пагинацией)")
     @ApiResponse(responseCode = "200", description = "Список лицензий получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun findByFilter(
+        @Parameter(description = "ID контракта")
         @PathVariable id: Long,
         @RequestParam(required = false) numFilter: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
@@ -70,8 +75,7 @@ class LicenseController(
 
     @PostMapping
     @Operation(summary = "Создать новую лицензию")
-    @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
-    @ResponseStatus(HttpStatus.CREATED)
+    @RequiresPermission("LicenseController:CreateLicense", description = "Создание новой лицензии")
     @ApiResponse(responseCode = "201", description = "Лицензия создана")
     @ValidationErrorResponse
     @ConflictResponse
@@ -81,7 +85,7 @@ class LicenseController(
 
     @PostMapping(value = ["/oip-by-license"])
     @Operation(summary = "Добавить ОИС(ы) в лицензию")
-    @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
+    @RequiresPermission("LicenseController:AddLicenseOip", description = "Добавление ОИС в лицензию")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponse(responseCode = "201", description = "ОИС(ы) добавлен(ы)")
     @ValidationErrorResponse
@@ -92,66 +96,74 @@ class LicenseController(
 
     @PutMapping("/{id}")
     @Operation(summary = "Изменить лицензию по заданному ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
+    @RequiresPermission("LicenseController:UpdateLicense", description = "Изменение лицензии")
     @ApiResponse(responseCode = "200", description = "Лицензия обновлена")
     @ValidationErrorResponse
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun update(@PathVariable id: Long, @Valid @RequestBody req: LicenseUpdateRequest): LicenseDto =
+    fun update(@Parameter(description = "ID лицензии")
+               @PathVariable id: Long,
+               @Valid @RequestBody req: LicenseUpdateRequest): LicenseDto =
         service.update(id, req)
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить лицензию по заданному ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("LicenseController:DeleteLicense", description = "Удаление лицензии")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "204", description = "Лицензия удалена")
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun delete(@PathVariable id: Long,
+    fun delete(@Parameter(description = "ID лицензии")
+               @PathVariable id: Long,
                @RequestParam(required = false, defaultValue = "false") useCascade: Boolean) {
         service.delete(id, useCascade)
     }
 
     @DeleteMapping("/oip-by-license/{id}")
     @Operation(summary = "Удалить ОИС из лицензии по заданному ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("LicenseController:DeleteOipFromLicenseById", description = "Удаление ОИС из лицензии")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "204", description = "ОИС удалён из лицензии")
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun deleteOip(@PathVariable id: Long) {
+    fun deleteOip(@Parameter(description = "ID записи \"лицензия -> оис\"")
+                  @PathVariable id: Long) {
         licenseOipService.delete(id)
     }
 
     @DeleteMapping("/oip-by-license/{idLicense}/root/{idRoot}")
     @Operation(summary = "Удалить ОИС(ы) из лицензии по заданному ID корневого ОИС")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("LicenseController:DeleteOipFromLicenseByIdRootOip", description = "Удаление ОИС из лицензии по ID корневого ОИС")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "204", description = "ОИС(ы) удален(ы) из лицензии")
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun deleteOipByRoot(@PathVariable idLicense: Long, @PathVariable idRoot: Long) {
+    fun deleteOipByRoot(@Parameter(description = "ID лицензии")
+                        @PathVariable idLicense: Long,
+                        @Parameter(description = "ID корневого ОИС")
+                        @PathVariable idRoot: Long) {
         licenseOipService.deleteByRoot(idLicense, idRoot)
     }
 
     @DeleteMapping("/oip-by-license/{idLicense}/license")
     @Operation(summary = "Удалить ОИС(ы) из лицензии по заданному ID лицензии")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("LicenseController:DeleteAllOipFromLicense", description = "Удаление всех ОИС из лицензии")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "204", description = "ОИС(ы) удален(ы) из лицензии")
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun deleteOipByLicense(@PathVariable idLicense: Long) {
+    fun deleteOipByLicense(@Parameter(description = "ID лицензии")
+                           @PathVariable idLicense: Long) {
         licenseOipService.deleteByLic(idLicense)
     }
 }

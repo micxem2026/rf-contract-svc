@@ -30,7 +30,7 @@ class AclController(
 
     @PostMapping("/syncContract")
     @Operation(summary = "Синхронизация таблицы контрактов")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -38,7 +38,7 @@ class AclController(
 
     @PostMapping("/compContract/{id}")
     @Operation(summary = "Компенсация (удаление) контракта")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Компенсация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -46,7 +46,7 @@ class AclController(
 
     @PostMapping("/syncLicense")
     @Operation(summary = "Синхронизация таблицы лицензий")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -54,7 +54,7 @@ class AclController(
 
     @PostMapping("/syncLicenseOip")
     @Operation(summary = "Синхронизация таблицы ОИС лицензий")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -62,7 +62,7 @@ class AclController(
 
     @PostMapping("/syncLicenseRights")
     @Operation(summary = "Синхронизация таблицы прав лицензий")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -70,7 +70,7 @@ class AclController(
 
     @PostMapping("/syncLicenseRightsRt")
     @Operation(summary = "Синхронизация таблицы способов использования прав лицензий")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -78,7 +78,7 @@ class AclController(
 
     @PostMapping("/syncLicenseRtFeatureSet")
     @Operation(summary = "Синхронизация таблицы наборов характеристик")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -86,7 +86,7 @@ class AclController(
 
     @PostMapping("/syncLicenseRtFeatures")
     @Operation(summary = "Синхронизация таблицы характеристик")
-    @PreAuthorize("hasAnyAuthority('SCOPE_admin')")
+    @PreAuthorize("hasRole('SERVICE')")
     @ApiResponse(responseCode = "200", description = "Синхронизация выполнена")
     @CommonSecurityResponses
     @InternalServerErrorResponse

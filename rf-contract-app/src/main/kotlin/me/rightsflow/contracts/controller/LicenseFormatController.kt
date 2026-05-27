@@ -1,10 +1,12 @@
 package me.rightsflow.contracts.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import me.rightsflow.common.config.*
+import me.rightsflow.common.permission.annotation.RequiresPermission
 import me.rightsflow.contracts.dto.request.LicenseFormatCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseFormatUpdateRequest
 import me.rightsflow.contracts.dto.response.LicenseFormatDto
@@ -27,16 +29,17 @@ class LicenseFormatController(
 
     @GetMapping("/{id}")
     @Operation(summary = "Получить формат лицензии по ID записи")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("LicenseFormatController:GetLicenseFormatById", description = "Получить формат лицензии по ID")
     @ApiResponse(responseCode = "200", description = "Формат лицензии найден")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun findById(@PathVariable id: Long): LicenseFormatDto = service.getById(id)
+    fun findById(@Parameter(description = "ID формата лицензии")
+                 @PathVariable id: Long): LicenseFormatDto = service.getById(id)
 
     @GetMapping
     @Operation(summary = "Поиск форматов лицензий по фильтру (с пагинацией)")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("LicenseFormatController:FindAllLicenseFormatsByFilter", description = "Поиск форматов лицензий по фильтру (с пагинацией)")
     @ApiResponse(responseCode = "200", description = "Список форматов лицензий получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -50,7 +53,7 @@ class LicenseFormatController(
 
     @PostMapping
     @Operation(summary = "Создать новый формат лицензии")
-    @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
+    @RequiresPermission("LicenseFormatController:CreateLicenseFormat", description = "Создать формат лицензии")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponse(responseCode = "201", description = "Формат лицензии создан")
     @ConflictResponse
@@ -61,26 +64,28 @@ class LicenseFormatController(
 
     @PutMapping("/{id}")
     @Operation(summary = "Изменить формат лицензии по заданному ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
+    @RequiresPermission("LicenseFormatController:UpdateLicenseFormat", description = "Изменить формат лицензии")
     @ApiResponse(responseCode = "200", description = "Формат лицензии обновлён")
     @NotFoundResponse
     @ConflictResponse
     @ValidationErrorResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun update(@PathVariable id: Long, @Valid @RequestBody req: LicenseFormatUpdateRequest): LicenseFormatDto =
+    fun update(@Parameter(description = "ID формата лицензии")
+               @PathVariable id: Long, @Valid @RequestBody req: LicenseFormatUpdateRequest): LicenseFormatDto =
         service.update(id, req)
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить формат лицензии по заданному ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("LicenseFormatController:DeleteLicenseFormat", description = "Удалить формат лицензии")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "204", description = "Формат лицензии удалён")
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun delete(@PathVariable id: Long,
+    fun delete(@Parameter(description = "ID формата лицензии")
+               @PathVariable id: Long,
                @RequestParam(required = false, defaultValue = "false") useCascade: Boolean) {
         service.delete(id, useCascade)
     }

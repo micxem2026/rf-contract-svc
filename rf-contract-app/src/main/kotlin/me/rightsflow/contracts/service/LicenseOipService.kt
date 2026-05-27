@@ -26,11 +26,13 @@ class LicenseOipService(
 ) {
 
     fun getById(id: Long): LicenseOipDto {
-        val oip = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseOip::class.java) }
+        val oip = repo.findByIdForUser(id, buildUsername()).orElseThrow {
+            EntityNotFoundWithClsException(id, LicenseOip::class.java)
+        }
         return oip.toDto(oip.buildParents())
     }
 
-    fun getFirstByIdLicense(id: Long): LicenseOipDto? {
+    internal fun getFirstByIdLicense(id: Long): LicenseOipDto? {
         val oip = repo.findFirstByIdLicense(id)
         return oip?.toDto(oip.buildParents())
     }
@@ -38,7 +40,7 @@ class LicenseOipService(
     fun findByLicense(id: Long, pageable: Pageable): Page<LicenseOipDto> {
         licenseRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
 
-        val result = repo.findByIdLicense(id, pageable)
+        val result = repo.findByIdLicenseForUser(id, buildUsername(), pageable)
 
         // Собрать все ID_OIP для родителей
         val oipIds = result.content.flatMap { it.parents?.split(",") ?: emptyList() }.map { it.toInt() }.toSet()
@@ -77,13 +79,15 @@ class LicenseOipService(
             "SELECT pkg_contract.ins_license_oip(" +
                     ":pIdLicense, " +
                     ":pIdOipStr, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
         query.setParameter("pIdLicense", req.idLicense)
         query.setParameter("pIdOipStr", req.listIdOip.joinToString(separator = ";") { "${it.parents?:""}:${it.idOip}" })
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         @Suppress("UNCHECKED_CAST")
         val result = query.singleResult as Array<Long>
@@ -101,9 +105,11 @@ class LicenseOipService(
 
         sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
@@ -115,10 +121,12 @@ class LicenseOipService(
         sp.registerStoredProcedureParameter("p_id_license", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_id_root_oip", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id_license", idLicense)
         sp.setParameter("p_id_root_oip", idRoot)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
@@ -129,9 +137,11 @@ class LicenseOipService(
 
         sp.registerStoredProcedureParameter("p_id_license", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id_license", idLicense)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
@@ -146,6 +156,9 @@ class LicenseOipService(
 
         return pList.mapIndexedNotNull { i, e -> parentsMap[e.toInt()]?.apply { this.level = pList.size - i - 1 } }
     }
+
+    private fun buildUsername(): String? =
+        if (subProvider.isBypassRole()) null else subProvider.currentSub()
 
     private fun LicenseOip.toDto(parents: List<ParentInfo> = emptyList()) = LicenseOipDto(
         id = this.id!!,

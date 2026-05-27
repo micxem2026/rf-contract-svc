@@ -6,7 +6,6 @@ import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.security.OAuthFlow
 import io.swagger.v3.oas.models.security.OAuthFlows
-import io.swagger.v3.oas.models.security.Scopes
 import io.swagger.v3.oas.models.security.SecurityRequirement
 import io.swagger.v3.oas.models.security.SecurityScheme
 import io.swagger.v3.oas.models.servers.Server
@@ -72,7 +71,7 @@ class OpenApiConfig {
                                         OAuthFlow()
                                             .tokenUrl("$protocol://$contractHost/auth/oauth2/token")
                                             .refreshUrl("$protocol://$contractHost/auth/oauth2/token")
-                                            .scopes(
+                                            /*.scopes(
                                                 Scopes()
                                                     .addString("read", "Чтение записей")
                                                     .addString("create", "Создание записей")
@@ -82,7 +81,7 @@ class OpenApiConfig {
                                                     .addString("admin", "Доступ администратора")
                                                     .addString("manager", "Доступ менеджера")
                                                     .addString("user", "Доступ пользователя")
-                                            )
+                                            )*/
                                     )
                             )
                     )

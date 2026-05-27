@@ -5,8 +5,7 @@ import jakarta.persistence.ParameterMode
 import jakarta.persistence.PersistenceContext
 import me.rightsflow.common.config.SecuritySubjectProvider
 import me.rightsflow.common.exception.EntityNotFoundWithClsException
-import me.rightsflow.common.util.realLower
-import me.rightsflow.common.util.realUpper
+import me.rightsflow.common.util.setTextArrayParam
 import me.rightsflow.contracts.dto.request.ContractCreateRequest
 import me.rightsflow.contracts.dto.request.ContractStatusUpdateRequest
 import me.rightsflow.contracts.dto.request.ContractUpdateRequest
@@ -14,18 +13,8 @@ import me.rightsflow.contracts.dto.response.ContractChangeStatusDto
 import me.rightsflow.contracts.dto.response.ContractCounterpartyShortDto
 import me.rightsflow.contracts.dto.response.ContractDto
 import me.rightsflow.contracts.dto.response.ContractWithTotalsProjection
-import me.rightsflow.contracts.entity.Contract
-import me.rightsflow.contracts.entity.ContractCounterparty
-import me.rightsflow.contracts.entity.ContractStatus
-import me.rightsflow.contracts.entity.ContractType
-import me.rightsflow.contracts.entity.Currency
-import me.rightsflow.contracts.entity.Organization
-import me.rightsflow.contracts.repository.ContractCounterpartyRepository
-import me.rightsflow.contracts.repository.ContractRepository
-import me.rightsflow.contracts.repository.ContractStatusRepository
-import me.rightsflow.contracts.repository.ContractTypeRepository
-import me.rightsflow.contracts.repository.CurrencyRepository
-import me.rightsflow.contracts.repository.OrganizationRepository
+import me.rightsflow.contracts.entity.*
+import me.rightsflow.contracts.repository.*
 import me.rightsflow.contracts.toOffsetDateTime
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -51,23 +40,27 @@ class ContractService(
     }
 
     fun getById(id: Long): ContractDto =
-        repo.getContractById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }.toContractDto()
+        repo.getContractByIdForUser(id, buildUsername())
+            .orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
+            .toContractDto()
 
     fun findByFilter(
         idContractType: Int?,
-        idContractStatus: Int?,
+        idContractStatus: List<Int>?,
         idOrg: String?,
         numFilter: String?,
         inOut: String?,
         pageable: Pageable
-    ): Page<ContractDto> = run {
-        //val contractKind = inOut?.let { Contract.ContractKind.valueOf(it) }
-        var idOrgInt: Int? = null
-        if (idOrg != null) {
-            idOrgInt = repo.getIdOrg(idOrg)
-        }
-
-        repo.findByFilter(idContractType, idContractStatus, idOrgInt, numFilter, inOut, pageable).toContractDtoPage()
+    ): Page<ContractDto> {
+        val idOrgInt = idOrg?.let { repo.getIdOrg(it) }
+        val normalizedStatus: String? = idContractStatus
+            ?.takeIf { it.isNotEmpty() }
+            ?.joinToString(",")
+        return repo.findByFilterForUser(
+            idContractType, normalizedStatus, idOrgInt, numFilter, inOut,
+            buildUsername(),
+            pageable
+        ).toContractDtoPage()
     }
 
     @Transactional
@@ -87,7 +80,8 @@ class ContractService(
                     ":pDescription, " +
                     ":pIdCurrency, " +
                     ":pIdCurrencyPayment, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -104,9 +98,9 @@ class ContractService(
         query.setParameter("pIdCurrency", req.idCurrency)
         query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
-
         val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
         em.refresh(e)
         return getById(id)
@@ -114,7 +108,7 @@ class ContractService(
 
     @Transactional
     fun update(id: Long, req: ContractUpdateRequest): ContractDto {
-        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
+
         val query = em.createNativeQuery(
             "SELECT pkg_contract.upd_contract(" +
                     ":pId, " +
@@ -130,7 +124,8 @@ class ContractService(
                     ":pDescription, " +
                     ":pIdCurrency, " +
                     ":pIdCurrencyPayment, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy," +
+                    ":pBypass " +
                     ")"
         )
 
@@ -148,9 +143,10 @@ class ContractService(
         query.setParameter("pIdCurrency", req.idCurrency)
         query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
-
+        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
         em.refresh(e)
         return getById(id)
 
@@ -161,13 +157,15 @@ class ContractService(
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_contract")
 
-        sp.registerStoredProcedureParameter("p_id", java.lang.Long::class.java, ParameterMode.IN)
-        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
-        sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_id",          java.lang.Long::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username",    String::class.java,         ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java,        ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass",      Boolean::class.java,        ParameterMode.IN)
 
-        sp.setParameter("p_id", id)
-        sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_id",          id)
+        sp.setParameter("p_username",    subProvider.currentSub())
         sp.setParameter("p_use_cascade", useCascade)
+        sp.setParameter("p_bypass",      subProvider.isBypassRole())
 
         sp.execute()
     }
@@ -180,15 +178,16 @@ class ContractService(
                     ":pIdContract, " +
                     ":pStatusCode, " +
                     ":pUsername" +
+                    ":pBypass" +
                     ")"
         )
 
         query.setParameter("pIdContract", id)
         query.setParameter("pStatusCode", req.statusCode)
         query.setParameter("pUsername", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
-
         em.refresh(e)
 
         val success = e.contractStatus?.code == req.statusCode.uppercase()
@@ -212,48 +211,20 @@ class ContractService(
         return (result as Number).toInt()
     }
 
-    @Deprecated("Use projection version")
-    private fun Contract.toDto() = ContractDto(
-        id = this.id!!,
-        guid = this.guid,
-        num = this.num,
-        idOrg = this.idOrg,
-        code1c = this.organization?.code_1c ?:  "",
-        nameOrg = this.organization?.name ?: "",
-        idOrgParty = this.idOrgParty,
-        nameOrgParty = this.organizationParty?.name ?: "",
-        validityPeriodStart = this.validityPeriod.realLower(),
-        validityPeriodEnd = this.validityPeriod.realUpper(),
-        contractDate = this.contractDate,
-        idContractType = this.idContractType,
-        contractTypeName = this.contractType?.name ?: "",
-        idContractStatus = this.idContractStatus,
-        contractStatusName = this.contractStatus?.name ?: "",
-        inOut = this.inOut.name,
-        description = this.description,
-        warning = this.warning,
-        idSibling = this.idSibling,
-        guidSibling = this.siblingContract?.guid ?: "",
-        numSibling = this.siblingContract?.num ?: "",
-        idParent = this.idParent,
-        guidParent = this.parentContract?.guid ?: "",
-        numParent = this.parentContract?.num ?: "",
-        idCurrency = this.idCurrency,
-        currencyCode = this.currency?.isoCharCode ?: "",
-        currencyName = this.currency?.name ?: "",
-        idCurrencyPayment = this.idCurrencyPayment,
-        currencyCodePayment = this.currencyPayment?.isoCharCode ?: "",
-        currencyNamePayment = this.currencyPayment?.name ?: "",
-        idContractVp = this.idContractVp,
-        contractPrice        =  BigDecimal.ZERO,
-        contractVatAmount    =  BigDecimal.ZERO,
-        contractTotalAmount  =  BigDecimal.ZERO,
-        cParties             =  emptyList(),
-        createdBy = this.createdBy,
-        createdAt = this.createdAt,
-        updatedBy = this.updatedBy,
-        updatedAt = this.updatedAt
-    )
+    /**
+     * Возвращает username для передачи в org-фильтр репозитория.
+     *
+     * NULL — для ролей ADMIN и SERVICE (bypass: JOIN не даст ограничений,
+     *        условие ":username IS NULL OR ..." всегда true).
+     *
+     * username — для всех остальных ролей: JOIN с user_org_access
+     *            вернёт только контракты доступных организаций.
+     */
+    private fun buildUsername(): String? {
+        val roles = subProvider.currentRoles()
+        if (roles.any { it in listOf("ADMIN", "SERVICE") }) return null
+        return subProvider.currentSub()
+    }
 
     private fun Page<ContractWithTotalsProjection>.toContractDtoPage(): Page<ContractDto> {
         val content = this.content

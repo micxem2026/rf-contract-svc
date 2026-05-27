@@ -6,7 +6,6 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import me.rightsflow.common.config.CommonSecurityResponses
 import me.rightsflow.common.config.InternalServerErrorResponse
 import me.rightsflow.contracts.service.ConstraintService
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
@@ -21,7 +20,6 @@ class ConstraintController(
 
     @GetMapping("/oip/{id}")
     @Operation(summary = "Проверить использование ОИС в контрактах")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
     @ApiResponse(responseCode = "200", description = "Статус использования ОИС получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -31,7 +29,6 @@ class ConstraintController(
 
     @GetMapping("/right-type/{id}")
     @Operation(summary = "Проверить использование типа права в контрактах")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
     @ApiResponse(responseCode = "200", description = "Статус использования типа права получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -41,7 +38,6 @@ class ConstraintController(
 
     @GetMapping("/feature-category/{id}")
     @Operation(summary = "Проверить использование категории характеристик в контрактах")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
     @ApiResponse(responseCode = "200", description = "Статус использования категории характеристик получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -50,7 +46,6 @@ class ConstraintController(
 
     @GetMapping("/feature/{id}")
     @Operation(summary = "Проверить использование характеристики в контрактах")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
     @ApiResponse(responseCode = "200", description = "Статус использования характеристики получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -59,7 +54,6 @@ class ConstraintController(
 
     @GetMapping("/counterparty/{id}")
     @Operation(summary = "Проверить использование контрагента в контрактах")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
     @ApiResponse(responseCode = "200", description = "Статус использования контрагента получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse
@@ -68,7 +62,6 @@ class ConstraintController(
 
     @GetMapping("/organization/{id}")
     @Operation(summary = "Проверить использование организации в контрактах")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
     @ApiResponse(responseCode = "200", description = "Статус использования организации получен")
     @CommonSecurityResponses
     @InternalServerErrorResponse

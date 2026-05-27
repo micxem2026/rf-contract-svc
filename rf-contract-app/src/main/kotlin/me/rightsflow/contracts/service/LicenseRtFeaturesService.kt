@@ -25,11 +25,13 @@ class LicenseRtFeaturesService(
 ) {
 
     fun getById(id: Long): LicenseRtFeaturesDto =
-        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java) }.toDto()
+        repo.findByIdForUser(id, buildUsername()).orElseThrow {
+            EntityNotFoundWithClsException(id, LicenseRtFeatures::class.java)
+        }.toDto()
 
     fun findByFeatureSet(id: Long): List<LicenseRtFeaturesDto> {
         licenseRtFeatureSetRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatureSet::class.java) }
-        return repo.findByIdFeatureSet(id).map { it.toDto() }
+        return repo.findByIdFeatureSetForUser(id, buildUsername()).map { it.toDto() }
     }
 
     @Transactional
@@ -40,7 +42,8 @@ class LicenseRtFeaturesService(
                     ":pIdFeatureSet, " +
                     ":pIdFeature, " +
                     ":pIncluded, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -49,6 +52,7 @@ class LicenseRtFeaturesService(
         query.setParameter("pIdFeature", req.idFeature)
         query.setParameter("pIncluded", req.isIncluded)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
 
@@ -65,7 +69,8 @@ class LicenseRtFeaturesService(
                     ":pIdFeatureSet, " +
                     ":pIdFeatures, " +
                     ":pIncluded, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -74,6 +79,7 @@ class LicenseRtFeaturesService(
         query.setParameter("pIdFeatures", req.idFeatures.joinToString(","))
         query.setParameter("pIncluded", req.isIncluded)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         val ids = query.singleResult as String
 
@@ -87,9 +93,11 @@ class LicenseRtFeaturesService(
 
         sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
@@ -104,12 +112,17 @@ class LicenseRtFeaturesService(
 
         sp.registerStoredProcedureParameter("p_ids", String::class.java, ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass", Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_ids", ids.joinToString(","))
         sp.setParameter("p_username", subProvider.currentSub())
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
+
+    private fun buildUsername(): String? =
+        if (subProvider.isBypassRole()) null else subProvider.currentSub()
 
     private fun LicenseRtFeatures.toDto() = LicenseRtFeaturesDto(
         id = this.id!!,

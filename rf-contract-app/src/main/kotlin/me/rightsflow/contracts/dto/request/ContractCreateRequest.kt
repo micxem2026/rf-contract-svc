@@ -3,6 +3,7 @@ package me.rightsflow.contracts.dto.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
 import java.time.LocalDate
 
@@ -18,10 +19,18 @@ data class ContractCreateRequest(
 
     @field:Schema(description = "ID организации владельца контракта (можно передать 1C код организации)", example = "1")
     @field:NotNull
+    @field:Pattern(
+        regexp = "^[a-zA-Z0-9_-]+$",
+        message = "idOrg can only contain letters, digits, hyphens and underscores"
+    )
     var idOrg: String,
 
     @field:Schema(description = "ID организации партнёра для внутригруппового контракта", example = "1")
-    val idOrgParty: Int?,
+    @field:Pattern(
+        regexp = "^[a-zA-Z0-9_-]+$",
+        message = "idOrgParty can only contain letters, digits, hyphens and underscores"
+    )
+    val idOrgParty: String?,
 
     @field:Schema(description = "Период действия контракта (начало)", example = "2022-01-01")
     val validityPeriodStart: LocalDate?,

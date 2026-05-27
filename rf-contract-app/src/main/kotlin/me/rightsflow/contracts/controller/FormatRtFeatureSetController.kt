@@ -1,10 +1,12 @@
 package me.rightsflow.contracts.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
 import me.rightsflow.common.config.*
+import me.rightsflow.common.permission.annotation.RequiresPermission
 import me.rightsflow.contracts.dto.request.FormatRtFeatureSetCreateRequest
 import me.rightsflow.contracts.dto.request.FormatRtFeatureSetUpdateRequest
 import me.rightsflow.contracts.dto.request.FormatRtFeaturesCreateRequest
@@ -30,21 +32,22 @@ class FormatRtFeatureSetController(
 ) {
     @GetMapping("/{id}")
     @Operation(summary = "Получить набор характеристик права по ID записи")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("FormatRtFeatureSetController:GetFormatRtFeatureSetById", description = "Получение набора характеристик формата по ID")
     @ApiResponse(responseCode = "200", description = "Набор характеристик права найден")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun getById(@PathVariable id: Long): FormatRtFeatureSetDto = service.getById(id)
+    fun getById(@Parameter(description = "ID набора характеристик") @PathVariable id: Long): FormatRtFeatureSetDto = service.getById(id)
 
     @GetMapping("/by-format-rt/{id}")
     @Operation(summary = "Получить список наборов характеристик прав по ID привязки права к формату")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("FormatRtFeatureSetController:GetFormatRtFeaturesByFormatRt", description = "Получение списка наборов характеристик формата")
     @ApiResponse(responseCode = "200", description = "Список наборов характеристик прав получен")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun findByFormatRt(
+        @Parameter(description = "ID права формата")
         @PathVariable id: Long,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<FormatRtFeatureSetDto> {
@@ -54,17 +57,18 @@ class FormatRtFeatureSetController(
 
     @GetMapping("/features-by-fs/{id}")
     @Operation(summary = "Получить список характеристик по ID набора характеристик")
-    @PreAuthorize("hasAuthority('SCOPE_user')")
+    @RequiresPermission("FormatRtFeatureSetController:GetAllFeatures", description = "Получение всех характеристик для набора характеристик формата")
     @ApiResponse(responseCode = "200", description = "Список характеристик получен")
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun findFeaturesByFeatureSet(@PathVariable id: Long): List<FormatRtFeaturesDto> =
+    fun findFeaturesByFeatureSet(@Parameter(description = "ID набора характеристик")
+                                 @PathVariable id: Long): List<FormatRtFeaturesDto> =
         formatRtFeaturesService.findByFeatureSet(id)
 
     @PostMapping
     @Operation(summary = "Создать набор характеристик права для формата")
-    @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
+    @RequiresPermission("FormatRtFeatureSetController:CreateFormatRtFeatureSet", description = "Создание набора характеристик для формата")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponse(responseCode = "201", description = "Набор характеристик права создан")
     @ConflictResponse
@@ -76,7 +80,7 @@ class FormatRtFeatureSetController(
 
     @PostMapping(value = ["/features-by-fs"])
     @Operation(summary = "Добавить характеристику в набор характеристик")
-    @PreAuthorize("hasAnyAuthority('SCOPE_create','SCOPE_manager')")
+    @RequiresPermission("FormatRtFeatureSetController:CreateFormatRtFeature", description = "Добавление характеристики в набор характеристик формата")
     @ResponseStatus(HttpStatus.CREATED)
     @ApiResponse(responseCode = "201", description = "Характеристика добавлена")
     @ConflictResponse
@@ -88,7 +92,7 @@ class FormatRtFeatureSetController(
 
     @PutMapping("/{id}")
     @Operation(summary = "Изменить набор характеристик права по ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_update','SCOPE_manager')")
+    @RequiresPermission("FormatRtFeatureSetController:UpdateFormatRtFeatureSet", description = "Изменение набора характеристик формата")
     @ApiResponse(responseCode = "200", description = "Набор характеристик права обновлён")
     @ConflictResponse
     @NotFoundResponse
@@ -96,34 +100,37 @@ class FormatRtFeatureSetController(
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun update(
+        @Parameter(description = "ID набора характеристик")
         @PathVariable id: Long,
         @Valid @RequestBody req: FormatRtFeatureSetUpdateRequest
     ): FormatRtFeatureSetDto = service.update(id, req)
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Удалить набор характеристик права по ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("FormatRtFeatureSetController:DeleteFormatRtFeatureSet", description = "Удаление набора характеристик формата")
     @ApiResponse(responseCode = "204", description = "Набор характеристик права удалён")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun delete(@PathVariable id: Long,
+    fun delete(@Parameter(description = "ID набора характеристик")
+               @PathVariable id: Long,
                @RequestParam(required = false, defaultValue = "false") useCascade: Boolean) {
         service.delete(id, useCascade)
     }
 
     @DeleteMapping("/features-by-fs/{id}")
     @Operation(summary = "Удалить характеристику из набора характеристик по заданному ID записи")
-    @PreAuthorize("hasAnyAuthority('SCOPE_delete','SCOPE_manager')")
+    @RequiresPermission("FormatRtFeatureSetController:DeleteFormatRtFeature", description = "Удаление характеристики из набора характеристик")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @ApiResponse(responseCode = "204", description = "Характеристика удалена из набора характеристик")
     @NotFoundResponse
     @ConflictResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun deleteFeatureFromFeatureSet(@PathVariable id: Long) {
+    fun deleteFeatureFromFeatureSet(@Parameter(description = "ID записи \"набор характеристик -> характеристика\"")
+                                    @PathVariable id: Long) {
         formatRtFeaturesService.delete(id)
     }
 }

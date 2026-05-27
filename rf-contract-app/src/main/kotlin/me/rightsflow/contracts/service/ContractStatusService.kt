@@ -13,8 +13,11 @@ class ContractStatusService(
     fun getById(id: Int): ContractStatusDto =
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, ContractStatus::class.java) }.toDto()
 
-    fun findAll(): List<ContractStatusDto> =
-        repo.findAll().sortedBy { it.id }.map { it.toDto() }
+    fun findAll(idContractType: Int?): List<ContractStatusDto> =
+        if (idContractType != null)
+            repo.findByIdContractType(idContractType).sortedBy { it.id }.map { it.toDto() }
+        else
+            repo.findAll().sortedBy { it.id }.map { it.toDto() }
 
     private fun ContractStatus.toDto() = ContractStatusDto(
         id = this.id,

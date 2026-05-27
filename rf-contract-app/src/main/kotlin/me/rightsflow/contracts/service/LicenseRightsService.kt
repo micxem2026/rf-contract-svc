@@ -30,11 +30,13 @@ class LicenseRightsService(
     private val log = LoggerFactory.getLogger(LicenseRightsService::class.java)
 
     fun getById(id: Long): LicenseRightsDto =
-        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }.toDto()
+        repo.findByIdForUser(id, buildUsername())
+            .orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
+            .toDto()
 
     fun findByLicense(id: Long, pageable: Pageable): Page<LicenseRightsDto> {
         licenseRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
-        return repo.findByLicenseId(id, pageable).map { it.toDto() }
+        return repo.findByLicenseIdForUser(id, buildUsername(), pageable).map { it.toDto() }
     }
 
     @Transactional
@@ -49,7 +51,8 @@ class LicenseRightsService(
                     ":pVatAmount, " +
                     ":pTotalAmount, " +
                     ":pDescription, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -62,6 +65,7 @@ class LicenseRightsService(
         query.setParameter("pTotalAmount", req.totalAmount)
         query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
 
@@ -84,7 +88,8 @@ class LicenseRightsService(
                     ":pVatAmount, " +
                     ":pTotalAmount, " +
                     ":pDescription, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -98,6 +103,7 @@ class LicenseRightsService(
         query.setParameter("pTotalAmount", req.totalAmount)
         query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
 
@@ -135,16 +141,21 @@ class LicenseRightsService(
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rights")
 
-        sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
-        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_id",          Long::class.java,    ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username",    String::class.java,  ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass",      Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
         sp.setParameter("p_use_cascade", useCascade)
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
+
+    private fun buildUsername(): String? =
+        if (subProvider.isBypassRole()) null else subProvider.currentSub()
 
     private fun LicenseRights.toDto() = LicenseRightsDto(
         id = this.id!!,

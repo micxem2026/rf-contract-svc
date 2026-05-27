@@ -141,6 +141,158 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         pageable: Pageable
     ): Page<ContractWithTotalsProjection>
 
+    /**
+     * Получить контракт по ID с фильтрацией по организациям пользователя.
+     *
+     * @param id       ID контракта
+     * @param username JWT sub пользователя, или NULL для bypass (ADMIN/SERVICE)
+     */
+    @Query(
+        value = """
+            SELECT
+                c.id,
+                c.guid,
+                c.num,
+                c.id_org                     AS idOrg,
+                c.id_org_party               AS idOrgParty,
+                lower(c.validity_period)     AS validityPeriodStart,
+                upper(c.validity_period)     AS validityPeriodEnd,
+                c.contract_date              AS contractDate,
+                c.id_contract_type           AS idContractType,
+                c.id_contract_status         AS idContractStatus,
+                c.in_out                     AS inOut,
+                c.description,
+                c.warning,
+                c.id_sibling                 AS idSibling,
+                c.id_parent                  AS idParent,
+                c.id_currency                AS idCurrency,
+                c.id_currency_payment        AS idCurrencyPayment,
+                c.id_contract_vp             AS idContractVp,
+                c.created_by                 AS createdBy,
+                c.created_at                 AS createdAt,
+                c.updated_by                 AS updatedBy,
+                c.updated_at                 AS updatedAt,
+                COALESCE(l.price,        0)  AS contractPrice,
+                COALESCE(l.vat_amount,   0)  AS contractVatAmount,
+                COALESCE(l.total_amount, 0)  AS contractTotalAmount
+            FROM contract c
+            LEFT JOIN (
+                SELECT id_contract,
+                       SUM(price)        AS price,
+                       SUM(vat_amount)   AS vat_amount,
+                       SUM(total_amount) AS total_amount
+                FROM   license
+                GROUP  BY id_contract
+            ) l ON l.id_contract = c.id
+            LEFT JOIN user_org_access uoa
+                   ON :username IS NOT NULL
+                  AND uoa.username = :username
+                  AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
+            WHERE c.id = :id
+              AND (:username IS NULL OR uoa.username IS NOT NULL)
+        """,
+        nativeQuery = true
+    )
+    fun getContractByIdForUser(
+        @Param("id")       id:       Long,
+        @Param("username") username: String?   // null = bypass для ADMIN/SERVICE
+    ): Optional<ContractWithTotalsProjection>
+
+
+    /**
+     * Поиск контрактов по фильтрам с фильтрацией по организациям пользователя.
+     * Сортировка и пагинация работают через стандартный Pageable.
+     *
+     * @param username JWT sub пользователя, или NULL для bypass (ADMIN/SERVICE)
+     */
+    @Query(
+        value = """
+            SELECT DISTINCT
+                c.id,
+                c.guid,
+                c.num,
+                c.id_org                     AS idOrg,
+                c.id_org_party               AS idOrgParty,
+                lower(c.validity_period)     AS validityPeriodStart,
+                upper(c.validity_period)     AS validityPeriodEnd,
+                c.contract_date              AS contractDate,
+                c.id_contract_type           AS idContractType,
+                c.id_contract_status         AS idContractStatus,
+                c.in_out                     AS inOut,
+                c.description,
+                c.warning,
+                c.id_sibling                 AS idSibling,
+                c.id_parent                  AS idParent,
+                c.id_currency                AS idCurrency,
+                c.id_currency_payment        AS idCurrencyPayment,
+                c.id_contract_vp             AS idContractVp,
+                c.created_by                 AS createdBy,
+                c.created_at                 AS createdAt,
+                c.updated_by                 AS updatedBy,
+                c.updated_at                 AS updatedAt,
+                COALESCE(l.price,        0)  AS contractPrice,
+                COALESCE(l.vat_amount,   0)  AS contractVatAmount,
+                COALESCE(l.total_amount, 0)  AS contractTotalAmount
+            FROM contract c
+            LEFT JOIN (
+                SELECT id_contract,
+                       SUM(price)        AS price,
+                       SUM(vat_amount)   AS vat_amount,
+                       SUM(total_amount) AS total_amount
+                FROM   license
+                GROUP  BY id_contract
+            ) l ON l.id_contract = c.id
+            LEFT JOIN contract_counterparty cc ON cc.id_contract = c.id
+            LEFT JOIN sync__klf_counterparty cp ON cp.id = cc.id_cpart
+            LEFT JOIN user_org_access uoa
+                   ON :username IS NOT NULL
+                  AND uoa.username = :username
+                  AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
+            WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
+              AND (:idStatus IS NULL OR c.id_contract_status = ANY(string_to_array(:idStatus, ',')::integer[]))
+              AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
+              AND (:inOut    IS NULL OR c.in_out             = :inOut)
+              AND (
+                    :numFilter IS NULL
+                    OR lower(c.num)      LIKE lower(concat('%', :numFilter, '%'))
+                    OR lower(cp.name)    LIKE lower(concat('%', :numFilter, '%'))
+                    OR lower(cp.code_1c) LIKE lower(concat('%', :numFilter, '%'))
+                  )
+              AND (:username IS NULL OR uoa.username IS NOT NULL)
+        """,
+        countQuery = """
+            SELECT COUNT(DISTINCT c.id)
+            FROM contract c
+            LEFT JOIN contract_counterparty cc ON cc.id_contract = c.id
+            LEFT JOIN sync__klf_counterparty cp ON cp.id = cc.id_cpart
+            LEFT JOIN user_org_access uoa
+                   ON :username IS NOT NULL 
+                  AND uoa.username = :username
+                  AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
+            WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
+              AND (:idStatus IS NULL OR c.id_contract_status = ANY(string_to_array(:idStatus, ',')::integer[]))
+              AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
+              AND (:inOut    IS NULL OR c.in_out             = :inOut)
+              AND (
+                    :numFilter IS NULL
+                    OR lower(c.num)      LIKE lower(concat('%', :numFilter, '%'))
+                    OR lower(cp.name)    LIKE lower(concat('%', :numFilter, '%'))
+                    OR lower(cp.code_1c) LIKE lower(concat('%', :numFilter, '%'))
+                  )
+              AND (:username IS NULL OR uoa.username IS NOT NULL)
+        """,
+        nativeQuery = true
+    )
+    fun findByFilterForUser(
+        @Param("idType")    idType:    Int?,
+        @Param("idStatus")  idStatus:  String?,
+        @Param("idOrg")     idOrg:     Int?,
+        @Param("numFilter") numFilter: String?,
+        @Param("inOut")     inOut:     String?,
+        @Param("username")  username:  String?,  // null = bypass для ADMIN/SERVICE
+        pageable: Pageable
+    ): Page<ContractWithTotalsProjection>
+
     @Query("select * from pkg_contract.get_org_id(:idOrg)", nativeQuery = true)
     fun getIdOrg(@Param("idOrg") idOrg: String): Int
 }

@@ -13,5 +13,6 @@
 * **PG_DB_USER** `(rightsflow)` - *имя пользователя базы данных*
 * **PG_DB_PASSWORD** - *пароль пользователя базы данных*
 * **SWAGGER_CLIENT_SECRET** - *секрет клиента Swagger*
+* **RF_SYSTEM_CLIENT_SECRET** - *секрет клиента system*
 * **RF_OTLP_ENDPOINT** `(http://tempo.monitoring:4318/v1/traces)` - *адрес сервиса OpenTelemetry*
 * **RF_TRACE_ENABLED** `(false)` - *флаг включения трассировки*

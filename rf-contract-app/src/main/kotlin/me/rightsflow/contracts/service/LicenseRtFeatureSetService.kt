@@ -27,13 +27,14 @@ class LicenseRtFeatureSetService(
     @PersistenceContext private val em: EntityManager
 ) {
 
-    fun getById(id: Long): LicenseRtFeatureSetDto {
-        return repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatureSet::class.java) }.toDto()
-    }
+    fun getById(id: Long): LicenseRtFeatureSetDto =
+        repo.findByIdForUser(id, buildUsername())
+            .orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatureSet::class.java) }
+            .toDto()
 
     fun findByLicenseRt(id: Long, pageable: Pageable): Page<LicenseRtFeatureSetDto> {
         licenseRtRepo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRights::class.java) }
-        return repo.findByIdLicRights(id, pageable).map { it.toDto() }
+        return repo.findByIdLicRightsForUser(id, buildUsername(), pageable).map { it.toDto() }
     }
 
     @Transactional
@@ -46,7 +47,8 @@ class LicenseRtFeatureSetService(
                     ":pIsSubLicense, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -57,6 +59,7 @@ class LicenseRtFeatureSetService(
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
 
@@ -77,7 +80,8 @@ class LicenseRtFeatureSetService(
                     ":pIsSubLicense, " +
                     ":pBegDate, " +
                     ":pEndDate, " +
-                    ":pUpdatedBy" +
+                    ":pUpdatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -89,6 +93,7 @@ class LicenseRtFeatureSetService(
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pUpdatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
 
@@ -101,16 +106,21 @@ class LicenseRtFeatureSetService(
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, LicenseRtFeatureSet::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_license_rt_feature_set")
 
-        sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
-        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_id",          Long::class.java,    ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username",    String::class.java,  ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass",      Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
         sp.setParameter("p_use_cascade", useCascade)
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
+
+    private fun buildUsername(): String? =
+        if (subProvider.isBypassRole()) null else subProvider.currentSub()
 
     private fun LicenseRtFeatureSet.toDto() = LicenseRtFeatureSetDto(
         id = this.id!!,

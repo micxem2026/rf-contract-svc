@@ -8,7 +8,6 @@ import jakarta.persistence.*
 import me.rightsflow.common.entity.BaseAudit
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Type
-import java.math.BigDecimal
 import java.time.LocalDate
 
 

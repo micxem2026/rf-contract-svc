@@ -27,13 +27,16 @@ class LicenseService(
 ) {
 
     fun getById(id: Long): LicenseDto =
-        repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }.toDto()
+        repo.findByIdForUser(id, buildUsername())
+            .orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
+            .toDto()
 
     fun findByFilter(
         idContract: Long,
         numFilter: String?,
         pageable: Pageable
-    ): Page<LicenseDto> = repo.findByFilter(idContract, numFilter, pageable).map { it.toDto() }
+    ): Page<LicenseDto> =
+        repo.findByFilterForUser(idContract, numFilter, buildUsername(), pageable).map { it.toDto() }
 
     @Transactional
     fun create(req: LicenseCreateRequest): LicenseDto {
@@ -51,7 +54,8 @@ class LicenseService(
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pDescription, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -68,6 +72,7 @@ class LicenseService(
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
 
@@ -93,7 +98,8 @@ class LicenseService(
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pDescription, " +
-                    ":pCreatedBy" +
+                    ":pCreatedBy, " +
+                    ":pBypass" +
                     ")"
         )
 
@@ -110,6 +116,7 @@ class LicenseService(
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pDescription", req.description)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
 
@@ -122,16 +129,21 @@ class LicenseService(
         repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
         val sp = em.createStoredProcedureQuery("pkg_contract.del_license")
 
-        sp.registerStoredProcedureParameter("p_id", Long::class.java, ParameterMode.IN)
-        sp.registerStoredProcedureParameter("p_username", String::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_id",          Long::class.java,    ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_username",    String::class.java,  ParameterMode.IN)
         sp.registerStoredProcedureParameter("p_use_cascade", Boolean::class.java, ParameterMode.IN)
+        sp.registerStoredProcedureParameter("p_bypass",      Boolean::class.java, ParameterMode.IN)
 
         sp.setParameter("p_id", id)
         sp.setParameter("p_username", subProvider.currentSub())
         sp.setParameter("p_use_cascade", useCascade)
+        sp.setParameter("p_bypass", subProvider.isBypassRole())
 
         sp.execute()
     }
+
+    private fun buildUsername(): String? =
+        if (subProvider.isBypassRole()) null else subProvider.currentSub()
 
     private fun License.toDto() = run {
         val licOip = licenseOipService.getFirstByIdLicense(this.id!!)
