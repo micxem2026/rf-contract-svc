@@ -124,7 +124,7 @@ class ContractService(
                     ":pDescription, " +
                     ":pIdCurrency, " +
                     ":pIdCurrencyPayment, " +
-                    ":pCreatedBy," +
+                    ":pCreatedBy, " +
                     ":pBypass " +
                     ")"
         )
@@ -177,7 +177,7 @@ class ContractService(
             "SELECT pkg_contract.upd_contract_status(" +
                     ":pIdContract, " +
                     ":pStatusCode, " +
-                    ":pUsername" +
+                    ":pUsername, " +
                     ":pBypass" +
                     ")"
         )
