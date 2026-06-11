@@ -64,6 +64,8 @@ class ContractController(
         @RequestParam(required = false) idContractType: Int?,
         @Parameter(description = "Фильтр по ID статуса контракта")
         @RequestParam(required = false) idContractStatus: List<Int>?,
+        @Parameter(description = "Фильтр по статусу 1С контракта")
+        @RequestParam(required = false) status1c: List<String>?,
         @Parameter(description = "Фильтр по ID организации или коду 1С организации")
         @RequestParam(required = false) idOrg: String?,
         @Parameter(description = "Фильтр по номеру договора, коду 1C контрагента или названию контрагента")
@@ -77,7 +79,7 @@ class ContractController(
                     " - *iS* — внутренняя продажа") inOut: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<ContractDto> {
-        val page = service.findByFilter(idContractType, idContractStatus, idOrg, filter, inOut,pageable)
+        val page = service.findByFilter(idContractType, idContractStatus, status1c, idOrg, filter, inOut,pageable)
         return PagedModel(page)
     }
 
@@ -126,7 +128,7 @@ class ContractController(
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun updateStatus(@Parameter(description = "ID контракта")
-                     @PathVariable id: Long, @Valid @RequestBody req: ContractStatusUpdateRequest): ContractChangeStatusDto =
+                     @PathVariable id: Long, @Valid @RequestBody req: ContractStatusUpdateRequest): ContractDto =
         service.updateStatus(id, req)
 
     @DeleteMapping("/{id}")

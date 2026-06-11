@@ -49,6 +49,9 @@ data class ContractCreateRequest(
     @field:NotNull
     var inOut: String,
 
+    @field:Schema(description = "Статус контракта в 1С")
+    val status1c: String?,
+
     @field:Schema(description = "Описание", example = "Описание")
     val description: String?,
 

@@ -71,7 +71,10 @@ class Contract(
     var idCurrencyPayment: Int? = null,
 
     @Column(name = "ID_CONTRACT_VP")
-    var idContractVp: Int? = null
+    var idContractVp: Int? = null,
+
+    @Column(name = "STATUS_1C", length = 255)
+    var status1c: String? = null
 
 ) : BaseAudit() {
 

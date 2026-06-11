@@ -47,6 +47,7 @@ class ContractService(
     fun findByFilter(
         idContractType: Int?,
         idContractStatus: List<Int>?,
+        status1c: List<String>?,
         idOrg: String?,
         numFilter: String?,
         inOut: String?,
@@ -56,8 +57,11 @@ class ContractService(
         val normalizedStatus: String? = idContractStatus
             ?.takeIf { it.isNotEmpty() }
             ?.joinToString(",")
+        val normalizedStatus1c: String? = status1c
+            ?.takeIf { it.isNotEmpty() }
+            ?.joinToString(",")
         return repo.findByFilterForUser(
-            idContractType, normalizedStatus, idOrgInt, numFilter, inOut,
+            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, inOut,
             buildUsername(),
             pageable
         ).toContractDtoPage()
@@ -75,6 +79,7 @@ class ContractService(
                     ":pBegDate, " +
                     ":pEndDate, " +
                     ":pContractDate, " +
+                    ":pStatus1c, " +
                     ":pIdContractType, " +
                     ":pInOut, " +
                     ":pDescription, " +
@@ -92,6 +97,7 @@ class ContractService(
         query.setParameter("pBegDate", req.validityPeriodStart)
         query.setParameter("pEndDate", req.validityPeriodEnd)
         query.setParameter("pContractDate", req.contractDate)
+        query.setParameter("pStatus1c", req.status1c)
         query.setParameter("pIdContractType", req.idContractType)
         query.setParameter("pInOut", req.inOut)
         query.setParameter("pDescription", req.description)
@@ -171,12 +177,13 @@ class ContractService(
     }
 
     @Transactional
-    fun updateStatus(id: Long, req: ContractStatusUpdateRequest): ContractChangeStatusDto {
+    fun updateStatus(id: Long, req: ContractStatusUpdateRequest): ContractDto {
         val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
         val query = em.createNativeQuery(
             "SELECT pkg_contract.upd_contract_status(" +
                     ":pIdContract, " +
                     ":pStatusCode, " +
+                    ":pStatus1c, " +
                     ":pUsername, " +
                     ":pBypass" +
                     ")"
@@ -184,17 +191,14 @@ class ContractService(
 
         query.setParameter("pIdContract", id)
         query.setParameter("pStatusCode", req.statusCode)
+        query.setParameter("pStatus1c", req.status1c)
         query.setParameter("pUsername", subProvider.currentSub())
         query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
         em.refresh(e)
 
-        val success = e.contractStatus?.code == req.statusCode.uppercase()
-        val info = if (success) "Статус договора успешно изменен" else e.warning ?: ""
-        val contract = getById(id)
-
-        return ContractChangeStatusDto(success, info, id, contract)
+        return getById(id)
 
     }
 
@@ -302,6 +306,7 @@ class ContractService(
         contractTypeName     = types[getIdContractType()]?.name ?: "",
         idContractStatus     = getIdContractStatus(),
         contractStatusName   = statuses[getIdContractStatus()]?.name ?: "",
+        status1c             = getStatus1c(),
         inOut                = getInOut(),
         description          = getDescription(),
         warning              = getWarning(),

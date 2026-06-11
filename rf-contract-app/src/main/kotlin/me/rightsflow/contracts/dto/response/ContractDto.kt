@@ -23,6 +23,7 @@ data class ContractDto(
     @field:Schema(description = "Наименование типа контракта", example = "Договор") val contractTypeName: String,
     @field:Schema(description = "ID статуса контракта", example = "1") val idContractStatus: Int,
     @field:Schema(description = "Наименование статуса контракта", example = "Подписан") val contractStatusName: String,
+    @field:Schema(description = "Статус 1С контракта") val status1c: String?,
     @field:Schema(description = "Вид контракта (внешняя покупка/продажа, внутренняя покупка/продажа)", example = "eS") val inOut: String,
     @field:Schema(description = "Описание", example = "Договор на поставку товаров") val description: String?,
     @field:Schema(description = "Предупреждения целостности контракта", example = "Контракт не содержит лицензий!") val warning: String?,
@@ -68,6 +69,7 @@ interface ContractWithTotalsProjection {
     fun getContractDate(): LocalDate?
     fun getIdContractType(): Int
     fun getIdContractStatus(): Int
+    fun getStatus1c(): String?
     fun getInOut(): String
     fun getDescription(): String?
     fun getWarning(): String?

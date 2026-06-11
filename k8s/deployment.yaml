@@ -38,6 +38,8 @@ spec:
       labels:
         app: rf-contract-svc
       annotations:
+        kubernetes.io/container-log-max-files: "3"
+        kubernetes.io/container-log-max-size: 50Mi
         prometheus.io/scrape: "true"
         prometheus.io/path: "/api/contract/v1/actuator/prometheus"
         prometheus.io/port: "8082" # <-- порт приложения

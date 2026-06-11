@@ -24,6 +24,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.contract_date              as contractDate,
                 c.id_contract_type           as idContractType,
                 c.id_contract_status         as idContractStatus,
+                c.status_1c                  AS status1c,                
                 c.in_out                     as inOut,
                 c.description,
                 c.warning,
@@ -69,6 +70,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.contract_date              as contractDate,
                 c.id_contract_type           as idContractType,
                 c.id_contract_status         as idContractStatus,
+                c.status_1c                  AS status1c,
                 c.in_out                     as inOut,
                 c.description,
                 c.warning,
@@ -160,6 +162,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.contract_date              AS contractDate,
                 c.id_contract_type           AS idContractType,
                 c.id_contract_status         AS idContractStatus,
+                c.status_1c                  AS status1c,
                 c.in_out                     AS inOut,
                 c.description,
                 c.warning,
@@ -218,6 +221,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.contract_date              AS contractDate,
                 c.id_contract_type           AS idContractType,
                 c.id_contract_status         AS idContractStatus,
+                c.status_1c                  AS status1c,
                 c.in_out                     AS inOut,
                 c.description,
                 c.warning,
@@ -250,6 +254,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                   AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
             WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
               AND (:idStatus IS NULL OR c.id_contract_status = ANY(string_to_array(:idStatus, ',')::integer[]))
+              AND (:status1c IS NULL OR c.status_1c = ANY(string_to_array(:status1c, ',')::character varying[]))
               AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
               AND (:inOut    IS NULL OR c.in_out             = :inOut)
               AND (
@@ -271,6 +276,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                   AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
             WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
               AND (:idStatus IS NULL OR c.id_contract_status = ANY(string_to_array(:idStatus, ',')::integer[]))
+              AND (:status1c IS NULL OR c.status_1c = ANY(string_to_array(:status1c, ',')::character varying[]))
               AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
               AND (:inOut    IS NULL OR c.in_out             = :inOut)
               AND (
@@ -286,6 +292,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
     fun findByFilterForUser(
         @Param("idType")    idType:    Int?,
         @Param("idStatus")  idStatus:  String?,
+        @Param("status1c")  status1c:  String?,
         @Param("idOrg")     idOrg:     Int?,
         @Param("numFilter") numFilter: String?,
         @Param("inOut")     inOut:     String?,
