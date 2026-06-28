@@ -39,13 +39,18 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.updated_at                 as updatedAt,
                 coalesce(l.price,        0)  as contractPrice,
                 coalesce(l.vat_amount,   0)  as contractVatAmount,
-                coalesce(l.total_amount, 0)  as contractTotalAmount
+                coalesce(l.total_amount, 0)  as contractTotalAmount,
+                l.vat_rate                   as contractVatRate
             from contract c
             left join (
                 select id_contract,
                        sum(price)        as price,
                        sum(vat_amount)   as vat_amount,
-                       sum(total_amount) as total_amount
+                       sum(total_amount) as total_amount,
+                       CASE
+                           WHEN MIN(vat_rate) = MAX(vat_rate) THEN MIN(vat_rate)
+                           ELSE 99
+                       END AS vat_rate                       
                 from license
                 group by id_contract
             ) l on l.id_contract = c.id
@@ -85,13 +90,18 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.updated_at                 as updatedAt,
                 coalesce(l.price,        0)  as contractPrice,
                 coalesce(l.vat_amount,   0)  as contractVatAmount,
-                coalesce(l.total_amount, 0)  as contractTotalAmount
+                coalesce(l.total_amount, 0)  as contractTotalAmount,
+                l.vat_rate                   as contractVatRate
             from contract c
             left join (
                 select id_contract,
                        sum(price)        as price,
                        sum(vat_amount)   as vat_amount,
-                       sum(total_amount) as total_amount
+                       sum(total_amount) as total_amount,
+                       CASE
+                           WHEN MIN(vat_rate) = MAX(vat_rate) THEN MIN(vat_rate)
+                           ELSE 99
+                       END AS vat_rate                       
                 from license
                 group by id_contract
             ) l on l.id_contract = c.id
@@ -177,13 +187,18 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.updated_at                 AS updatedAt,
                 COALESCE(l.price,        0)  AS contractPrice,
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
-                COALESCE(l.total_amount, 0)  AS contractTotalAmount
+                COALESCE(l.total_amount, 0)  AS contractTotalAmount,
+                l.vat_rate                   as contractVatRate
             FROM contract c
             LEFT JOIN (
                 SELECT id_contract,
                        SUM(price)        AS price,
                        SUM(vat_amount)   AS vat_amount,
-                       SUM(total_amount) AS total_amount
+                       SUM(total_amount) AS total_amount,
+                       CASE
+                           WHEN MIN(vat_rate) = MAX(vat_rate) THEN MIN(vat_rate)
+                           ELSE 99
+                       END AS vat_rate                       
                 FROM   license
                 GROUP  BY id_contract
             ) l ON l.id_contract = c.id
@@ -236,13 +251,18 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 c.updated_at                 AS updatedAt,
                 COALESCE(l.price,        0)  AS contractPrice,
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
-                COALESCE(l.total_amount, 0)  AS contractTotalAmount
+                COALESCE(l.total_amount, 0)  AS contractTotalAmount,
+                l.vat_rate                   as contractVatRate
             FROM contract c
             LEFT JOIN (
                 SELECT id_contract,
                        SUM(price)        AS price,
                        SUM(vat_amount)   AS vat_amount,
-                       SUM(total_amount) AS total_amount
+                       SUM(total_amount) AS total_amount,
+                       CASE
+                           WHEN MIN(vat_rate) = MAX(vat_rate) THEN MIN(vat_rate)
+                           ELSE 99
+                       END AS vat_rate                       
                 FROM   license
                 GROUP  BY id_contract
             ) l ON l.id_contract = c.id

@@ -48,6 +48,7 @@ data class ContractDto(
     @field:Schema(description = "Сумма по лицензиям (цена)", example = "1000.00") val contractPrice: BigDecimal,
     @field:Schema(description = "Сумма НДС по лицензиям", example = "200.00") val contractVatAmount: BigDecimal,
     @field:Schema(description = "Итоговая сумма по лицензиям", example = "1200.00") val contractTotalAmount: BigDecimal,
+    @field:Schema(description = "Ставка НДС из лицензий (99 - ставки НДС лицензий разные)", example = "22.00") val contractVatRate: BigDecimal?,
 
     @field:Schema(description = "Контрагенты договора") val cParties: List<ContractCounterpartyShortDto>,
 
@@ -87,4 +88,5 @@ interface ContractWithTotalsProjection {
     fun getContractPrice(): BigDecimal?
     fun getContractVatAmount(): BigDecimal?
     fun getContractTotalAmount(): BigDecimal?
+    fun getContractVatRate(): BigDecimal?
 }
