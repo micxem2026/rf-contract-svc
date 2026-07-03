@@ -3,6 +3,7 @@ package me.rightsflow.contracts.dto.request
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Schema(description = "Запрос на обновление контракта")
@@ -51,4 +52,16 @@ data class ContractUpdateRequest(
 
     @field:Schema(description = "ID валюты платежа", example = "1")
     var idCurrencyPayment: Int?,
+
+    @field:Schema(description = "Стоимость для УНФ")
+    var unfPrice: BigDecimal?,
+
+    @field:Schema(description = "Ставка НДС для УНФ")
+    var unfVatRate: BigDecimal?,
+
+    @field:Schema(description = "Сумма НДС  для УНФ")
+    var unfVatAmount: BigDecimal?,
+
+    @field:Schema(description = "Всего для УНФ")
+    var unfTotalAmount: BigDecimal?
 )

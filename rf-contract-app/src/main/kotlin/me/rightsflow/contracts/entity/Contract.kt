@@ -8,6 +8,7 @@ import jakarta.persistence.*
 import me.rightsflow.common.entity.BaseAudit
 import org.hibernate.Hibernate
 import org.hibernate.annotations.Type
+import java.math.BigDecimal
 import java.time.LocalDate
 
 
@@ -74,7 +75,19 @@ class Contract(
     var idContractVp: Int? = null,
 
     @Column(name = "STATUS_1C", length = 255)
-    var status1c: String? = null
+    var status1c: String? = null,
+
+    @Column(name = "UNF_PRICE")
+    var unfPrice: BigDecimal? = null,
+
+    @Column(name = "UNF_VAT_RATE")
+    var unfVatRate: BigDecimal? = null ,
+
+    @Column(name = "UNF_VAT_AMOUNT")
+    var unfVatAmount: BigDecimal? = null,
+
+    @Column(name = "UNF_TOTAL_AMOUNT")
+    var totalAmount: BigDecimal? = null
 
 ) : BaseAudit() {
 

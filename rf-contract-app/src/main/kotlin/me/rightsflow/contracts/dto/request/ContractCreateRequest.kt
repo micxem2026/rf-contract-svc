@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
 import jakarta.validation.constraints.Size
+import java.math.BigDecimal
 import java.time.LocalDate
 
 @Schema(description = "Запрос на создание контракта")
@@ -60,5 +61,17 @@ data class ContractCreateRequest(
 
     @field:Schema(description = "ID валюты платежа", example = "1")
     var idCurrencyPayment: Int?,
+
+    @field:Schema(description = "Стоимость для УНФ")
+    var unfPrice: BigDecimal?,
+
+    @field:Schema(description = "Ставка НДС для УНФ")
+    var unfVatRate: BigDecimal?,
+
+    @field:Schema(description = "Сумма НДС  для УНФ")
+    var unfVatAmount: BigDecimal?,
+
+    @field:Schema(description = "Всего для УНФ")
+    var unfTotalAmount: BigDecimal?
 
 )

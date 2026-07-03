@@ -85,6 +85,10 @@ class ContractService(
                     ":pDescription, " +
                     ":pIdCurrency, " +
                     ":pIdCurrencyPayment, " +
+                    ":pUnfPrice, " +
+                    ":pUnfVatRate, " +
+                    ":pUnfVatAmount, " +
+                    ":pUnfTotalAmount, " +
                     ":pCreatedBy, " +
                     ":pBypass" +
                     ")"
@@ -103,6 +107,10 @@ class ContractService(
         query.setParameter("pDescription", req.description)
         query.setParameter("pIdCurrency", req.idCurrency)
         query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
+        query.setParameter("pUnfPrice", req.unfPrice)
+        query.setParameter("pUnfVatRate", req.unfVatRate)
+        query.setParameter("pUnfVatAmount", req.unfVatAmount)
+        query.setParameter("pUnfTotalAmount", req.unfTotalAmount)
         query.setParameter("pCreatedBy", subProvider.currentSub())
         query.setParameter("pBypass", subProvider.isBypassRole())
 
@@ -130,6 +138,10 @@ class ContractService(
                     ":pDescription, " +
                     ":pIdCurrency, " +
                     ":pIdCurrencyPayment, " +
+                    ":pUnfPrice, " +
+                    ":pUnfVatRate, " +
+                    ":pUnfVatAmount, " +
+                    ":pUnfTotalAmount, " +
                     ":pCreatedBy, " +
                     ":pBypass " +
                     ")"
@@ -148,6 +160,10 @@ class ContractService(
         query.setParameter("pDescription", req.description)
         query.setParameter("pIdCurrency", req.idCurrency)
         query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
+        query.setParameter("pUnfPrice", req.unfPrice)
+        query.setParameter("pUnfVatRate", req.unfVatRate)
+        query.setParameter("pUnfVatAmount", req.unfVatAmount)
+        query.setParameter("pUnfTotalAmount", req.unfTotalAmount)
         query.setParameter("pCreatedBy", subProvider.currentSub())
         query.setParameter("pBypass", subProvider.isBypassRole())
 
@@ -323,6 +339,10 @@ class ContractService(
         currencyCodePayment  = getIdCurrencyPayment()?.let { currencies[it]?.isoCharCode },
         currencyNamePayment  = getIdCurrencyPayment()?.let { currencies[it]?.name },
         idContractVp         = getIdContractVp(),
+        unfContractPrice     = getUnfContractPrice(),
+        unfContractVatRate   = getUnfContractVatRate(),
+        unfContractVatAmount = getUnfContractVatAmount(),
+        unfContractTotalAmount = getUnfContractTotalAmount(),
         contractPrice        = getContractPrice() ?: BigDecimal.ZERO,
         contractVatAmount    = getContractVatAmount() ?: BigDecimal.ZERO,
         contractTotalAmount  = getContractTotalAmount() ?: BigDecimal.ZERO,

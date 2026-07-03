@@ -45,6 +45,11 @@ data class ContractDto(
     @field:Schema(description = "Код валюты платежа", example = "USD") val currencyCodePayment: String?,
     @field:Schema(description = "Название валюты платежа", example = "Доллар США") val currencyNamePayment: String?,
 
+    @field:Schema(description = "Сумма контракта для УНФ", example = "1000.00") val unfContractPrice: BigDecimal?,
+    @field:Schema(description = "Сумма НДС контракта для УНФ", example = "200.00") val unfContractVatAmount: BigDecimal?,
+    @field:Schema(description = "Итоговая сумма контракта для УНФ", example = "1200.00") val unfContractTotalAmount: BigDecimal?,
+    @field:Schema(description = "Ставка НДС контракта для УНФ", example = "22.00") val unfContractVatRate: BigDecimal?,
+
     @field:Schema(description = "Сумма по лицензиям (цена)", example = "1000.00") val contractPrice: BigDecimal,
     @field:Schema(description = "Сумма НДС по лицензиям", example = "200.00") val contractVatAmount: BigDecimal,
     @field:Schema(description = "Итоговая сумма по лицензиям", example = "1200.00") val contractTotalAmount: BigDecimal,
@@ -79,6 +84,10 @@ interface ContractWithTotalsProjection {
     fun getIdCurrency(): Int?
     fun getIdCurrencyPayment(): Int?
     fun getIdContractVp(): Int?
+    fun getUnfContractPrice(): BigDecimal?
+    fun getUnfContractVatAmount(): BigDecimal?
+    fun getUnfContractTotalAmount(): BigDecimal?
+    fun getUnfContractVatRate(): BigDecimal?
     fun getCreatedBy(): String
     fun getCreatedAt(): Instant
     fun getUpdatedBy(): String?
