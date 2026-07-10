@@ -88,6 +88,7 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-reflect")
 
     // Swagger/OpenAPI
+    implementation("org.webjars:swagger-ui:5.25.3")
     implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:${property("springDocVersion")}")
     implementation("org.apache.commons:commons-lang3:3.18.0") {
         because("CVE-2025-48924 - Security fix")

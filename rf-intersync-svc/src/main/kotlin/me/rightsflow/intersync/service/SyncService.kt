@@ -243,6 +243,7 @@ class SyncService {
                     ":pSyncId, " +
                     ":pId, " +
                     ":pName, " +
+                    ":pOrd, " +
                     ":pCreatedBy, " +
                     ":pCreatedAt, " +
                     ":pUpdatedBy, " +
@@ -253,6 +254,7 @@ class SyncService {
         query.setParameter("pSyncId", pSyncId)
         query.setParameter("pId", dto.id)
         query.setParameter("pName", dto.name)
+        query.setParameter("pOrd", dto.ord)
         query.setParameter("pCreatedBy", dto.created_by)
         query.setParameter("pCreatedAt", dto.created_at?.let { microsToOffsetDateTime(it) })
         query.setParameter("pUpdatedBy", dto.updated_by)

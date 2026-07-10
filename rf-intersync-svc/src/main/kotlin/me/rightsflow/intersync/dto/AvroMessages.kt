@@ -99,6 +99,7 @@ data class KlfRightTypeAvroMessage(
 data class KlfFeatureCategoryAvroMessage(
     val id: Int?,
     val name: String,
+    val ord: Int?,
     val created_by: String,
     val created_at: Instant?,
     val updated_by: String?,

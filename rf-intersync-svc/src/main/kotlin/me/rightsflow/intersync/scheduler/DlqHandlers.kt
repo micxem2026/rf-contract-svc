@@ -142,7 +142,7 @@ class FeatureCategoryDlqHandler(
     override fun process(key: String, value: GenericRecord?) {
         val syncId = key.substringAfter("=").substringBefore("}").trim().toInt()
         val featureCategoryDto = when (value) {
-            null -> KlfFeatureCategoryAvroMessage(null,"","",null,null,null)
+            null -> KlfFeatureCategoryAvroMessage(null,"", null, "",null,null,null)
             else -> MessageConverter.convertToKlfFeatureCategoryAvroMessage(value)
         }
         replicationService.processFeatureCategory(syncId, featureCategoryDto)

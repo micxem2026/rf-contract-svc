@@ -56,10 +56,10 @@ data class ContractCreateRequest(
     @field:Schema(description = "Описание", example = "Описание")
     val description: String?,
 
-    @field:Schema(description = "ID валюты контракта", example = "1")
+    @field:Schema(description = "ID валюты контракта", example = "643")
     var idCurrency: Int?,
 
-    @field:Schema(description = "ID валюты платежа", example = "1")
+    @field:Schema(description = "ID валюты платежа", example = "643")
     var idCurrencyPayment: Int?,
 
     @field:Schema(description = "Стоимость для УНФ")

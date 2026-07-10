@@ -6,16 +6,16 @@ import java.time.LocalDate
 @Schema(description = "Запрос на обновление набора характеристик права для лицензии")
 data class LicenseRtFeatureSetUpdateRequest(
 
-    @field:Schema(description = "ID привязки права к лицензии")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "ID привязки права к лицензии")
     val idLicRights: Long?,
 
-    @field:Schema(description = "Признак исключительности права", example = "true")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Признак исключительности права", example = "true")
     val isExclusive: Boolean?,
 
-    @field:Schema(description = "Признак использования права при эксклюзивной продаже", example = "false")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Признак использования права при эксклюзивной продаже", example = "false")
     val isUseRight: Boolean?,
 
-    @field:Schema(description = "Признак сублицензирования", example = "false")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Признак сублицензирования", example = "false")
     val isSubLicense: Boolean?,
 
     @field:Schema(description = "Период действия набора характеристик (начало)", example = "2022-01-01")

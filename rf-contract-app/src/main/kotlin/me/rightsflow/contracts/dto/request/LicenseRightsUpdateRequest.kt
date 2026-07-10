@@ -20,13 +20,13 @@ data class LicenseRightsUpdateRequest(
     @field:Schema(description = "Количество дней действия holdback-а")
     val hbDays: Int?,
 
-    @field:Schema(description = "Стоимость", example = "100.00")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Стоимость", example = "100.00")
     var price: BigDecimal?,
 
-    @field:Schema(description = "Сумма НДС", example = "20.00")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Сумма НДС", example = "20.00")
     var vatAmount: BigDecimal?,
 
-    @field:Schema(description = "Всего", example = "120.00")
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Всего", example = "120.00")
     var totalAmount: BigDecimal?,
 
     @field:Schema(description = "Описание", example = "Право на бесплатное использование видео контента")

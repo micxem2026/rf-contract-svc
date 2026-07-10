@@ -252,7 +252,7 @@ class StreamProcessors(
                 log.info("featureCategoryProcessor -> Received sync message with id: $syncId")
                 val featureCategoryDto = when (message.payload) {
                     is GenericRecord -> MessageConverter.convertToKlfFeatureCategoryAvroMessage(message.payload as GenericRecord)
-                    is KafkaNull -> KlfFeatureCategoryAvroMessage(null,"","",Instant.EPOCH,
+                    is KafkaNull -> KlfFeatureCategoryAvroMessage(null,"", null, "",Instant.EPOCH,
                         null,null)
                     else -> throw IllegalArgumentException("featureCategoryProcessor -> Unsupported message type: ${message.payload.javaClass}")
                 }
@@ -701,6 +701,7 @@ object MessageConverter {
         return KlfFeatureCategoryAvroMessage(
             id = record.get("id") as Int?,
             name = record.getString("name"),
+            ord = record.get("ord") as Int?,
             created_by = record.getString("created_by"),
             created_at = record.getStringOrNull("created_at")?.let { Instant.parse(it)},
             updated_by = record.getStringOrNull("updated_by"),
