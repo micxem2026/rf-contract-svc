@@ -63,15 +63,15 @@ data class ContractCreateRequest(
     var idCurrencyPayment: Int?,
 
     @field:Schema(description = "Стоимость для УНФ")
-    var unfPrice: BigDecimal?,
+    var unfContractPrice: BigDecimal?,
 
     @field:Schema(description = "Ставка НДС для УНФ")
-    var unfVatRate: BigDecimal?,
+    var unfContractVatRate: BigDecimal?,
 
     @field:Schema(description = "Сумма НДС  для УНФ")
-    var unfVatAmount: BigDecimal?,
+    var unfContractVatAmount: BigDecimal?,
 
     @field:Schema(description = "Всего для УНФ")
-    var unfTotalAmount: BigDecimal?
+    var unfContractTotalAmount: BigDecimal?
 
 )

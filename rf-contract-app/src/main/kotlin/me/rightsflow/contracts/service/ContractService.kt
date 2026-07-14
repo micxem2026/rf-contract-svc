@@ -107,10 +107,10 @@ class ContractService(
         query.setParameter("pDescription", req.description)
         query.setParameter("pIdCurrency", req.idCurrency)
         query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
-        query.setParameter("pUnfPrice", req.unfPrice)
-        query.setParameter("pUnfVatRate", req.unfVatRate)
-        query.setParameter("pUnfVatAmount", req.unfVatAmount)
-        query.setParameter("pUnfTotalAmount", req.unfTotalAmount)
+        query.setParameter("pUnfPrice", req.unfContractPrice)
+        query.setParameter("pUnfVatRate", req.unfContractVatRate)
+        query.setParameter("pUnfVatAmount", req.unfContractVatAmount)
+        query.setParameter("pUnfTotalAmount", req.unfContractTotalAmount)
         query.setParameter("pCreatedBy", subProvider.currentSub())
         query.setParameter("pBypass", subProvider.isBypassRole())
 
@@ -142,6 +142,7 @@ class ContractService(
                     ":pUnfVatRate, " +
                     ":pUnfVatAmount, " +
                     ":pUnfTotalAmount, " +
+                    ":pIdContractVp, " +
                     ":pCreatedBy, " +
                     ":pBypass " +
                     ")"
@@ -160,10 +161,11 @@ class ContractService(
         query.setParameter("pDescription", req.description)
         query.setParameter("pIdCurrency", req.idCurrency)
         query.setParameter("pIdCurrencyPayment", req.idCurrencyPayment)
-        query.setParameter("pUnfPrice", req.unfPrice)
-        query.setParameter("pUnfVatRate", req.unfVatRate)
-        query.setParameter("pUnfVatAmount", req.unfVatAmount)
-        query.setParameter("pUnfTotalAmount", req.unfTotalAmount)
+        query.setParameter("pUnfPrice", req.unfContractPrice)
+        query.setParameter("pUnfVatRate", req.unfContractVatRate)
+        query.setParameter("pUnfVatAmount", req.unfContractVatAmount)
+        query.setParameter("pUnfTotalAmount", req.unfContractTotalAmount)
+        query.setParameter("pIdContractVp", req.idContractVp)
         query.setParameter("pCreatedBy", subProvider.currentSub())
         query.setParameter("pBypass", subProvider.isBypassRole())
 
