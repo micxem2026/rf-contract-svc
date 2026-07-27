@@ -10,13 +10,16 @@ import me.rightsflow.common.util.realUpper
 import me.rightsflow.contracts.dto.request.LicenseCreateRequest
 import me.rightsflow.contracts.dto.request.LicenseUpdateRequest
 import me.rightsflow.contracts.dto.response.LicenseDto
+import me.rightsflow.contracts.dto.response.LicenseProjection
 import me.rightsflow.contracts.dto.response.ParentInfo
 import me.rightsflow.contracts.entity.License
 import me.rightsflow.contracts.repository.LicenseRepository
+import me.rightsflow.contracts.toOffsetDateTime
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.ZoneId
 
 @Service
 class LicenseService(
@@ -25,6 +28,10 @@ class LicenseService(
     private val licenseOipService: LicenseOipService,
     @PersistenceContext private val em: EntityManager
 ) {
+
+    companion object {
+        private val MOSCOW_ZONE = ZoneId.of("Europe/Moscow")
+    }
 
     fun getById(id: Long): LicenseDto =
         repo.findByIdForUser(id, buildUsername())
@@ -151,6 +158,7 @@ class LicenseService(
                            licOip.parents.filter { it.level == 0 }
                            .getOrNull(0) ?: ParentInfo(licOip.idOip, licOip.oipName ?: "", null)
                        else ParentInfo(0, "", null)
+        val partsInfo = repo.findPartsInfoById(this.id!!)
         LicenseDto(
             id = this.id!!,
             idContract = this.idContract,
@@ -169,10 +177,45 @@ class LicenseService(
             rootOipId = if (licOip != null) licIdOip.id else null,
             rootOipName = if (licOip != null) licIdOip.name else null,
             description = this.description,
+            partRanges = partsInfo.getPartRanges(),
+            numParts = partsInfo.getNumParts(),
             createdBy = this.createdBy,
             createdAt = this.createdAt,
             updatedBy = this.updatedBy,
             updatedAt = this.updatedAt
+        )
+    }
+
+    private fun LicenseProjection.toDto(): LicenseDto {
+        val licOip = licenseOipService.getFirstByIdLicense(this.getId())
+        val licIdOip = if (licOip != null)
+            licOip.parents.filter { it.level == 0 }
+                .getOrNull(0) ?: ParentInfo(licOip.idOip, licOip.oipName ?: "", null)
+        else ParentInfo(0, "", null)
+        return LicenseDto(
+            id = this.getId(),
+            idContract = this.getIdContract(),
+            contractNum = this.getContractNum() ?: "",
+            idLicFormat = this.getIdLicFormat(),
+            licFormatName = this.getLicFormatName() ?: "",
+            guid = this.getGuid(),
+            num = this.getNum(),
+            name = this.getName(),
+            price = this.getPrice(),
+            vatRate = this.getVatRate(),
+            vatAmount = this.getVatAmount(),
+            totalAmount = this.getTotalAmount(),
+            validityPeriodStart = this.getValidityPeriodStart(),
+            validityPeriodEnd = this.getValidityPeriodEnd(),
+            rootOipId = if (licOip != null) licIdOip.id else null,
+            rootOipName = if (licOip != null) licIdOip.name else null,
+            description = this.getDescription(),
+            partRanges = this.getPartRanges(),
+            numParts = this.getNumParts(),
+            createdBy = this.getCreatedBy(),
+            createdAt = this.getCreatedAt().toOffsetDateTime(MOSCOW_ZONE),
+            updatedBy = this.getUpdatedBy(),
+            updatedAt = this.getUpdatedAt()?.toOffsetDateTime(MOSCOW_ZONE)
         )
     }
 }

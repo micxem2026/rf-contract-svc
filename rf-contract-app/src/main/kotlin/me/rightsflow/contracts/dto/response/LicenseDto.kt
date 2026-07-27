@@ -3,6 +3,7 @@ package me.rightsflow.contracts.dto.response
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.OffsetDateTime
 import java.math.BigDecimal
+import java.time.Instant
 import java.time.LocalDate
 
 @Schema(description = "Лицензия")
@@ -29,5 +30,40 @@ data class LicenseDto(
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
-    @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?
+    @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?,
+
+    @field:Schema(description = "Диапазоны номеров частей", example = "1-5, 8, 10-12") val partRanges: String?,
+    @field:Schema(description = "Количество частей (ОИС), привязанных к лицензии", example = "7") val numParts: Long
+
 )
+
+interface LicenseProjection {
+    fun getId(): Long
+    fun getIdContract(): Long
+    fun getContractNum(): String?
+    fun getIdLicFormat(): Long?
+    fun getLicFormatName(): String?
+    fun getGuid(): String?
+    fun getNum(): String
+    fun getName(): String?
+    fun getPrice(): BigDecimal
+    fun getVatRate(): BigDecimal
+    fun getVatAmount(): BigDecimal
+    fun getTotalAmount(): BigDecimal
+    fun getValidityPeriodStart(): LocalDate?
+    fun getValidityPeriodEnd(): LocalDate?
+    fun getDescription(): String?
+    fun getCreatedBy(): String
+    fun getCreatedAt(): Instant
+    fun getUpdatedBy(): String?
+    fun getUpdatedAt(): Instant?
+
+    // Новые поля
+    fun getPartRanges(): String?
+    fun getNumParts(): Long
+}
+
+interface LicensePartsInfo {
+    fun getPartRanges(): String?
+    fun getNumParts(): Long
+}
