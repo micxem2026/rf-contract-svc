@@ -48,4 +48,4 @@ RUN chmod +x ./gradlew && ./gradlew --no-daemon assemble -Pgitlab.registry.token
 
 FROM ${GITLAB}/rights-flow/rf-base-images/liberica-openjdk:17.0.13-cds
 COPY --from=builder /src/rf-contract-app/build/libs/rf-contract-svc.jar rf-contract-svc.jar
-ENTRYPOINT ["java","-XX:+UseContainerSupport","-Xms256m","-Xmx512m","-jar","/rf-contract-svc.jar"]
+ENTRYPOINT ["java","-XX:+UseContainerSupport","-Xms512m","-Xmx1024m","-jar","/rf-contract-svc.jar"]

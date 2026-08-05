@@ -18,7 +18,7 @@ data:
   hostname: contract-svc
   hostname-external: rights.flow.me
   protocol-external: https
-  profiles: local,kafka
+  profiles: kuber,kafka
   contract-db: pg-contract-db-svc
 ---
 apiVersion: apps/v1
@@ -159,11 +159,11 @@ spec:
             failureThreshold: 15
           resources:
             requests:
-              cpu: "250m"
+              cpu: "500m"
               memory: "512Mi"
             limits:
               cpu: "1"
-              memory: "1024Mi"
+              memory: "1.5Gi"
       restartPolicy: Always
       imagePullSecrets:
         - name: gitlab-registry-secret
