@@ -161,7 +161,7 @@ class LicenseRightsService(
         id = this.id!!,
         idLicense = this.idLicense,
         licenseNum = this.license?.num ?: "",
-        licenseRightsRt = this.getLicenseRightsRt(pgeService, subProvider),
+        licenseRightsRt = this.getLicenseRightsRt(pgeService, subProvider, repo),
         hbStartDate = this.hbStartDate,
         hbDays = this.hbDays,
         price = this.price,
@@ -178,7 +178,8 @@ class LicenseRightsService(
 
 internal fun LicenseRights.getLicenseRightsRt(
     pgeService: PgeService,
-    subProvider: SecuritySubjectProvider
+    subProvider: SecuritySubjectProvider,
+    repo: LicenseRightsRepository
 ): List<LicenseRightsRtDto> {
 
     val entIds = this.rights.map { it.id!! }
@@ -188,7 +189,7 @@ internal fun LicenseRights.getLicenseRightsRt(
         .groupBy { it.idEntity }
 
     return this.rights.map {
-
+        val mri = repo.findMissingRightInfoById(it.id!!)
         LicenseRightsRtDto(
             id = it.id!!,
             idLicRights = it.idLicRights,
@@ -197,6 +198,8 @@ internal fun LicenseRights.getLicenseRightsRt(
             nameRightType = it.rightType?.name ?: "",
             financeConditions = fc.getOrDefault(it.id!!, emptyList()),
             additionalConditions = ac.getOrDefault(it.id!!, emptyList()),
+            missingFlag = mri.getMissingFlag(),
+            missingRightInfo = mri.getMissingRightInfo(),
             createdBy = it.createdBy,
             createdAt = it.createdAt
         )

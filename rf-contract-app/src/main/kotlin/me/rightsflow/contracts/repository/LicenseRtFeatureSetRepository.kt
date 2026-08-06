@@ -1,5 +1,6 @@
 package me.rightsflow.contracts.repository
 
+import me.rightsflow.contracts.dto.response.LicensePartsInfo
 import me.rightsflow.contracts.entity.LicenseRtFeatureSet
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -10,7 +11,7 @@ import java.util.Optional
 
 interface LicenseRtFeatureSetRepository : JpaRepository<LicenseRtFeatureSet, Long> {
 
-    fun findByIdLicRights(idLicRights: Long, pageable: Pageable): Page<LicenseRtFeatureSet>
+    //fun findByIdLicRights(idLicRights: Long, pageable: Pageable): Page<LicenseRtFeatureSet>
 
     /**
      * Получить набор характеристик по ID с фильтрацией по организациям пользователя.

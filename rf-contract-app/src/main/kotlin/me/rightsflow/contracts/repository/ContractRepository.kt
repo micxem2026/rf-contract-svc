@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param
 import java.util.Optional
 
 interface ContractRepository : JpaRepository<Contract, Long> {
-
+/*
     @Query(
         value = """
             select
@@ -44,7 +44,8 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 coalesce(l.price,        0)  as contractPrice,
                 coalesce(l.vat_amount,   0)  as contractVatAmount,
                 coalesce(l.total_amount, 0)  as contractTotalAmount,
-                l.vat_rate                   as contractVatRate
+                l.vat_rate                   as contractVatRate,
+                coalesce(m.missing_flag, 0)  as missingFlag
             from contract c
             left join (
                 select id_contract,
@@ -58,6 +59,12 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 from license
                 group by id_contract
             ) l on l.id_contract = c.id
+            left join (
+                select id_contract, 
+                       max(missing_flag) as missing_flag
+                from missing_right
+                group by id_contract       
+            ) m on m.id_contract = c.id
             where c.id = :id
         """,
         nativeQuery = true
@@ -65,7 +72,8 @@ interface ContractRepository : JpaRepository<Contract, Long> {
     fun getContractById(
         @Param("id") id: Long
     ): Optional<ContractWithTotalsProjection>
-
+*/
+/*
     @Query(
         value = """
             select
@@ -99,7 +107,8 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 coalesce(l.price,        0)  as contractPrice,
                 coalesce(l.vat_amount,   0)  as contractVatAmount,
                 coalesce(l.total_amount, 0)  as contractTotalAmount,
-                l.vat_rate                   as contractVatRate
+                l.vat_rate                   as contractVatRate,
+                coalesce(m.missing_flag, 0)  as missingFlag
             from contract c
             left join (
                 select id_contract,
@@ -113,6 +122,12 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 from license
                 group by id_contract
             ) l on l.id_contract = c.id
+            left join (
+                select id_contract, 
+                       max(missing_flag) as missing_flag
+                from missing_right
+                group by id_contract       
+            ) m on m.id_contract = c.id            
             left join contract_counterparty cc on cc.id_contract = c.id
             left join sync__klf_counterparty cp on cp.id = cc.id_cpart
             where (:idType        is null or c.id_contract_type   = :idType)
@@ -160,7 +175,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         @Param("inOut")     inOut:     String?,   // String, не enum — нативный запрос
         pageable: Pageable
     ): Page<ContractWithTotalsProjection>
-
+*/
     /**
      * Получить контракт по ID с фильтрацией по организациям пользователя.
      *
@@ -200,26 +215,44 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.price,        0)  AS contractPrice,
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
-                l.vat_rate                   as contractVatRate
+                l.vat_rate                   as contractVatRate,
+                coalesce(m.missing_flag, 0)  as missingFlag                
             FROM contract c
-            LEFT JOIN (
-                SELECT id_contract,
-                       SUM(price)        AS price,
-                       SUM(vat_amount)   AS vat_amount,
-                       SUM(total_amount) AS total_amount,
-                       CASE
-                           WHEN MIN(vat_rate) = MAX(vat_rate) THEN MIN(vat_rate)
-                           ELSE 99
-                       END AS vat_rate                       
-                FROM   license
-                GROUP  BY id_contract
-            ) l ON l.id_contract = c.id
-            LEFT JOIN user_org_access uoa
-                   ON :username IS NOT NULL
-                  AND uoa.username = :username
-                  AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
+            LEFT JOIN LATERAL (
+                        SELECT
+                            COALESCE(SUM(li.price), 0)        AS price,
+                            COALESCE(SUM(li.vat_amount), 0)   AS vat_amount,
+                            COALESCE(SUM(li.total_amount), 0) AS total_amount,
+                            CASE
+                                WHEN COUNT(*) = 0 THEN NULL
+                                WHEN MIN(li.vat_rate) = MAX(li.vat_rate) THEN MIN(li.vat_rate)
+                                ELSE 99
+                            END AS vat_rate
+                        FROM license li
+                        WHERE li.id_contract = c.id
+            ) l ON true
+            LEFT JOIN LATERAL (
+                    SELECT
+                        MAX(mr.missing_flag) AS missing_flag
+                    FROM missing_right mr
+                    WHERE mr.id_contract = c.id      
+            ) m on true            
             WHERE c.id = :id
-              AND (:username IS NULL OR uoa.username IS NOT NULL)
+              AND (
+                    NULLIF(:username, '') IS NULL
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_org_access u
+                        WHERE u.username = :username
+                          AND u.id_org = c.id_org
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_org_access u
+                        WHERE u.username = :username
+                          AND u.id_org = c.id_org_party
+                    )
+              )
         """,
         nativeQuery = true
     )
@@ -237,7 +270,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
      */
     @Query(
         value = """
-            SELECT DISTINCT
+            SELECT 
                 c.id,
                 c.guid,
                 c.num,
@@ -268,60 +301,124 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.price,        0)  AS contractPrice,
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
-                l.vat_rate                   as contractVatRate
+                l.vat_rate                   as contractVatRate,
+                coalesce(m.missing_flag, 0)  as missingFlag                
             FROM contract c
-            LEFT JOIN (
-                SELECT id_contract,
-                       SUM(price)        AS price,
-                       SUM(vat_amount)   AS vat_amount,
-                       SUM(total_amount) AS total_amount,
-                       CASE
-                           WHEN MIN(vat_rate) = MAX(vat_rate) THEN MIN(vat_rate)
-                           ELSE 99
-                       END AS vat_rate                       
-                FROM   license
-                GROUP  BY id_contract
-            ) l ON l.id_contract = c.id
-            LEFT JOIN contract_counterparty cc ON cc.id_contract = c.id
-            LEFT JOIN sync__klf_counterparty cp ON cp.id = cc.id_cpart
-            LEFT JOIN user_org_access uoa
-                   ON :username IS NOT NULL
-                  AND uoa.username = :username
-                  AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
-            WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
-              AND (:idStatus IS NULL OR c.id_contract_status = ANY(string_to_array(:idStatus, ',')::integer[]))
-              AND (:status1c IS NULL OR c.status_1c = ANY(string_to_array(:status1c, ',')::character varying[]))
+            LEFT JOIN LATERAL (
+                        SELECT
+                            COALESCE(SUM(li.price), 0)        AS price,
+                            COALESCE(SUM(li.vat_amount), 0)   AS vat_amount,
+                            COALESCE(SUM(li.total_amount), 0) AS total_amount,
+                            CASE
+                                WHEN COUNT(*) = 0 THEN NULL
+                                WHEN MIN(li.vat_rate) = MAX(li.vat_rate) THEN MIN(li.vat_rate)
+                                ELSE 99
+                            END AS vat_rate
+                        FROM license li
+                        WHERE li.id_contract = c.id
+            ) l ON true
+            LEFT JOIN LATERAL (
+                    SELECT
+                        MAX(mr.missing_flag) AS missing_flag
+                    FROM missing_right mr
+                    WHERE mr.id_contract = c.id      
+            ) m on true            
+            WHERE (:idType   IS NULL OR c.id_contract_type = :idType)
+              AND (
+                    NULLIF(:idStatus, '') IS NULL
+                    OR c.id_contract_status = ANY(
+                           string_to_array(NULLIF(:idStatus, ''), ',')::integer[]
+                       )
+              )
+              AND (
+                    NULLIF(:status1c, '') IS NULL
+                    OR c.status_1c = ANY(
+                           string_to_array(NULLIF(:status1c, ''), ',')::varchar[]
+                       )
+              )
               AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
               AND (:inOut    IS NULL OR c.in_out             = :inOut)
               AND (
-                    :numFilter IS NULL
-                    OR lower(c.num)      LIKE lower(concat('%', :numFilter, '%'))
-                    OR lower(cp.name)    LIKE lower(concat('%', :numFilter, '%'))
-                    OR lower(cp.code_1c) LIKE lower(concat('%', :numFilter, '%'))
+                    NULLIF(:numFilter, '') IS NULL
+                    OR c.num ILIKE concat('%', :numFilter, '%')
+                    OR c.guid ILIKE concat('%', :numFilter, '%')
+                    OR EXISTS (
+                        SELECT 1
+                        FROM contract_counterparty cc
+                        JOIN sync__klf_counterparty cp
+                             ON cp.id = cc.id_cpart
+                        WHERE cc.id_contract = c.id
+                          AND (
+                                cp.name ILIKE concat('%', :numFilter, '%')
+                             OR cp.code_1c ILIKE concat('%', :numFilter, '%')
+                          )
+                    )
                   )
-              AND (:username IS NULL OR uoa.username IS NOT NULL)
+              AND (
+                    NULLIF(:username, '') IS NULL
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_org_access u
+                        WHERE u.username = :username
+                          AND u.id_org = c.id_org
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_org_access u
+                        WHERE u.username = :username
+                          AND u.id_org = c.id_org_party
+                    )
+              )
         """,
         countQuery = """
             SELECT COUNT(DISTINCT c.id)
             FROM contract c
-            LEFT JOIN contract_counterparty cc ON cc.id_contract = c.id
-            LEFT JOIN sync__klf_counterparty cp ON cp.id = cc.id_cpart
-            LEFT JOIN user_org_access uoa
-                   ON :username IS NOT NULL 
-                  AND uoa.username = :username
-                  AND (uoa.id_org = c.id_org OR uoa.id_org = c.id_org_party)
             WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
-              AND (:idStatus IS NULL OR c.id_contract_status = ANY(string_to_array(:idStatus, ',')::integer[]))
-              AND (:status1c IS NULL OR c.status_1c = ANY(string_to_array(:status1c, ',')::character varying[]))
+              AND (
+                    NULLIF(:idStatus, '') IS NULL
+                    OR c.id_contract_status = ANY(
+                           string_to_array(NULLIF(:idStatus, ''), ',')::integer[]
+                       )
+              )
+              AND (
+                    NULLIF(:status1c, '') IS NULL
+                    OR c.status_1c = ANY(
+                           string_to_array(NULLIF(:status1c, ''), ',')::varchar[]
+                       )
+              )
               AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
               AND (:inOut    IS NULL OR c.in_out             = :inOut)
               AND (
                     :numFilter IS NULL
-                    OR lower(c.num)      LIKE lower(concat('%', :numFilter, '%'))
-                    OR lower(cp.name)    LIKE lower(concat('%', :numFilter, '%'))
-                    OR lower(cp.code_1c) LIKE lower(concat('%', :numFilter, '%'))
+                    OR c.num ILIKE concat('%', :numFilter, '%')
+                    OR c.guid ILIKE concat('%', :numFilter, '%')
+                    OR EXISTS (
+                        SELECT 1
+                        FROM contract_counterparty cc
+                        JOIN sync__klf_counterparty cp
+                             ON cp.id = cc.id_cpart
+                        WHERE cc.id_contract = c.id
+                          AND (
+                                cp.name ILIKE concat('%', :numFilter, '%')
+                             OR cp.code_1c ILIKE concat('%', :numFilter, '%')
+                          )
+                    )
                   )
-              AND (:username IS NULL OR uoa.username IS NOT NULL)
+              AND (
+                    NULLIF(:username, '') IS NULL
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_org_access u
+                        WHERE u.username = :username
+                          AND u.id_org = c.id_org
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM user_org_access u
+                        WHERE u.username = :username
+                          AND u.id_org = c.id_org_party
+                    )
+              )
         """,
         nativeQuery = true
     )

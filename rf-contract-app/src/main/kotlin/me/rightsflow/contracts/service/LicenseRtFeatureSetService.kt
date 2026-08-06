@@ -125,7 +125,7 @@ class LicenseRtFeatureSetService(
     private fun LicenseRtFeatureSet.toDto() = LicenseRtFeatureSetDto(
         id = this.id!!,
         idLicRights = this.idLicRights,
-        licenseRightsRt = this.licenseRights?.getLicenseRightsRt(pgeService, subProvider) ?: emptyList(),
+        licenseRightsRt = this.licenseRights?.getLicenseRightsRt(pgeService, subProvider, licenseRtRepo) ?: emptyList(),
         isExclusive = this.isExclusive,
         isUseRight = this.isUseRight,
         isSubLicense = this.isSubLicense,

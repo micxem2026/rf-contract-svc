@@ -33,7 +33,10 @@ data class LicenseDto(
     @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?,
 
     @field:Schema(description = "Диапазоны номеров частей", example = "1-5, 8, 10-12") val partRanges: String?,
-    @field:Schema(description = "Количество частей (ОИС), привязанных к лицензии", example = "7") val numParts: Long
+    @field:Schema(description = "Количество частей (ОИС), привязанных к лицензии", example = "7") val numParts: Long,
+
+    @field:Schema(description = "Флаг наличия отсутствующих прав") val missingFlag: Int,
+    @field:Schema(description = "Информация об отсутствующих правах") val missingRightInfo: String?
 
 )
 
@@ -61,9 +64,15 @@ interface LicenseProjection {
     // Новые поля
     fun getPartRanges(): String?
     fun getNumParts(): Long
+
+    // Агрегаты из missing_right
+    fun getMissingFlag(): Int
+    fun getMissingRightInfo(): String?
 }
 
 interface LicensePartsInfo {
     fun getPartRanges(): String?
     fun getNumParts(): Long
+    fun getMissingFlag(): Int
+    fun getMissingRightInfo(): String?
 }

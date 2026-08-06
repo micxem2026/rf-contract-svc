@@ -48,7 +48,7 @@ class LicenseRtFeatureSetController(
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun findByLicenseRt(
-        @Parameter(description = "ID права лицензии")
+        @Parameter(description = "ID права лицензии (idLicRights)")
         @PathVariable id: Long,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<LicenseRtFeatureSetDto> {
@@ -63,7 +63,7 @@ class LicenseRtFeatureSetController(
     @NotFoundResponse
     @CommonSecurityResponses
     @InternalServerErrorResponse
-    fun findFeaturesByFeatureSet(@Parameter(description = "ID набора характеристик")
+    fun findFeaturesByFeatureSet(@Parameter(description = "ID набора характеристик (idFeatureSet)")
                                  @PathVariable id: Long): List<LicenseRtFeaturesDto> =
         licenseRtFeaturesService.findByFeatureSet(id)
 

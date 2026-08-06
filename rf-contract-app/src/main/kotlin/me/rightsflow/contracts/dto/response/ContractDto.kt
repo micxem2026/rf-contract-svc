@@ -57,6 +57,8 @@ data class ContractDto(
 
     @field:Schema(description = "Контрагенты договора") val cParties: List<ContractCounterpartyShortDto>,
 
+    @field:Schema(description = "Флаг наличия отсутствующих прав") val missingFlag: Int,
+
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
@@ -98,4 +100,8 @@ interface ContractWithTotalsProjection {
     fun getContractVatAmount(): BigDecimal?
     fun getContractTotalAmount(): BigDecimal?
     fun getContractVatRate(): BigDecimal?
+
+    // Агрегаты из missing_right
+    fun getMissingFlag(): Int
+
 }

@@ -349,6 +349,7 @@ class ContractService(
         contractVatAmount    = getContractVatAmount() ?: BigDecimal.ZERO,
         contractTotalAmount  = getContractTotalAmount() ?: BigDecimal.ZERO,
         contractVatRate      = getContractVatRate(),
+        missingFlag          = getMissingFlag(),
         cParties             = parties[getId()]?.map { it.toDto() } ?: emptyList(),
         createdBy            = getCreatedBy(),
         createdAt            = getCreatedAt().toOffsetDateTime(MOSCOW_ZONE),

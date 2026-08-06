@@ -68,7 +68,7 @@ class ContractController(
         @RequestParam(required = false) status1c: List<String>?,
         @Parameter(description = "Фильтр по ID организации или коду 1С организации")
         @RequestParam(required = false) idOrg: String?,
-        @Parameter(description = "Фильтр по номеру договора, коду 1C контрагента или названию контрагента")
+        @Parameter(description = "Фильтр по номеру договора, Штрих-коду (guid), коду 1C контрагента или названию контрагента")
         @RequestParam(required = false) filter: String?,
         @RequestParam(required = false)
         @Parameter(name = "inOut", schema = Schema(type = "string", allowableValues = ["eP", "eS", "iP", "iS"]),

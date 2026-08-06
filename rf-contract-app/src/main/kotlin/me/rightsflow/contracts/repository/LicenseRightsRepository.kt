@@ -1,5 +1,7 @@
 package me.rightsflow.contracts.repository
 
+import me.rightsflow.contracts.dto.response.LicensePartsInfo
+import me.rightsflow.contracts.dto.response.MissingRightInfo
 import me.rightsflow.contracts.entity.LicenseRights
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -72,4 +74,27 @@ interface LicenseRightsRepository : JpaRepository<LicenseRights, Long> {
         @Param("username")  username:  String?,
         pageable: Pageable
     ): Page<LicenseRights>
+
+    /**
+     * Лёгкий запрос только вычисляемых полей — используется в create/update,
+     * где единичное право лицензии уже получено как entity через стандартный findById().
+     */
+    @Query(
+        value = """
+            SELECT
+                coalesce(m.missing_flag, 0)  AS missingFlag, 
+                m.missing_right_info         AS missingRightInfo                
+            FROM license_rights_rt lrr
+            LEFT JOIN LATERAL (
+                    SELECT
+                        MAX(mr.missing_flag) AS missing_flag,
+                        string_agg(mr.missing_right_info, E'\n---\n') AS missing_right_info
+                    FROM missing_right mr
+                    WHERE mr.id_lic_rights_rt = lrr.id      
+            ) m on true            
+            WHERE lrr.id = :id
+        """,
+        nativeQuery = true
+    )
+    fun findMissingRightInfoById(@Param("id") id: Long): MissingRightInfo
 }

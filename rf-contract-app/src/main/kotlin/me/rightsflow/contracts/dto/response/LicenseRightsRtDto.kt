@@ -12,6 +12,13 @@ data class LicenseRightsRtDto(
     @field:Schema(description = "Наименование типа права") val nameRightType: String,
     @field:Schema(description = "Финансовые условия") val financeConditions: List<PropertyDataDto>,
     @field:Schema(description = "Дополнительные условия") val additionalConditions: List<PropertyDataDto>,
+    @field:Schema(description = "Флаг наличия отсутствующих прав") val missingFlag: Int,
+    @field:Schema(description = "Информация об отсутствующих правах") val missingRightInfo: String?,
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime
 )
+
+interface MissingRightInfo {
+    fun getMissingFlag(): Int
+    fun getMissingRightInfo(): String?
+}
