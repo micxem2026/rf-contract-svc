@@ -1,5 +1,5 @@
 ARG GITLAB
-FROM amazoncorretto:17.0.13-al2023-headful as builder
+FROM amazoncorretto:17.0.20-al2023 as builder
 
 # 1. Объявляем аргумент, который придет из docker build
 ARG CERT_NAME
