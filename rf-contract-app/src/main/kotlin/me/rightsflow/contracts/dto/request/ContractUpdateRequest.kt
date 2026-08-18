@@ -58,6 +58,12 @@ data class ContractUpdateRequest(
     @field:Schema(description = "ID валюты платежа", example = "643")
     var idCurrencyPayment: Int?,
 
+    @field:Schema(description = "ID родительского контракта (связь [Договор -> Доп. соглашение к договору])")
+    var idParent: Long?,
+
+    @field:Schema(description = "ID родственного контракта (связь [Сделка -> Договор])")
+    var idSibling: Long?,
+
     @field:Schema(description = "Стоимость для УНФ")
     var unfContractPrice: BigDecimal?,
 

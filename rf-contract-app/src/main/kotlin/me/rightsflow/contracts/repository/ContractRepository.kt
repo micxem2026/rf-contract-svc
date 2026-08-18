@@ -216,7 +216,8 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
                 l.vat_rate                   as contractVatRate,
-                coalesce(m.missing_flag, 0)  as missingFlag                
+                coalesce(m.missing_flag, 0)  as missingFlag,
+                l1.numParts                
             FROM contract c
             LEFT JOIN LATERAL (
                         SELECT
@@ -231,6 +232,13 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                         FROM license li
                         WHERE li.id_contract = c.id
             ) l ON true
+            LEFT JOIN LATERAL (
+                        SELECT
+                            COUNT(lo.id_oip) AS numParts
+                        FROM license li
+                        JOIN license_oip lo on lo.id_license = li.id
+                        WHERE li.id_contract = c.id
+            ) l1 ON true            
             LEFT JOIN LATERAL (
                     SELECT
                         MAX(mr.missing_flag) AS missing_flag
@@ -302,7 +310,8 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
                 l.vat_rate                   as contractVatRate,
-                coalesce(m.missing_flag, 0)  as missingFlag                
+                coalesce(m.missing_flag, 0)  as missingFlag,
+                l1.numParts                  
             FROM contract c
             LEFT JOIN LATERAL (
                         SELECT
@@ -317,6 +326,13 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                         FROM license li
                         WHERE li.id_contract = c.id
             ) l ON true
+            LEFT JOIN LATERAL (
+                        SELECT
+                            COUNT(lo.id_oip) AS numParts
+                        FROM license li
+                        JOIN license_oip lo on lo.id_license = li.id
+                        WHERE li.id_contract = c.id
+            ) l1 ON true            
             LEFT JOIN LATERAL (
                     SELECT
                         MAX(mr.missing_flag) AS missing_flag

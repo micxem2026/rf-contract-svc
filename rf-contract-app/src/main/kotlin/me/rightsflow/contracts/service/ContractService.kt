@@ -90,6 +90,8 @@ class ContractService(
                     ":pUnfVatAmount, " +
                     ":pUnfTotalAmount, " +
                     ":pCreatedBy, " +
+                    ":pIdParent, " +
+                    ":pIdSibling, " +
                     ":pBypass" +
                     ")"
         )
@@ -112,6 +114,8 @@ class ContractService(
         query.setParameter("pUnfVatAmount", req.unfContractVatAmount)
         query.setParameter("pUnfTotalAmount", req.unfContractTotalAmount)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pIdParent", req.idParent)
+        query.setParameter("pIdSibling", req.idSibling)
         query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
@@ -144,6 +148,8 @@ class ContractService(
                     ":pUnfTotalAmount, " +
                     ":pIdContractVp, " +
                     ":pCreatedBy, " +
+                    ":pIdParent, " +
+                    ":pIdSibling, " +
                     ":pBypass " +
                     ")"
         )
@@ -167,6 +173,8 @@ class ContractService(
         query.setParameter("pUnfTotalAmount", req.unfContractTotalAmount)
         query.setParameter("pIdContractVp", req.idContractVp)
         query.setParameter("pCreatedBy", subProvider.currentSub())
+        query.setParameter("pIdParent", req.idParent)
+        query.setParameter("pIdSibling", req.idSibling)
         query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
@@ -349,6 +357,7 @@ class ContractService(
         contractVatAmount    = getContractVatAmount() ?: BigDecimal.ZERO,
         contractTotalAmount  = getContractTotalAmount() ?: BigDecimal.ZERO,
         contractVatRate      = getContractVatRate(),
+        numParts             = getNumParts(),
         missingFlag          = getMissingFlag(),
         cParties             = parties[getId()]?.map { it.toDto() } ?: emptyList(),
         createdBy            = getCreatedBy(),
