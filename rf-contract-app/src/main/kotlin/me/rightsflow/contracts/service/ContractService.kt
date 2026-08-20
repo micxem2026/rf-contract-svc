@@ -50,6 +50,7 @@ class ContractService(
         status1c: List<String>?,
         idOrg: String?,
         numFilter: String?,
+        cpFilter: String?,
         inOut: String?,
         pageable: Pageable
     ): Page<ContractDto> {
@@ -61,7 +62,7 @@ class ContractService(
             ?.takeIf { it.isNotEmpty() }
             ?.joinToString(",")
         return repo.findByFilterForUser(
-            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, inOut,
+            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, cpFilter, inOut,
             buildUsername(),
             pageable
         ).toContractDtoPage()

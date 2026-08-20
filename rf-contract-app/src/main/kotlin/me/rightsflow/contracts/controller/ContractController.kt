@@ -68,8 +68,10 @@ class ContractController(
         @RequestParam(required = false) status1c: List<String>?,
         @Parameter(description = "Фильтр по ID организации или коду 1С организации")
         @RequestParam(required = false) idOrg: String?,
-        @Parameter(description = "Фильтр по номеру договора, Штрих-коду (guid), коду 1C контрагента или названию контрагента")
+        @Parameter(description = "Фильтр по номеру договора или Штрих-коду (guid)")
         @RequestParam(required = false) filter: String?,
+        @Parameter(description = "Фильтр по коду 1C контрагента или названию контрагента")
+        @RequestParam(required = false) filter2: String?,
         @RequestParam(required = false)
         @Parameter(name = "inOut", schema = Schema(type = "string", allowableValues = ["eP", "eS", "iP", "iS"]),
             description = "Фильтр по виду контракта:\n\n" +
@@ -79,7 +81,7 @@ class ContractController(
                     " - *iS* — внутренняя продажа") inOut: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<ContractDto> {
-        val page = service.findByFilter(idContractType, idContractStatus, status1c, idOrg, filter, inOut,pageable)
+        val page = service.findByFilter(idContractType, idContractStatus, status1c, idOrg, filter, filter2, inOut, pageable)
         return PagedModel(page)
     }
 

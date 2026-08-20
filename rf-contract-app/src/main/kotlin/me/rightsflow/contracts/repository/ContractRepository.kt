@@ -355,9 +355,12 @@ interface ContractRepository : JpaRepository<Contract, Long> {
               AND (:idOrg    IS NULL OR c.id_org             = :idOrg)
               AND (:inOut    IS NULL OR c.in_out             = :inOut)
               AND (
-                    NULLIF(:numFilter, '') IS NULL
+                    :numFilter IS NULL
                     OR c.num ILIKE concat('%', :numFilter, '%')
                     OR c.guid ILIKE concat('%', :numFilter, '%')
+                  )
+              AND (
+                    :cpFilter IS NULL
                     OR EXISTS (
                         SELECT 1
                         FROM contract_counterparty cc
@@ -365,11 +368,11 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                              ON cp.id = cc.id_cpart
                         WHERE cc.id_contract = c.id
                           AND (
-                                cp.name ILIKE concat('%', :numFilter, '%')
-                             OR cp.code_1c ILIKE concat('%', :numFilter, '%')
+                                cp.name ILIKE concat('%', :cpFilter, '%')
+                             OR cp.code_1c ILIKE concat('%', :cpFilter, '%')
                           )
                     )
-                  )
+                  ) 
               AND (
                     NULLIF(:username, '') IS NULL
                     OR EXISTS (
@@ -408,6 +411,9 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                     :numFilter IS NULL
                     OR c.num ILIKE concat('%', :numFilter, '%')
                     OR c.guid ILIKE concat('%', :numFilter, '%')
+                  )
+              AND (
+                    :cpFilter IS NULL
                     OR EXISTS (
                         SELECT 1
                         FROM contract_counterparty cc
@@ -415,11 +421,11 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                              ON cp.id = cc.id_cpart
                         WHERE cc.id_contract = c.id
                           AND (
-                                cp.name ILIKE concat('%', :numFilter, '%')
-                             OR cp.code_1c ILIKE concat('%', :numFilter, '%')
+                                cp.name ILIKE concat('%', :cpFilter, '%')
+                             OR cp.code_1c ILIKE concat('%', :cpFilter, '%')
                           )
                     )
-                  )
+                  )                  
               AND (
                     NULLIF(:username, '') IS NULL
                     OR EXISTS (
@@ -444,6 +450,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         @Param("status1c")  status1c:  String?,
         @Param("idOrg")     idOrg:     Int?,
         @Param("numFilter") numFilter: String?,
+        @Param("cpFilter")  cpFilter:  String?,
         @Param("inOut")     inOut:     String?,
         @Param("username")  username:  String?,  // null = bypass для ADMIN/SERVICE
         pageable: Pageable
