@@ -245,6 +245,12 @@ BEGIN
             p_unf_total_amount, p_id_parent, p_id_sibling, p_username)
     returning id into r_result;
 
+    -- выставляем флаг невалидности
+    perform pkg_contract.is_contract_valid(
+            p_id_contract => r_result,
+            p_username => 'system'
+    );
+
     return r_result;
 END;
 $BODY$;
@@ -359,3 +365,135 @@ ALTER FUNCTION pkg_contract.upd_contract(bigint, character varying, character va
     character varying, bigint, bigint, boolean)
     OWNER TO rightsflow;
 
+CREATE OR REPLACE FUNCTION pkg_contract.ins_license(
+    p_guid character varying,
+    p_num character varying,
+    p_name character varying,
+    p_id_contract bigint,
+    p_id_lic_format bigint,
+    p_price numeric,
+    p_vat_rate numeric,
+    p_vat_amount numeric,
+    p_total_amount numeric,
+    p_beg_date date,
+    p_end_date date,
+    p_description character varying,
+    p_username character varying,
+    p_bypass boolean DEFAULT false)
+    RETURNS bigint
+    LANGUAGE 'plpgsql'
+    COST 100
+    VOLATILE SECURITY DEFINER PARALLEL UNSAFE
+    SET search_path=rightsflow
+AS $BODY$
+
+DECLARE
+    r_result bigint;
+    v_contract contract%rowtype;
+    v_validity_period daterange;
+    v_num contract.num%type;
+BEGIN
+
+    if p_id_contract is null then
+        raise exception 'Ошибка создания лицензии! Не указан идентификатор договора (p_id_contract)!'
+            using errcode = '20104';
+    end if;
+
+    -- Проверка доступа к родительскому контракту
+    PERFORM pkg_contract.check_contract_org_access(p_id_contract, p_username, p_bypass);
+
+    SET LOCAL lock_timeout = '5s';
+    select * into v_contract from contract where id = p_id_contract for update;
+
+    v_num := coalesce(nullif(p_num, ''), pkg_contract.get_next_license_num());
+    v_validity_period := daterange(p_beg_date, p_end_date, '[]');
+
+    if isempty(v_contract.validity_period * v_validity_period) then
+        raise exception 'Лицензия не пересекается с периодом договора!'
+            using errcode = '20105';
+        -- Отключил по требованию заказчика
+        --else
+        --    v_validity_period := v_contract.validity_period * v_validity_period;
+    end if;
+
+    insert into license (id_contract, id_lic_format, guid, num, name, price, vat_rate, vat_amount, total_amount, validity_period, description, created_by)
+    values (p_id_contract, p_id_lic_format, p_guid, v_num, p_name, p_price, p_vat_rate,
+            p_vat_amount, p_total_amount, v_validity_period, p_description, p_username)
+    returning id into r_result;
+
+    -- выставляем флаг невалидности
+    perform pkg_contract.is_contract_valid(
+            p_id_contract => p_id_contract,
+            p_username => 'system'
+            );
+
+    return r_result;
+END;
+$BODY$;
+
+CREATE OR REPLACE PROCEDURE pkg_contract.del_license(
+    IN p_id bigint,
+    IN p_username character varying,
+    IN p_use_cascade boolean DEFAULT false,
+    IN p_bypass boolean DEFAULT false)
+    LANGUAGE 'plpgsql'
+    SECURITY DEFINER
+    SET search_path=rightsflow
+AS $BODY$
+
+DECLARE
+    rec record;
+    v_id_contract bigint;
+BEGIN
+    -- Проверка доступа через цепочку license → contract
+    PERFORM pkg_contract.check_license_org_access(p_id, p_username, p_bypass);
+
+    if p_use_cascade then
+        for rec in select * from license_rights where id_license = p_id loop
+                call pkg_contract.del_license_rights(rec.id, p_username, true);
+            end loop;
+        for rec in select * from license_oip where id_license = p_id loop
+                call pkg_contract.del_license_oip(rec.id, p_username);
+            end loop;
+    end if;
+    select id_contract into v_id_contract from license where id = p_id;
+    delete from license where id = p_id;
+
+    -- выставляем флаг невалидности
+    perform pkg_contract.is_contract_valid(
+            p_id_contract => v_id_contract,
+            p_username => 'system'
+            );
+
+END;
+$BODY$;
+
+CREATE OR REPLACE PROCEDURE pkg_contract.del_contract_counterparty(
+    IN p_id bigint,
+    IN p_username character varying,
+    IN p_bypass boolean DEFAULT false)
+    LANGUAGE 'plpgsql'
+    SECURITY DEFINER
+    SET search_path=rightsflow
+AS $BODY$
+
+DECLARE
+    v_rec RECORD;
+BEGIN
+    -- Проверка доступа
+    select * into v_rec from contract_counterparty where id = p_id;
+    if FOUND then
+        PERFORM pkg_contract.check_contract_org_access(v_rec.id_contract, p_username, p_bypass);
+    else
+        raise exception 'Контрагент контракта не существует: [ID=%]', p_id;
+    end if;
+
+    delete from contract_counterparty where id = p_id;
+
+    -- выставляем флаг невалидности
+    perform pkg_contract.is_contract_valid(
+            p_id_contract => v_rec.id_contract,
+            p_username => 'system'
+            );
+END;
+$BODY$;

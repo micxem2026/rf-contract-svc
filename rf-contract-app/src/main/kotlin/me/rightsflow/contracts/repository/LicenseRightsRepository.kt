@@ -1,6 +1,5 @@
 package me.rightsflow.contracts.repository
 
-import me.rightsflow.contracts.dto.response.LicensePartsInfo
 import me.rightsflow.contracts.dto.response.MissingRightInfo
 import me.rightsflow.contracts.entity.LicenseRights
 import org.springframework.data.domain.Page
@@ -97,4 +96,18 @@ interface LicenseRightsRepository : JpaRepository<LicenseRights, Long> {
         nativeQuery = true
     )
     fun findMissingRightInfoById(@Param("id") id: Long): MissingRightInfo
+
+    /**
+     * Возвращает статус валидности контракта для заданного idLicRights
+     */
+    @Query(
+        value = """
+            select c.warning is null as c_valid_flag from contract c
+            join license l on l.id_contract = c.id
+            join license_rights lr on lr.id_license = l.id
+            where lr.id = :id
+        """,
+        nativeQuery = true
+    )
+    fun getContractValidStatus(@Param("id") id: Long): Boolean
 }

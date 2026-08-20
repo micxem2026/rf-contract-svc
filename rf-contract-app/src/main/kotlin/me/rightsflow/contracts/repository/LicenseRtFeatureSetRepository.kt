@@ -1,6 +1,5 @@
 package me.rightsflow.contracts.repository
 
-import me.rightsflow.contracts.dto.response.LicensePartsInfo
 import me.rightsflow.contracts.entity.LicenseRtFeatureSet
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

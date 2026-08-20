@@ -82,10 +82,7 @@ class LicenseService(
         query.setParameter("pBypass", subProvider.isBypassRole())
 
         val id = query.singleResult as Long
-
-        val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, License::class.java) }
-        em.refresh(e)
-        return e.toDto()
+        return getById(id)
     }
 
     @Transactional
@@ -126,9 +123,7 @@ class LicenseService(
         query.setParameter("pBypass", subProvider.isBypassRole())
 
         query.singleResult as Long
-
-        em.refresh(e)
-        return e.toDto()
+        return getById(id)
     }
 
     @Transactional

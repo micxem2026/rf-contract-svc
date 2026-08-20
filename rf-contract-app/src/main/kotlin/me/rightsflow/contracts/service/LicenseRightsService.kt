@@ -188,6 +188,8 @@ internal fun LicenseRights.getLicenseRightsRt(
     val ac = pgeService.getPgData("PG_RT_COND", entIds, subProvider.currentSub())
         .groupBy { it.idEntity }
 
+    val isContractValid = repo.getContractValidStatus(this.id!!)
+
     return this.rights.map {
         val mri = repo.findMissingRightInfoById(it.id!!)
         LicenseRightsRtDto(
@@ -198,7 +200,7 @@ internal fun LicenseRights.getLicenseRightsRt(
             nameRightType = it.rightType?.name ?: "",
             financeConditions = fc.getOrDefault(it.id!!, emptyList()),
             additionalConditions = ac.getOrDefault(it.id!!, emptyList()),
-            missingFlag = mri.getMissingFlag(),
+            missingFlag = if (isContractValid)  mri.getMissingFlag() else -1,
             missingRightInfo = mri.getMissingRightInfo(),
             createdBy = it.createdBy,
             createdAt = it.createdAt

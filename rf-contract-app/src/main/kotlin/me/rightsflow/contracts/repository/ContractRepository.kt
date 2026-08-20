@@ -216,7 +216,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
                 l.vat_rate                   as contractVatRate,
-                coalesce(m.missing_flag, 0)  as missingFlag,
+                case when c.warning is null then coalesce(m.missing_flag, 0) else -1 end as missingFlag,
                 l1.numParts                
             FROM contract c
             LEFT JOIN LATERAL (
@@ -310,7 +310,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.vat_amount,   0)  AS contractVatAmount,
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
                 l.vat_rate                   as contractVatRate,
-                coalesce(m.missing_flag, 0)  as missingFlag,
+                case when c.warning is null then coalesce(m.missing_flag, 0) else -1 end as missingFlag,
                 l1.numParts                  
             FROM contract c
             LEFT JOIN LATERAL (
@@ -458,4 +458,13 @@ interface ContractRepository : JpaRepository<Contract, Long> {
 
     @Query("select * from pkg_contract.get_org_id(:idOrg)", nativeQuery = true)
     fun getIdOrg(@Param("idOrg") idOrg: String): Int
+
+    @Query(value = """
+        select pkg_contract.is_contract_valid(
+                   p_id_contract => :id,
+                   p_username => 'system'
+           );
+    """,
+    nativeQuery = true)
+    fun getContractValidState(@Param("id") id: Long): Boolean
 }

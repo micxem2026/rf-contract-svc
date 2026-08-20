@@ -55,7 +55,7 @@ interface LicenseRepository : JpaRepository<License, Long> {
                 l.updated_at                                 AS updatedAt,
                 pkg_acl.compress_part_num_ranges(l.id)       AS partRanges,
                 (SELECT COUNT(*) FROM license_oip lo WHERE lo.id_license = l.id) AS numParts,
-                coalesce(m.missing_flag, 0)                  AS missingFlag,
+                case when c.warning is null then coalesce(m.missing_flag, 0) else -1 end as missingFlag,
                 m.missing_right_info                         AS missingRightInfo                 
             FROM  license l
             JOIN  contract c ON c.id = l.id_contract
@@ -119,7 +119,7 @@ interface LicenseRepository : JpaRepository<License, Long> {
             l.updated_at                                 AS updatedAt,
             pkg_acl.compress_part_num_ranges(l.id)       AS partRanges,
             (SELECT COUNT(*) FROM license_oip lo WHERE lo.id_license = l.id) AS numParts,
-            coalesce(m.missing_flag, 0)                  AS missingFlag,
+            case when c.warning is null then coalesce(m.missing_flag, 0) else -1 end as missingFlag,
             m.missing_right_info                         AS missingRightInfo            
         FROM  license l
         JOIN  contract c ON c.id = l.id_contract

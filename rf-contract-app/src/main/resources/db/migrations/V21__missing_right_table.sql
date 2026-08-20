@@ -1285,8 +1285,8 @@ BEGIN
     where lr.id = v_rec.id_lic_rights;
 
     call pkg_contract.make_change_buffer(p_action => 'DELETE', p_username => p_username, p_id_rt_feature => p_id);
-    perform pkg_contract.check_rights_for_contract(p_id_contract => v_id_contract);
     delete from license_rt_features where id = p_id;
+    perform pkg_contract.check_rights_for_contract(p_id_contract => v_id_contract);
 END;
 $BODY$;
 
@@ -1314,8 +1314,8 @@ BEGIN
     select l.id_contract into v_id_contract from license l where l.id = v_rec.id_license;
 
     call pkg_contract.make_change_buffer(p_action => 'DELETE', p_username => p_username, p_id_lic_oip => p_id);
-    perform pkg_contract.check_rights_for_contract(p_id_contract => v_id_contract);
     delete from license_oip where id = p_id;
+    perform pkg_contract.check_rights_for_contract(p_id_contract => v_id_contract);
 
 END;
 $BODY$;
@@ -1343,10 +1343,10 @@ BEGIN
             call pkg_contract.make_change_buffer(p_action => 'DELETE', p_username => p_username, p_id_lic_oip => v_rec.id);
         end loop;
 
+    delete from license_oip where id_license = p_id_license;
+
     select l.id_contract into v_id_contract from license l where l.id = p_id_license;
     perform pkg_contract.check_rights_for_contract(p_id_contract => v_id_contract);
-
-    delete from license_oip where id_license = p_id_license;
 END;
 $BODY$;
 
@@ -1377,10 +1377,10 @@ BEGIN
             call pkg_contract.make_change_buffer(p_action => 'DELETE', p_username => p_username, p_id_lic_oip => v_rec.id);
         end loop;
 
+    delete from license_oip where id_license = p_id_license and id_root_oip = p_id_root_oip;
+
     select l.id_contract into v_id_contract from license l where l.id = p_id_license;
     perform pkg_contract.check_rights_for_contract(p_id_contract => v_id_contract);
-
-    delete from license_oip where id_license = p_id_license and id_root_oip = p_id_root_oip;
 END;
 $BODY$;
 

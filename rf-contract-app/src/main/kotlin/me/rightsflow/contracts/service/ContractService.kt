@@ -229,6 +229,9 @@ class ContractService(
 
     }
 
+    @Transactional
+    fun checkContractValidStatus(id: Long): Boolean = repo.getContractValidState(id)
+
     /**
      * Отправка события на пересчёт прав для сделки
      */

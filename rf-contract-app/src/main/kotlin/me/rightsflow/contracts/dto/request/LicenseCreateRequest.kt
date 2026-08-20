@@ -13,7 +13,7 @@ data class LicenseCreateRequest(
     @field:Schema(description = "ID контракта", example = "1")
     @field:NotNull var idContract: Long,
 
-    @field:Schema(description = "ID формата для лицензии", example = "1")
+    @field:Schema(description = "ID формата для лицензии", example = "null")
     val idLicFormat: Long?,
 
     @field:Schema(description = "GUID", example = "014-12345678")

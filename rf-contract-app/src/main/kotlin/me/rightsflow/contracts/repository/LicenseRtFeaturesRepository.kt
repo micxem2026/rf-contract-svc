@@ -1,13 +1,10 @@
 package me.rightsflow.contracts.repository
 
-import me.rightsflow.contracts.entity.LicenseRtFeatureSet
 import me.rightsflow.contracts.entity.LicenseRtFeatures
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
-import java.util.Optional
+import java.util.*
 
 interface LicenseRtFeaturesRepository : JpaRepository<LicenseRtFeatures, Long> {
     fun findByIdFeatureSet(idFeatureSet: Long): List<LicenseRtFeatures>
@@ -34,7 +31,7 @@ interface LicenseRtFeaturesRepository : JpaRepository<LicenseRtFeatures, Long> {
         nativeQuery = true
     )
     fun findByIdForUser(
-        @Param("id")       id:       Long,
+        @Param("id") id: Long,
         @Param("username") username: String?
     ): Optional<LicenseRtFeatures>
 
@@ -75,6 +72,6 @@ interface LicenseRtFeaturesRepository : JpaRepository<LicenseRtFeatures, Long> {
     )
     fun findByIdFeatureSetForUser(
         @Param("idFeatureSet") idFeatureSet: Long,
-        @Param("username")     username:     String?
+        @Param("username") username: String?
     ): List<LicenseRtFeatures>
 }

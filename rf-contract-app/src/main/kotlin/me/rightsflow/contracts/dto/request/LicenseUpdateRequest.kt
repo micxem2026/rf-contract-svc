@@ -11,7 +11,7 @@ import java.time.LocalDate
                       "**NULL** поля: idLicFormat, guid, name, validityPeriodStart, validityPeriodEnd, description")
 data class LicenseUpdateRequest(
 
-    @field:Schema(description = "ID формата для лицензии")
+    @field:Schema(description = "ID формата для лицензии", example = "null")
     val idLicFormat: Long?,
 
     @field:Schema(description = "GUID")

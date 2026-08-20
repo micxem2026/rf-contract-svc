@@ -62,10 +62,10 @@ data class ContractCreateRequest(
     @field:Schema(description = "ID валюты платежа", example = "643")
     var idCurrencyPayment: Int?,
 
-    @field:Schema(description = "ID родительского контракта (связь [Договор -> Доп. соглашение к договору])")
+    @field:Schema(description = "ID родительского контракта (связь [Договор -> Доп. соглашение к договору])", example = "null" )
     var idParent: Long?,
 
-    @field:Schema(description = "ID родственного контракта (связь [Сделка -> Договор])")
+    @field:Schema(description = "ID родственного контракта (связь [Сделка -> Договор])", example = "null")
     var idSibling: Long?,
 
     @field:Schema(description = "Стоимость для УНФ")
