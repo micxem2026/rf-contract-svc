@@ -12,7 +12,6 @@ import me.rightsflow.contracts.dto.request.ContractCounterpartyRequest
 import me.rightsflow.contracts.dto.request.ContractCreateRequest
 import me.rightsflow.contracts.dto.request.ContractStatusUpdateRequest
 import me.rightsflow.contracts.dto.request.ContractUpdateRequest
-import me.rightsflow.contracts.dto.response.ContractChangeStatusDto
 import me.rightsflow.contracts.dto.response.ContractCounterpartyDto
 import me.rightsflow.contracts.dto.response.ContractDto
 import me.rightsflow.contracts.service.ContractCounterpartyService

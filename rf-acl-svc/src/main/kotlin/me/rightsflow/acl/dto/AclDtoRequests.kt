@@ -22,11 +22,8 @@ data class ContractRequest(
 
     val idCParty: Int?,
 
-    @field:NotNull
-    var begDate: LocalDate,
-
-    @field:NotNull
-    var endDate: LocalDate,
+    var begDate: LocalDate?,
+    var endDate: LocalDate?,
 
     var contractDate: LocalDate?,
 
@@ -79,10 +76,8 @@ data class LicenseRequest(
 
     val description: String?,
 
-    @field:NotNull
-    var begDate: LocalDate,
-    @field:NotNull
-    var endDate: LocalDate,
+    var begDate: LocalDate?,
+    var endDate: LocalDate?,
 
     @field:NotNull
     var dropFlag: Boolean
@@ -165,10 +160,8 @@ data class LicenseRtFeatureSetRequest(
     var isUseRight: Boolean,
     var isSubLicense: Boolean,
 
-    @field:NotNull
-    var begDate: LocalDate,
-    @field:NotNull
-    var endDate: LocalDate,
+    var begDate: LocalDate?,
+    var endDate: LocalDate?,
 
     @field:NotNull
     var dropFlag: Boolean
