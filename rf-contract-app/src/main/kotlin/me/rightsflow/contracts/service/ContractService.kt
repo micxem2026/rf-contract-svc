@@ -52,6 +52,7 @@ class ContractService(
         numFilter: String?,
         cpFilter: String?,
         inOut: String?,
+        managedBy: String?,
         pageable: Pageable
     ): Page<ContractDto> {
         val idOrgInt = idOrg?.let { repo.getIdOrg(it) }
@@ -62,7 +63,7 @@ class ContractService(
             ?.takeIf { it.isNotEmpty() }
             ?.joinToString(",")
         return repo.findByFilterForUser(
-            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, cpFilter, inOut,
+            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, cpFilter, inOut, managedBy,
             buildUsername(),
             pageable
         ).toContractDtoPage()
@@ -93,7 +94,8 @@ class ContractService(
                     ":pCreatedBy, " +
                     ":pIdParent, " +
                     ":pIdSibling, " +
-                    ":pBypass" +
+                    ":pBypass, " +
+                    ":pManagedBy" +
                     ")"
         )
 
@@ -118,6 +120,7 @@ class ContractService(
         query.setParameter("pIdParent", req.idParent)
         query.setParameter("pIdSibling", req.idSibling)
         query.setParameter("pBypass", subProvider.isBypassRole())
+        query.setParameter("pManagedBy", req.managedBy)
 
         val id = query.singleResult as Long
         val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
@@ -151,7 +154,8 @@ class ContractService(
                     ":pCreatedBy, " +
                     ":pIdParent, " +
                     ":pIdSibling, " +
-                    ":pBypass " +
+                    ":pBypass, " +
+                    ":pManagedBy" +
                     ")"
         )
 
@@ -177,6 +181,7 @@ class ContractService(
         query.setParameter("pIdParent", req.idParent)
         query.setParameter("pIdSibling", req.idSibling)
         query.setParameter("pBypass", subProvider.isBypassRole())
+        query.setParameter("pManagedBy", req.managedBy)
 
         query.singleResult as Long
         val e = repo.findById(id).orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
@@ -367,7 +372,11 @@ class ContractService(
         createdBy            = getCreatedBy(),
         createdAt            = getCreatedAt().toOffsetDateTime(MOSCOW_ZONE),
         updatedBy            = getUpdatedBy(),
-        updatedAt            = getUpdatedAt()?.toOffsetDateTime(MOSCOW_ZONE)
+        updatedAt            = getUpdatedAt()?.toOffsetDateTime(MOSCOW_ZONE),
+        managedBy            = getManagedBy(),
+        createdByDisplayName = getCreatedByDisplayName(),
+        updatedByDisplayName = getUpdatedByDisplayName(),
+        managedByDisplayName = getManagedByDisplayName()
     )
 
     private fun ContractCounterparty.toDto() = ContractCounterpartyShortDto(

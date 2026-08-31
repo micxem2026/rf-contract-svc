@@ -77,6 +77,9 @@ data class ContractCreateRequest(
     var unfContractVatAmount: BigDecimal?,
 
     @field:Schema(description = "Всего для УНФ")
-    var unfContractTotalAmount: BigDecimal?
+    var unfContractTotalAmount: BigDecimal?,
+
+    @field:Schema(description = "Менеджер контракта")
+    var managedBy: String?
 
 )

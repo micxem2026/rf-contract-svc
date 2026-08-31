@@ -63,7 +63,12 @@ data class ContractDto(
     @field:Schema(description = "Пользователь, создавший запись", example = "admin") val createdBy: String,
     @field:Schema(description = "Дата и время создания записи", example = "2022-01-01T00:00:00Z") val createdAt: OffsetDateTime,
     @field:Schema(description = "Пользователь, обновивший запись", example = "admin") val updatedBy: String?,
-    @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?
+    @field:Schema(description = "Дата и время обновления записи", example = "2022-01-01T00:00:00Z") val updatedAt: OffsetDateTime?,
+
+    @field:Schema(description = "Ответственный за контракт", example = "admin") val managedBy: String,
+    @field:Schema(description = "Имя ответственного за контракт пользователя", example = "Петров А.В.") val managedByDisplayName: String,
+    @field:Schema(description = "Имя пользователя, создавшего запись", example = "Иванова В. П.") val createdByDisplayName: String,
+    @field:Schema(description = "Имя пользователя, изменившего запись", example = "Иванова В. П.") val updatedByDisplayName: String?
 )
 
 interface ContractWithTotalsProjection {
@@ -105,5 +110,10 @@ interface ContractWithTotalsProjection {
 
     // Агрегаты из missing_right
     fun getMissingFlag(): Int
+
+    fun getManagedBy(): String
+    fun getManagedByDisplayName(): String
+    fun getCreatedByDisplayName(): String
+    fun getUpdatedByDisplayName(): String?
 
 }

@@ -78,4 +78,7 @@ data class ContractUpdateRequest(
 
     @field:Schema(description = "ID договора в VP", example = "122")
     var idContractVp: Int?,
+
+    @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Менеджер контракта")
+    var managedBy: String?
 )

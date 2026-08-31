@@ -217,8 +217,15 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
                 l.vat_rate                   as contractVatRate,
                 case when c.warning is null then coalesce(m.missing_flag, 0) else -1 end as missingFlag,
-                l1.numParts                
+                l1.numParts,
+                coalesce(c.managed_by, 'unknown') as managedBy,
+                u1.display_name as createdByDisplayName,
+                u2.display_name as updatedByDisplayName,
+                coalesce(u3.display_name, '<Не назначен>') as managedByDisplayName
             FROM contract c
+            LEFT JOIN sync__users u1 ON u1.username = c.created_by
+            LEFT JOIN sync__users u2 ON u2.username = c.updated_by
+            LEFT JOIN sync__users u3 ON u3.username = c.managed_by
             LEFT JOIN LATERAL (
                         SELECT
                             COALESCE(SUM(li.price), 0)        AS price,
@@ -311,8 +318,15 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                 COALESCE(l.total_amount, 0)  AS contractTotalAmount,
                 l.vat_rate                   as contractVatRate,
                 case when c.warning is null then coalesce(m.missing_flag, 0) else -1 end as missingFlag,
-                l1.numParts                  
+                l1.numParts,
+                coalesce(c.managed_by, 'unknown') as managedBy,
+                u1.display_name as createdByDisplayName,
+                u2.display_name as updatedByDisplayName,
+                coalesce(u3.display_name, '<Не назначен>') as managedByDisplayName                                  
             FROM contract c
+            LEFT JOIN sync__users u1 ON u1.username = c.created_by
+            LEFT JOIN sync__users u2 ON u2.username = c.updated_by
+            LEFT JOIN sync__users u3 ON u3.username = c.managed_by            
             LEFT JOIN LATERAL (
                         SELECT
                             COALESCE(SUM(li.price), 0)        AS price,
@@ -339,7 +353,8 @@ interface ContractRepository : JpaRepository<Contract, Long> {
                     FROM missing_right mr
                     WHERE mr.id_contract = c.id      
             ) m on true            
-            WHERE (:idType   IS NULL OR c.id_contract_type = :idType)
+            WHERE (:idType IS NULL OR c.id_contract_type = :idType)
+              AND (:managedBy IS NULL OR c.managed_by = :managedBy)
               AND (
                     NULLIF(:idStatus, '') IS NULL
                     OR c.id_contract_status = ANY(
@@ -393,6 +408,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
             SELECT COUNT(DISTINCT c.id)
             FROM contract c
             WHERE (:idType   IS NULL OR c.id_contract_type   = :idType)
+              AND (:managedBy IS NULL OR c.managed_by = :managedBy)
               AND (
                     NULLIF(:idStatus, '') IS NULL
                     OR c.id_contract_status = ANY(
@@ -452,6 +468,7 @@ interface ContractRepository : JpaRepository<Contract, Long> {
         @Param("numFilter") numFilter: String?,
         @Param("cpFilter")  cpFilter:  String?,
         @Param("inOut")     inOut:     String?,
+        @Param("managedBy") managedBy: String?,
         @Param("username")  username:  String?,  // null = bypass для ADMIN/SERVICE
         pageable: Pageable
     ): Page<ContractWithTotalsProjection>

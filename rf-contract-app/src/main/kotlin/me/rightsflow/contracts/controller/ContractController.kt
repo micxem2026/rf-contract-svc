@@ -78,9 +78,12 @@ class ContractController(
                     " - *eS* — внешняя продажа\n\n" +
                     " - *iP* — внутренняя покупка\n\n"+
                     " - *iS* — внутренняя продажа") inOut: String?,
+        @Parameter(description = "Фильтр по ответственному пользователю (используется логин пользователя)")
+        @RequestParam(required = false) managedBy: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<ContractDto> {
-        val page = service.findByFilter(idContractType, idContractStatus, status1c, idOrg, filter, filter2, inOut, pageable)
+        val page = service.findByFilter(idContractType, idContractStatus, status1c, idOrg, filter,
+                                       filter2, inOut, managedBy, pageable)
         return PagedModel(page)
     }
 
