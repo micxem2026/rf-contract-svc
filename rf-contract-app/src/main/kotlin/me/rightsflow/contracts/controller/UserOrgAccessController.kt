@@ -83,8 +83,8 @@ class UserOrgAccessController(
     @CommonSecurityResponses
     @InternalServerErrorResponse
     fun getByOrg(
-        @Parameter(description = "ID организации")
-        @PathVariable idOrg: Int,
+        @Parameter(description = "ID организации или её код 1С")
+        @PathVariable idOrg: String,
         @PageableDefault(size = 20, sort = ["username"], direction = Sort.Direction.ASC)
         @ParameterObject pageable: Pageable
     ): PagedModel<UserOrgAccessDto> =
@@ -160,8 +160,8 @@ class UserOrgAccessController(
     fun revoke(
         @Parameter(description = "Username пользователя (JWT sub)")
         @PathVariable username: String,
-        @Parameter(description = "ID организации")
-        @PathVariable idOrg: Int
+        @Parameter(description = "ID организации или её код 1С")
+        @PathVariable idOrg: String
     ) = service.revoke(username, idOrg)
 
     @DeleteMapping("/by-user/{username}")

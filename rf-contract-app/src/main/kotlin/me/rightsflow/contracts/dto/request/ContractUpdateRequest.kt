@@ -80,5 +80,8 @@ data class ContractUpdateRequest(
     var idContractVp: Int?,
 
     @field:Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Менеджер контракта")
-    var managedBy: String?
+    var managedBy: String?,
+
+    @field:Schema(description = "Согласующий руководитель")
+    var coordinatedBy: String?
 )

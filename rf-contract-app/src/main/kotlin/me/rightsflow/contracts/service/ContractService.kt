@@ -44,6 +44,14 @@ class ContractService(
             .orElseThrow { EntityNotFoundWithClsException(id, Contract::class.java) }
             .toContractDto()
 
+    fun findBySiblingId(id: Long, pageable: Pageable): Page<ContractDto> {
+        return repo.getContractByIdSiblingForUser(id, buildUsername(), pageable).toContractDtoPage()
+    }
+
+    fun findByParentId(id: Long, pageable: Pageable): Page<ContractDto> {
+        return repo.getContractByIdParentForUser(id, buildUsername(), pageable).toContractDtoPage()
+    }
+
     fun findByFilter(
         idContractType: Int?,
         idContractStatus: List<Int>?,
@@ -53,6 +61,7 @@ class ContractService(
         cpFilter: String?,
         inOut: String?,
         managedBy: String?,
+        coordinatedBy: String?,
         pageable: Pageable
     ): Page<ContractDto> {
         val idOrgInt = idOrg?.let { repo.getIdOrg(it) }
@@ -63,9 +72,8 @@ class ContractService(
             ?.takeIf { it.isNotEmpty() }
             ?.joinToString(",")
         return repo.findByFilterForUser(
-            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, cpFilter, inOut, managedBy,
-            buildUsername(),
-            pageable
+            idContractType, normalizedStatus, normalizedStatus1c, idOrgInt, numFilter, cpFilter, inOut,
+            managedBy, coordinatedBy, buildUsername(), pageable
         ).toContractDtoPage()
     }
 
@@ -374,9 +382,11 @@ class ContractService(
         updatedBy            = getUpdatedBy(),
         updatedAt            = getUpdatedAt()?.toOffsetDateTime(MOSCOW_ZONE),
         managedBy            = getManagedBy(),
+        coordinatedBy        = getCoordinatedBy(),
         createdByDisplayName = getCreatedByDisplayName(),
         updatedByDisplayName = getUpdatedByDisplayName(),
-        managedByDisplayName = getManagedByDisplayName()
+        managedByDisplayName = getManagedByDisplayName(),
+        coordinatedByDisplayName = getCoordinatedByDisplayName()
     )
 
     private fun ContractCounterparty.toDto() = ContractCounterpartyShortDto(

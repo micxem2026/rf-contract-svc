@@ -15,7 +15,7 @@ data class UserOrgAccessRequest(
     val username: String,
 
     @field:NotNull(message = "ID организации обязателен")
-    val idOrg: Int
+    var idOrg: String
 )
 
 /**
@@ -29,5 +29,5 @@ data class UserOrgBulkRequest(
     val username: String,
 
     @field:NotEmpty(message = "Список организаций не может быть пустым")
-    val orgIds: List<Int>
+    val orgIds: List<String>
 )

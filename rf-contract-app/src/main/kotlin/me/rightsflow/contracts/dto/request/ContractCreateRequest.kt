@@ -80,6 +80,9 @@ data class ContractCreateRequest(
     var unfContractTotalAmount: BigDecimal?,
 
     @field:Schema(description = "Менеджер контракта")
-    var managedBy: String?
+    var managedBy: String?,
+
+    @field:Schema(description = "Согласующий руководитель")
+    var coordinatedBy: String?
 
 )

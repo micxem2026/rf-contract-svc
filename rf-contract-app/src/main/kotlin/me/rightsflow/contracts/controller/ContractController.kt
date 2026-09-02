@@ -52,6 +52,38 @@ class ContractController(
                                      @PathVariable id: Long): List<ContractCounterpartyDto> =
         counterpartyService.findByContract(id)
 
+    @GetMapping("/by-sibling/{id}")
+    @Operation(summary = "Поиск контрактов по ID_SIBLING (с пагинацией)")
+    @RequiresPermission("ContractController:FindAllContractsBySiblingId", description = "Поиск контрактов по ID_SIBLING (с пагинацией)")
+    @ApiResponse(responseCode = "200", description = "Список контрактов получен")
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun findBySiblingId(
+        @Parameter(description = "ID_SIBLING контрактов")
+        @PathVariable id: Long,
+        @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC)
+        @ParameterObject pageable: Pageable
+    ): PagedModel<ContractDto> {
+        val page = service.findBySiblingId(id, pageable)
+        return PagedModel(page)
+    }
+
+    @GetMapping("/by-parent/{id}")
+    @Operation(summary = "Поиск контрактов по ID_PARENT (с пагинацией)")
+    @RequiresPermission("ContractController:FindAllContractsByParentId", description = "Поиск контрактов по ID_PARENT (с пагинацией)")
+    @ApiResponse(responseCode = "200", description = "Список контрактов получен")
+    @CommonSecurityResponses
+    @InternalServerErrorResponse
+    fun findByParentId(
+        @Parameter(description = "ID_PARENT контрактов")
+        @PathVariable id: Long,
+        @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC)
+        @ParameterObject pageable: Pageable
+    ): PagedModel<ContractDto> {
+        val page = service.findByParentId(id, pageable)
+        return PagedModel(page)
+    }
+
     @GetMapping
     @Operation(summary = "Поиск контрактов по фильтрам (с пагинацией)")
     @RequiresPermission("ContractController:FindAllContractsByFilter", description = "Поиск контрактов по фильтрам (с пагинацией)")
@@ -80,10 +112,12 @@ class ContractController(
                     " - *iS* — внутренняя продажа") inOut: String?,
         @Parameter(description = "Фильтр по ответственному пользователю (используется логин пользователя)")
         @RequestParam(required = false) managedBy: String?,
+        @Parameter(description = "Фильтр по согласовавшему руководителю (используется логин пользователя)")
+        @RequestParam(required = false) coordinatedBy: String?,
         @PageableDefault(size = 20, sort = ["id"], direction = Sort.Direction.ASC) @ParameterObject pageable: Pageable
     ): PagedModel<ContractDto> {
         val page = service.findByFilter(idContractType, idContractStatus, status1c, idOrg, filter,
-                                       filter2, inOut, managedBy, pageable)
+                                       filter2, inOut, managedBy, coordinatedBy, pageable)
         return PagedModel(page)
     }
 

@@ -38,9 +38,10 @@ class UserOrgAccessService(
      * Получить всех пользователей, привязанных к организации (с пагинацией).
      */
     @Transactional(readOnly = true)
-    fun getByOrg(idOrg: Int, pageable: Pageable): Page<UserOrgAccessDto> {
-        requireOrgExists(idOrg)
-        return repo.findByIdOrg(idOrg, pageable).map { it.toDto() }
+    fun getByOrg(idOrg: String, pageable: Pageable): Page<UserOrgAccessDto> {
+        val irgId = repo.getIdOrg(idOrg)
+        requireOrgExists(irgId)
+        return repo.findByIdOrg(irgId, pageable).map { it.toDto() }
     }
 
     // ================================================================
@@ -55,22 +56,24 @@ class UserOrgAccessService(
      */
     @Transactional
     fun assign(req: UserOrgAccessRequest): UserOrgAccessDto {
-        requireOrgExists(req.idOrg)
 
-        if (repo.existsByUsernameAndIdOrg(req.username, req.idOrg)) {
+        val orgId = repo.getIdOrg(req.idOrg)
+         requireOrgExists(orgId)
+
+        if (repo.existsByUsernameAndIdOrg(req.username, orgId)) {
             throw IllegalArgumentException(
-                "Пользователь '${req.username}' уже привязан к организации [ID=${req.idOrg}]"
+                "Пользователь '${req.username}' уже привязан к организации [ID=${orgId}]"
             )
         }
 
         val entity = UserOrgAccess(
             username  = req.username,
-            idOrg     = req.idOrg,
+            idOrg     = orgId,
             createdBy = subProvider.currentSub()
         )
         val saved = repo.save(entity)
         log.info("Пользователь '{}' привязан к организации [ID={}] администратором '{}'",
-            req.username, req.idOrg, entity.createdBy)
+            req.username, orgId, entity.createdBy)
         return saved.toDto()
     }
 
@@ -86,11 +89,12 @@ class UserOrgAccessService(
     @Transactional
     fun assignBulk(req: UserOrgBulkRequest): List<UserOrgAccessDto> {
         // Валидируем все переданные ID организаций
-        req.orgIds.forEach { requireOrgExists(it) }
+        val orgIds = req.orgIds.map { repo.getIdOrg(it) }
+        orgIds.forEach { requireOrgExists(it) }
 
         val existing    = repo.findByUsername(req.username)
         val existingIds = existing.map { it.idOrg }.toSet()
-        val newIds      = req.orgIds.toSet()
+        val newIds      = orgIds.toSet()
 
         // Удаляем привязки, которых нет в новом списке
         val toDelete = existing.filter { it.idOrg !in newIds }
@@ -129,15 +133,16 @@ class UserOrgAccessService(
      * @throws EntityNotFoundException если привязка не найдена
      */
     @Transactional
-    fun revoke(username: String, idOrg: Int) {
-        if (!repo.existsByUsernameAndIdOrg(username, idOrg)) {
+    fun revoke(username: String, idOrg: String) {
+        val orgId = repo.getIdOrg(idOrg)
+        if (!repo.existsByUsernameAndIdOrg(username, orgId)) {
             throw EntityNotFoundException(
-                "Привязка пользователь='$username', org=[ID=$idOrg] не найдена"
+                "Привязка пользователь='$username', org=[ID=$orgId] не найдена"
             )
         }
-        repo.deleteByUsernameAndIdOrg(username, idOrg)
+        repo.deleteByUsernameAndIdOrg(username, orgId)
         log.info("Пользователь '{}' отвязан от организации [ID={}] администратором '{}'",
-            username, idOrg, subProvider.currentSub())
+            username, orgId, subProvider.currentSub())
     }
 
     /**

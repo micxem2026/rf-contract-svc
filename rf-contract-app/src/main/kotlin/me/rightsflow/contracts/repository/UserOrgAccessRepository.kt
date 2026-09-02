@@ -15,6 +15,10 @@ interface UserOrgAccessRepository : JpaRepository<UserOrgAccess, Long> {
      */
     fun findByUsername(username: String): List<UserOrgAccess>
 
+
+    @Query("select * from pkg_contract.get_org_id(:idOrg)", nativeQuery = true)
+    fun getIdOrg(@Param("idOrg") idOrg: String): Int
+
     /**
      * Все привязки для заданной организации (с пагинацией).
      */
