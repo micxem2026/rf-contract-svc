@@ -9,6 +9,7 @@ data class UserOrgAccessDto(
     val id: Long,
     val username: String,
     val idOrg: Int,
+    val code1c: String?,
 
     /**
      * Название организации из sync__klf_organization.

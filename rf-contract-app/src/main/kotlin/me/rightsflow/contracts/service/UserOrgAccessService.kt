@@ -170,11 +170,14 @@ class UserOrgAccessService(
      * Конвертация entity → DTO с подтягиванием названия организации.
      */
     private fun UserOrgAccess.toDto(): UserOrgAccessDto {
-        val orgName = orgRepo.findById(this.idOrg).map { it.name }.orElse(null)
+        val org = orgRepo.findById(this.idOrg).orElseThrow { EntityNotFoundException("Организация [ID=$idOrg] не найдена в справочнике") }
+        val orgName = org?.name ?: ""
+        val code1c = org?.code_1c ?: ""
         return UserOrgAccessDto(
             id        = this.id!!,
             username  = this.username,
             idOrg     = this.idOrg,
+            code1c    = code1c,
             orgName   = orgName,
             createdBy = this.createdBy,
             createdAt = this.createdAt
