@@ -29,7 +29,7 @@ class GenericDlqScheduler(
 
     private val log = LoggerFactory.getLogger(GenericDlqScheduler::class.java)
 
-    @Scheduled(cron = "0 0/5 * * * *")
+    @Scheduled(cron = "0 0/15 * * * *")
     fun processAllDlqs() {
         if (handlers.isEmpty()) {
             log.info("No DLQ handlers registered")

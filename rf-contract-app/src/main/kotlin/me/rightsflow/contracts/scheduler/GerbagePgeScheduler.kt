@@ -16,10 +16,7 @@ class GarbagePgeScheduler(
      */
     @Scheduled(fixedRateString = "\${rightsflow.app.scheduler.cleanup.interval:14400000}") // каждые 4 часа
     fun cleanupOldSearchResults() {
-        log.info("Начало очистки данных осиротевших PGE-свойств...")
-
         val stats = pgeService.garbagePgeData()
-
-        log.info("Очистка завершена: удалено {} записей", stats)
+        if (stats > 0) log.info("Очистка завершена: удалено {} записей", stats)
     }
 }
