@@ -28,6 +28,5 @@ data class UserOrgBulkRequest(
     @field:Size(max = 50, message = "Username не может быть длиннее 50 символов")
     val username: String,
 
-    @field:NotEmpty(message = "Список организаций не может быть пустым")
     val orgIds: List<String>
 )
